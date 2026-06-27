@@ -10,6 +10,12 @@ Leitidee des Produkts: ein **abendliches Briefing** statt eines Karten-Ebenen-Pr
 Oben wenige Statuskarten nach dem Ampelprinzip mit je einer konkreten Empfehlung,
 darunter eine Karte zur Verortung.
 
+## Schnellzugriff (Referenzdateien)
+- `REFERENCE.md` — gebündelte Referenz: Design-Tokens (Farben/Schrift), App-Architektur,
+  API-Endpunkte, Domänen-Formeln, Konventionen. **Erste Anlaufstelle.**
+- `REPORT.md` — vollständige Markdown-Fassung des Konzeptberichts (Inhalt + Berichts-Design).
+- `LOGBOOK.md` / `TODO.md` — Arbeitslog und offene Punkte (s. u.).
+
 ## Repo-Struktur
 - `mockups/*.html` — die vier Ansichten: Übersicht (Desktop), Mobil, Karte, Onboarding.
 - `report/report.html` — Quelle des Berichts; Bilder unter `report/img/` (relative Pfade).

@@ -5,6 +5,17 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-27 · Referenzdateien REFERENCE.md & REPORT.md
+**Was:** `REFERENCE.md` (Single Source of Truth: Design-Tokens inkl. Farb-/Status-
+Paletten, Typografie, App-Architektur, API-Endpunkte mit Parametern, Domänen-Formeln,
+Konventionen, Grenzen) und `REPORT.md` (vollständige Markdown-Fassung des Konzept-
+berichts aus `report/report.html` inkl. Tabellen, Hinweis-Boxen, Abbildungs-Captions
+und Berichts-Designschema) angelegt. Schnellzugriff in `CLAUDE.md` verlinkt.
+**Warum:** Künftig leichter und durchsuchbarer Zugriff auf alle Informationen an einem Ort.
+**Ergebnis:** Verweise in `CLAUDE.md`; `report/report.html` bleibt maßgeblich.
+
+---
+
 ## 2026-06-27 · App-Prototyp „Übersicht" + reales Onboarding
 **Was:** Neuer Ordner `app/` — lauffähiger Prototyp der Übersicht-Ansicht
 (Vite + TypeScript + maplibre-gl, kein Framework). Mockups/Report/`build.sh`
