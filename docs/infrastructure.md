@@ -54,11 +54,13 @@ Die alte `dns.hetzner.com`-API ist abgelöst (301 → console.hetzner.com).
   nur 22/80/443/icmp — zusätzlich zur ufw (Defense in Depth).
 - **nginx**: Security-Header (HSTS, X-Content-Type-Options, X-Frame-Options,
   Referrer-Policy), `server_tokens off`.
+- **Backups**: Hetzner-Automatik aktiv (täglich, 7 Slots, Fenster 18–22 UTC, +20% Preis).
+  Wiederherstellung/Rollback über Console oder API (`/v1/servers/145742852/actions`).
 
 ### Bewusst NICHT umgesetzt (Workflow-Änderung / schwer reversibel)
 - Non-root-Sudo-User + `PermitRootLogin no`; SSH-Port verschieben.
 - HSTS-**Preload**-Submission (monatelang bindend); HSTS `preload`-Flag.
-- Backups/Snapshots, Monitoring/Alerting, IP-Allowlist für SSH.
+- Monitoring/Alerting, IP-Allowlist für SSH.
 
 ## Reproduktion
 1. Server (cx23, nbg1, ubuntu-24.04, SSH-Key) mit `infra/cloud-init.yml` als user-data anlegen

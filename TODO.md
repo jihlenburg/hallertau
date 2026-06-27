@@ -1,4 +1,4 @@
-# TODO — HopfenBlick
+# TODO — DoldenBlick
 
 Offene Punkte und nächste Schritte. `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit.
 Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
@@ -46,8 +46,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] **Amtliche Markenrecherche** vor kommerziellem Einsatz: DPMAregister + EUIPO/TMview,
       Nizza-Klassen 9 & 42 (Software) und 32 (Bier); Restrisiko „Dolden"-Biermarken
       (Riedenburger *Dolden Sud*, *Dolden Mädel*) bewusst akzeptiert für jetzt.
-- [ ] Rename „HopfenBlick" → „DoldenBlick" quer durchs Repo (CLAUDE.md, README,
-      Mockups, Report, `deliverables/`-Dateinamen, app/) — separater, bewusster Schritt.
+- [x] Rename „HopfenBlick" → „DoldenBlick" quer durchs Repo (CLAUDE.md, README,
+      Mockups, Report, `deliverables/`-Dateinamen, app/, localStorage-Keys, npm-Paket);
+      Deliverables mit lokalem wkhtml-Binary neu gerendert. — 2026-06-27
 
 ## Infrastruktur / Hosting (s. `docs/infrastructure.md`)
 - [x] Cloud-Server `doldenblick-01` bei Hetzner (Projekt „Hallertau"), Ubuntu 24.04, nginx. — 2026-06-27
@@ -57,7 +58,7 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       nginx Security-Header/HSTS. — 2026-06-27
 - [ ] **Optional, schwerer/Workflow:** Non-root-Sudo-User + `PermitRootLogin no`; SSH-Port verschieben.
 - [ ] **Optional:** HSTS-Preload-Submission (erst nach längerem Stabilbetrieb, bindend).
-- [ ] **Backups/Snapshots** des Servers (Hetzner-Snapshots/Backups einschalten).
+- [x] **Backups** des Servers aktiviert (Hetzner, täglich, 7 Slots, Fenster 18–22 UTC, +20%). — 2026-06-27
 - [ ] **Monitoring/Alerting** (Uptime, Zertifikatsablauf, Plattenplatz).
 - [ ] `doldenblick.info` registrieren (zurückgestellt) bzw. später Redirect auf `.de`.
 - [ ] Deployment der echten App (`app/`) auf den Server statt Platzhalterseite;
@@ -67,12 +68,12 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] Vom Prototyp zur kleinen API mit Caching (Open-Meteo / Bright Sky).
 - [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing) — die Übersicht flaggt
       Nachtfrost jetzt in-app und verweist auf die DWD-WarnWetterApp, ersetzt aber keinen
-      Echtzeit-Alarm; einziger HopfenBlick-eigener Push-Kandidat ist das Spritzfenster.
+      Echtzeit-Alarm; einziger DoldenBlick-eigener Push-Kandidat ist das Spritzfenster.
 - [ ] Primäre **Farmer-Research** (Hallertau) zur Validierung der Abend-Briefing-Kadenz
       und Whole-Farm-Synthese (Persona in REPORT.md §3 ist bislang unbelegt).
-- [ ] **Report-PDF neu bauen**: Quelltexte (`REPORT.md`/`report.html`) sind korrigiert,
-      `deliverables/HopfenBlick_Report.pdf` ist veraltet — `./build.sh` braucht `wkhtmltopdf`
-      (+ pymupdf), war hier nicht installierbar.
+- [x] **Report-PDF + Mockups neu gebaut**: alle Deliverables mit lokalem
+      wkhtmltopdf/-image-Binary (`~/.local/wkhtmltox/bin`) + pymupdf neu gerendert —
+      neuer Name „DoldenBlick" in den Pixeln (4 PNG, 4 Vorschau-JPG, PDF 11 S.). — 2026-06-27
 - [ ] Lizenzen vor produktivem Einsatz klären (Open-Meteo/Bright Sky nicht-kommerziell;
       LfL-Weiterverbreitung ggf. abstimmen).
 
