@@ -21,3 +21,34 @@ describe('deltaT', () => {
     expect(dt).toBeLessThan(8)
   })
 })
+
+// Mehr als ein einzelner Stützpunkt: eine kleine Referenztabelle über den
+// spritzrelevanten Bereich, damit eine Regression in der Formel auffällt — nicht
+// nur am bisherigen 20 °C/50 %-Anker. Werte unabhängig aus der Stull-Formel
+// berechnet; Toleranz 0,1 °C (Stull-RMSE ~0,3 °C, Maximalfehler ~1 °C).
+describe('stullWetBulb — Referenztabelle (Tw, ΔT)', () => {
+  const cases: Array<[number, number, number, number]> = [
+    // T,  RH,   Tw,    ΔT
+    [20, 50, 13.7, 6.3],
+    [18, 55, 12.6, 5.4],
+    [15, 70, 11.62, 3.38],
+    [22, 45, 14.7, 7.3],
+    [25, 40, 16.38, 8.62],
+    [30, 30, 18.37, 11.63],
+    [28, 35, 17.87, 10.13],
+    [12, 85, 10.37, 1.63],
+  ]
+  for (const [t, rh, tw, dt] of cases) {
+    it(`T=${t} °C, RH=${rh} % → Tw≈${tw}, ΔT≈${dt}`, () => {
+      expect(stullWetBulb(t, rh)).toBeCloseTo(tw, 1)
+      expect(deltaT(t, rh)).toBeCloseTo(dt, 1)
+    })
+  }
+
+  it('hält die Spritzfenster-Grenze ΔT 2–8 °C an den Rändern ein', () => {
+    expect(deltaT(22, 45)).toBeLessThanOrEqual(8) // 7.30 → innerhalb
+    expect(deltaT(25, 40)).toBeGreaterThan(8) // 8.62 → außerhalb
+    expect(deltaT(15, 70)).toBeGreaterThan(2) // 3.38 → innerhalb
+    expect(deltaT(12, 85)).toBeLessThan(2) // 1.63 → außerhalb
+  })
+})

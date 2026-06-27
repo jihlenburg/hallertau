@@ -8,7 +8,12 @@ import type { Status } from '../types'
  */
 export const KC_HOPS = 1.05
 
-/** Schwellen für die 7-Tage-Bilanz (mm). */
+/**
+ * Schwellen für die 7-Tage-Bilanz (mm Defizit). Bewusst **heuristische
+ * Orientierungswerte**, NICHT aus nutzbarer Feldkapazität/Wurzeltiefe abgeleitet
+ * (die kennt diese klimatische Bilanz nicht). Als Tendenz-Ampel gedacht, nicht als
+ * Beregnungsschwelle — siehe `balanceLabel` und §12 in REFERENCE.md.
+ */
 export const WB = { GOOD_MAX: 5, WARN_MAX: 20 }
 
 export interface WaterBalance {

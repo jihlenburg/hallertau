@@ -22,20 +22,20 @@ render() { # <html-key> <output-name> <width>
     "mockups/$1.html" "deliverables/$2.png" >/dev/null 2>&1
   echo "    $2.png"
 }
-render m1_overview   HopfenBlick_Mockup1_Uebersicht 1600
-render m2_mobile     HopfenBlick_Mockup2_Mobil       820
-render m3_map        HopfenBlick_Mockup3_Karte      1600
-render m4_onboarding HopfenBlick_Mockup4_Onboarding 1600
+render m1_overview   DoldenBlick_Mockup1_Uebersicht 1600
+render m2_mobile     DoldenBlick_Mockup2_Mobil       820
+render m3_map        DoldenBlick_Mockup3_Karte      1600
+render m4_onboarding DoldenBlick_Mockup4_Onboarding 1600
 
 echo "==> 3/4  Vorschau-JPGs für den Bericht"
 mkdir -p report/img
 python3 - <<'PY'
 from PIL import Image
 items = {
-    "m1_overview":   ("HopfenBlick_Mockup1_Uebersicht", 1500),
-    "m2_mobile":     ("HopfenBlick_Mockup2_Mobil",       820),
-    "m3_map":        ("HopfenBlick_Mockup3_Karte",      1500),
-    "m4_onboarding": ("HopfenBlick_Mockup4_Onboarding", 1500),
+    "m1_overview":   ("DoldenBlick_Mockup1_Uebersicht", 1500),
+    "m2_mobile":     ("DoldenBlick_Mockup2_Mobil",       820),
+    "m3_map":        ("DoldenBlick_Mockup3_Karte",      1500),
+    "m4_onboarding": ("DoldenBlick_Mockup4_Onboarding", 1500),
 }
 for key, (png, w) in items.items():
     im = Image.open(f"deliverables/{png}.png").convert("RGB")
@@ -49,7 +49,7 @@ echo "==> 4/4  Bericht -> PDF (+ Seitenzahlen)"
 wkhtmltopdf --enable-local-file-access --page-size A4 \
   --margin-top 16 --margin-bottom 16 --margin-left 16 --margin-right 16 \
   report/report.html deliverables/_report_raw.pdf >/dev/null 2>&1
-python3 scripts/stamp_pages.py deliverables/_report_raw.pdf deliverables/HopfenBlick_Report.pdf
+python3 scripts/stamp_pages.py deliverables/_report_raw.pdf deliverables/DoldenBlick_Report.pdf
 rm -f deliverables/_report_raw.pdf
 
 echo "Fertig. Ergebnisse in deliverables/"

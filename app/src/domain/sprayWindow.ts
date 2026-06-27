@@ -23,7 +23,11 @@ export const SPRAY = {
   HOUR_END: 21, // spätestens
   MIN_HOURS: 2, // Mindestlänge eines Fensters
   HORIZON_H: 48, // Vorausschau
+  INVERSION_WIND_MAX: 4, // km/h — darunter in Dämmerungsstunden Inversionsneigung
 }
+
+/** Dämmerungs-/Nachtstunden mit erhöhter Strahlungsinversions-Neigung. */
+const isInversionHour = (hour: number) => hour <= 8 || hour >= 19
 
 export interface SprayHour {
   date: Date
@@ -39,6 +43,12 @@ export interface SprayAssessment {
   detail: string
   window: { start: Date; end: Date } | null
   hours: SprayHour[]
+  /**
+   * Liegt das gewählte Fenster ganz oder teilweise in Schwachwind-Dämmerungsstunden?
+   * Dann besteht Inversionsneigung (Abdrift) — als Vorsicht ausgewiesen, NICHT als
+   * harte Sperre, da Bewölkung in den Stundenwerten fehlt.
+   */
+  inversion: boolean
 }
 
 /**
@@ -78,6 +88,7 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
       detail: `In den nächsten ${SPRAY.HORIZON_H} h kein durchgehend günstiger Zeitraum (Wind, Niederschlag oder ΔT ungünstig).`,
       window: null,
       hours,
+      inversion: false,
     }
   }
 
@@ -86,16 +97,24 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
   const end = window.end
   const sameDay = isSameDay(start, now) ? 'heute' : isSameDay(start, addDays(now, 1)) ? 'morgen' : weekday(start)
   const headline = `${cap(sameDay)} ${fmtH(start)}–${fmtH(end)} Uhr`
-  const avgWind = avg(hours.filter((x) => inRange(x.date, start, end)).map((x) => x.wind))
-  const avgDt = avg(hours.filter((x) => inRange(x.date, start, end)).map((x) => x.dt))
+  const windowHours = hours.filter((x) => inRange(x.date, start, end))
+  const avgWind = avg(windowHours.map((x) => x.wind))
+  const avgDt = avg(windowHours.map((x) => x.dt))
+  // Schwachwind in Dämmerungsstunden → mögliche Strahlungsinversion (Abdrift).
+  const inversion = windowHours.some((x) => x.wind < SPRAY.INVERSION_WIND_MAX && isInversionHour(x.date.getHours()))
+  const tail = within24
+    ? ' — Wetter geeignet; Etikett & Auflagen beachten.'
+    : ' — geeignetes Wetter erst später im Vorhersagezeitraum.'
+  const invNote = inversion
+    ? ' Frühfenster bei Schwachwind — mögliche Inversionslage, Abdrift beachten.'
+    : ''
   return {
     status: within24 ? 'good' : 'warn',
     headline,
-    detail: `Wind ø ${Math.round(avgWind)} km/h · trocken · ΔT ${avgDt.toFixed(1)} °C${
-      within24 ? ' — günstiges Fenster für Pflanzenschutz.' : ' — erst später im Vorhersagezeitraum.'
-    }`,
+    detail: `Wind ø ${Math.round(avgWind)} km/h · trocken · ΔT ${avgDt.toFixed(1)} °C${tail}${invNote}`,
     window,
     hours,
+    inversion,
   }
 }
 

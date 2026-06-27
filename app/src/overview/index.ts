@@ -1,14 +1,15 @@
 import { FieldMap } from '../map'
 import { asCollection, getFields, getSelected, selectField, subscribe } from '../state'
 import { centroidLonLat } from '../domain/fields'
+import { gridCellKey } from '../domain/grid'
 import { fetchOpenMeteo, lastNDaysIndices, type OpenMeteoData } from '../api/openMeteo'
 import { fetchDwdAlerts, type DwdAlert } from '../api/brightSky'
 import { assessWeather } from '../domain/weather'
 import { evaluateSprayWindow } from '../domain/sprayWindow'
 import { computeWaterBalance, KC_HOPS } from '../domain/waterBalance'
-import { cardHtml, barsViz, meterViz, type CardSpec } from './cards'
+import { cardHtml, barsViz, meterViz, balanceLabel, roadmapStrip, countHints, type CardSpec } from './cards'
 import { icons } from '../ui/icons'
-import type { FieldFeature } from '../types'
+import type { FieldFeature, Status } from '../types'
 
 export function mountOverview(root: HTMLElement): void {
   const fields = getFields()
@@ -18,6 +19,7 @@ export function mountOverview(root: HTMLElement): void {
     <div class="hello">Guten Abend, Familie Huber</div>
     <div class="subhead" id="subhead">${fields.length} Schläge · ${total.toFixed(1)} ha · abendlicher Feld-Check</div>
     <div class="summary" id="summary"><span class="d"></span>Daten werden geladen …</div>
+    <div class="gridhint" id="gridhint"></div>
     <div class="layout">
       <div class="cards" id="cards"></div>
       <div class="panel">
@@ -29,7 +31,8 @@ export function mountOverview(root: HTMLElement): void {
         <ul class="fieldlist" id="flist"></ul>
         <div class="maphint">© OpenFreeMap · OpenMapTiles · DOP40: © Bayerische Vermessungsverwaltung</div>
       </div>
-    </div>`
+    </div>
+    <div class="roadmap" id="roadmap">${roadmapStrip()}</div>`
 
   const map = new FieldMap({ container: 'map', onSelect: (id) => selectField(id) })
   map.setData(asCollection(), getSelected()?.properties.id ?? null)
@@ -44,6 +47,7 @@ export function mountOverview(root: HTMLElement): void {
 
   renderFieldList()
   let controller: AbortController | null = null
+  let farmController: AbortController | null = null
 
   function renderFieldList() {
     const sel = getSelected()?.properties.id
@@ -67,7 +71,6 @@ export function mountOverview(root: HTMLElement): void {
       cardHtml({ status: 'loading', eyebrow: 'Wetter & Warnungen', icon: icons.weather('#6b7d72'), stat: 'lädt …', rec: 'Vorhersage wird abgerufen.', src: 'Open-Meteo · DWD' }),
       cardHtml({ status: 'loading', eyebrow: 'Spritzfenster', icon: icons.spray('#6b7d72'), stat: 'lädt …', rec: 'Stundenwerte werden ausgewertet.', src: 'Open-Meteo' }),
       cardHtml({ status: 'loading', eyebrow: 'Bewässerung · Wasserbilanz', icon: icons.water('#6b7d72'), stat: 'lädt …', rec: 'ET₀ wird berechnet.', src: 'Open-Meteo' }),
-      placeholders(),
     ].join('')
   }
 
@@ -98,7 +101,12 @@ export function mountOverview(root: HTMLElement): void {
     const precip = idx.map((i) => data.daily.precipitation_sum[i])
     const wb = computeWaterBalance(et0, precip, KC_HOPS)
 
-    const weatherSrc = weather.warningSource === 'dwd' ? 'DWD / Bright Sky' : 'Open-Meteo (aus Vorhersage abgeleitet)'
+    const weatherSrc =
+      weather.warningSource === 'dwd'
+        ? 'DWD / Bright Sky'
+        : weather.alertsReachable
+          ? 'Open-Meteo (aus Vorhersage abgeleitet)'
+          : 'Open-Meteo (abgeleitet · amtliche Warnungen nicht abrufbar)'
 
     const specs: CardSpec[] = [
       {
@@ -106,7 +114,7 @@ export function mountOverview(root: HTMLElement): void {
         eyebrow: 'Wetter & Warnungen',
         icon: icons.weather(),
         stat: weather.headline,
-        rec: weather.detail,
+        rec: `${weather.detail} <span class="cardnote">Kein Echtzeit-Alarm — für Frost/Hagel/Sturm die DWD-WarnWetterApp nutzen.</span>`,
         src: weatherSrc,
       },
       {
@@ -122,15 +130,32 @@ export function mountOverview(root: HTMLElement): void {
         status: wb.status,
         eyebrow: 'Bewässerung · Wasserbilanz',
         icon: icons.water(),
-        stat: wb.deficit > 0 ? `Defizit ${wb.deficit.toFixed(0)} mm` : `Bilanz +${(-wb.deficit).toFixed(0)} mm`,
-        rec: `Klimatische Bilanz (7 T): ETc = ET₀ · Kc(${wb.kc}) − Niederschlag. Kein Bodenmodell.`,
+        stat: balanceLabel(wb.status),
+        rec: `Klimatische Wasserbilanz (7 T): ETc = ET₀ · Kc(${wb.kc}) − Niederschlag. <span class="cardnote">Kein Bodenmodell — Tendenz, keine Beregnungsmenge.</span>`,
         viz: meterViz(wb.deficit, wb.etc, wb.precip),
         src: 'Open-Meteo · ET₀ (FAO-56)',
       },
     ]
 
-    root.querySelector<HTMLDivElement>('#cards')!.innerHTML = specs.map(cardHtml).join('') + placeholders()
-    updateSummary(sel, [weather.status, spray.status, wb.status])
+    root.querySelector<HTMLDivElement>('#cards')!.innerHTML = specs.map(cardHtml).join('')
+    updateGridHint(sel)
+    updateSubhead(sel, [weather.status, spray.status, wb.status])
+  }
+
+  /** Ehrlichkeitshinweis: liegt der gewählte Schlag mit Nachbarn in derselben ~2-km-Zelle? */
+  function updateGridHint(sel: FieldFeature) {
+    const selKey = gridCellKey(centroidLonLat(sel))
+    const shared = getFields().filter(
+      (f) => f.properties.id !== sel.properties.id && gridCellKey(centroidLonLat(f)) === selKey,
+    ).length
+    const gh = root.querySelector<HTMLDivElement>('#gridhint')!
+    if (shared > 0) {
+      gh.textContent = `Wetter-, Spritz- und Bewässerungswerte sind regionale Rasterwerte (~2 km) — sie gelten für ${shared + 1} benachbarte Schläge in derselben Modellzelle.`
+      gh.classList.add('show')
+    } else {
+      gh.textContent = ''
+      gh.classList.remove('show')
+    }
   }
 
   function renderError(msg: string) {
@@ -142,26 +167,80 @@ export function mountOverview(root: HTMLElement): void {
       rec: `Daten konnten nicht geladen werden (${msg}). Bitte später erneut versuchen.`,
       src,
     })
-    root.querySelector<HTMLDivElement>('#cards')!.innerHTML =
-      [
-        unavailable('Wetter & Warnungen', icons.weather(), 'Open-Meteo · DWD'),
-        unavailable('Spritzfenster', icons.spray(), 'Open-Meteo'),
-        unavailable('Bewässerung · Wasserbilanz', icons.water(), 'Open-Meteo · ET₀ (FAO-56)'),
-      ]
-        .map(cardHtml)
-        .join('') + placeholders()
-    const sum = root.querySelector<HTMLDivElement>('#summary')!
-    sum.className = 'summary'
-    sum.innerHTML = '<span class="d"></span>Daten derzeit nicht abrufbar'
+    root.querySelector<HTMLDivElement>('#cards')!.innerHTML = [
+      unavailable('Wetter & Warnungen', icons.weather(), 'Open-Meteo · DWD'),
+      unavailable('Spritzfenster', icons.spray(), 'Open-Meteo'),
+      unavailable('Bewässerung · Wasserbilanz', icons.water(), 'Open-Meteo · ET₀ (FAO-56)'),
+    ]
+      .map(cardHtml)
+      .join('')
+    root.querySelector<HTMLDivElement>('#subhead')!.textContent =
+      `${getFields().length} Schläge · Daten für den gewählten Schlag derzeit nicht abrufbar`
   }
 
-  function updateSummary(sel: FieldFeature, statuses: string[]) {
-    const hints = statuses.filter((s) => s === 'warn' || s === 'alert').length
-    const sum = root.querySelector<HTMLDivElement>('#summary')!
-    sum.className = `summary${hints === 0 ? ' good' : ''}`
-    sum.innerHTML = `<span class="d"></span>${hints === 0 ? 'Keine offenen Hinweise' : `${hints} Hinweis${hints > 1 ? 'e' : ''}`} für „${sel.properties.name}“`
+  /** Per-Schlag-Zeile (Auswahl + offene Hinweise des gewählten Schlags). */
+  function updateSubhead(sel: FieldFeature, statuses: Status[]) {
+    const hints = countHints(statuses)
     root.querySelector<HTMLDivElement>('#subhead')!.textContent =
-      `${getFields().length} Schläge · ausgewählt: ${sel.properties.name} (${sel.properties.sorte})`
+      `ausgewählt: ${sel.properties.name} (${sel.properties.sorte}) · ${
+        hints === 0 ? 'keine offenen Hinweise' : `${hints} Hinweis${hints > 1 ? 'e' : ''}`
+      }`
+  }
+
+  /**
+   * Ganzbetrieblicher Tageskopf „N Hinweise für morgen" (wie im Konzept). Holt
+   * Open-Meteo einmal pro DISTINKTER Rasterzelle (benachbarte Schläge teilen sich
+   * die Zelle) und zählt Schläge mit mindestens einem warn/alert. Schlägt der Abruf
+   * fehl, bleibt die neutrale Lade-Anzeige stehen (per-Schlag-Karten zeigen Details).
+   */
+  async function refreshFarm() {
+    const all = getFields()
+    if (!all.length) return
+    farmController?.abort()
+    farmController = new AbortController()
+    const signal = farmController.signal
+    const repByCell = new Map<string, FieldFeature>()
+    for (const f of all) {
+      const k = gridCellKey(centroidLonLat(f))
+      if (!repByCell.has(k)) repByCell.set(k, f)
+    }
+    try {
+      const now = new Date()
+      const dataByCell = new Map<string, OpenMeteoData>()
+      const alertsByCell = new Map<string, DwdAlert[] | null>()
+      await Promise.all(
+        [...repByCell].map(async ([k, f]) => {
+          const [lon, lat] = centroidLonLat(f)
+          dataByCell.set(k, await fetchOpenMeteo(lat, lon, signal))
+          alertsByCell.set(k, await fetchDwdAlerts(lat, lon, signal))
+        }),
+      )
+      let hinted = 0
+      for (const f of all) {
+        const k = gridCellKey(centroidLonLat(f))
+        const data = dataByCell.get(k)
+        if (!data) continue
+        const idx = lastNDaysIndices(data.daily.time, 7, now)
+        const fieldStatuses: Status[] = [
+          assessWeather(data, alertsByCell.get(k) ?? null, now).status,
+          evaluateSprayWindow(data.hourly, now).status,
+          computeWaterBalance(
+            idx.map((i) => data.daily.et0_fao_evapotranspiration[i]),
+            idx.map((i) => data.daily.precipitation_sum[i]),
+            KC_HOPS,
+          ).status,
+        ]
+        if (countHints(fieldStatuses) > 0) hinted++
+      }
+      const sum = root.querySelector<HTMLDivElement>('#summary')!
+      sum.className = `summary${hinted === 0 ? ' good' : ''}`
+      sum.innerHTML = `<span class="d"></span>${
+        hinted === 0 ? 'Keine offenen Hinweise' : `${hinted} Hinweis${hinted > 1 ? 'e' : ''}`
+      } für morgen · ${all.length} Schläge`
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return
+      // still — Detailkarten zeigen die Lage je Schlag.
+    }
   }
 
   subscribe(() => {
@@ -172,12 +251,5 @@ export function mountOverview(root: HTMLElement): void {
 
   setTimeout(() => map.resize(), 50)
   refresh()
-}
-
-function placeholders(): string {
-  return [
-    cardHtml({ status: 'info', eyebrow: 'Krankheitsdruck · Peronospora', icon: icons.perono('#255d97'), stat: 'In Vorbereitung', rec: 'LfL-Warndienst (Hüll) wird angebunden.', pending: true, src: 'LfL Bayern' }),
-    cardHtml({ status: 'info', eyebrow: 'Feld-Check · Satellit', icon: icons.sat('#255d97'), stat: 'In Vorbereitung', rec: 'Sentinel-Vitalität (regionales Screening) folgt.', pending: true, src: 'Copernicus / Sentinel' }),
-    cardHtml({ status: 'info', eyebrow: 'Wachstum & Erntefenster', icon: icons.growth(), stat: 'In Vorbereitung', rec: 'Phänologie/GTS-Modell folgt.', pending: true, src: 'Open-Meteo · DWD' }),
-  ].join('')
+  refreshFarm()
 }

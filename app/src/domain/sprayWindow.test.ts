@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { evaluateSprayWindow, type HourlySeries } from './sprayWindow'
 
-function buildSeries(now: Date, good: (d: Date) => boolean): HourlySeries {
+function buildSeries(
+  now: Date,
+  good: (d: Date) => boolean,
+  opts: { goodWind?: number; goodGust?: number } = {},
+): HourlySeries {
+  const gw = opts.goodWind ?? 5
+  const gg = opts.goodGust ?? 10
   const time: string[] = []
   const temperature_2m: number[] = []
   const relative_humidity_2m: number[] = []
@@ -21,8 +27,8 @@ function buildSeries(now: Date, good: (d: Date) => boolean): HourlySeries {
     relative_humidity_2m.push(g ? 55 : 80)
     precipitation.push(0)
     precipitation_probability.push(0)
-    wind_speed_10m.push(g ? 5 : 30)
-    wind_gusts_10m.push(g ? 10 : 45)
+    wind_speed_10m.push(g ? gw : 30)
+    wind_gusts_10m.push(g ? gg : 45)
   }
   return { time, temperature_2m, relative_humidity_2m, precipitation, precipitation_probability, wind_speed_10m, wind_gusts_10m }
 }
@@ -46,5 +52,36 @@ describe('evaluateSprayWindow', () => {
     const r = evaluateSprayWindow(series, now)
     expect(r.status).toBe('alert')
     expect(r.window).toBeNull()
+    expect(r.inversion).toBe(false)
+  })
+
+  it('warnt bei Schwachwind-Frühfenster vor möglicher Inversionslage', () => {
+    const now = new Date('2026-06-28T20:00:00')
+    const tomorrow = now.getDate() + 1
+    // Frühfenster 6–9 Uhr bei sehr schwachem Wind (2 km/h) → klassische Strahlungsinversion.
+    const series = buildSeries(
+      now,
+      (d) => d.getDate() === tomorrow && d.getHours() >= 6 && d.getHours() <= 9,
+      { goodWind: 2, goodGust: 6 },
+    )
+    const r = evaluateSprayWindow(series, now)
+    expect(r.window).not.toBeNull()
+    expect(r.inversion).toBe(true)
+    expect(r.detail).toMatch(/Inversion/)
+  })
+
+  it('keine Inversionswarnung bei windigem Mittagsfenster', () => {
+    const now = new Date('2026-06-28T20:00:00')
+    const tomorrow = now.getDate() + 1
+    // Mittagsfenster 12–15 Uhr, mäßiger Wind (8 km/h) → keine Inversionsneigung.
+    const series = buildSeries(
+      now,
+      (d) => d.getDate() === tomorrow && d.getHours() >= 12 && d.getHours() <= 15,
+      { goodWind: 8, goodGust: 14 },
+    )
+    const r = evaluateSprayWindow(series, now)
+    expect(r.window).not.toBeNull()
+    expect(r.inversion).toBe(false)
+    expect(r.detail).not.toMatch(/Inversion/)
   })
 })

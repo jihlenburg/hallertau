@@ -1,7 +1,34 @@
-# Logbuch — HopfenBlick
+# Logbuch — DoldenBlick
 
 Chronologische Notizen zu Entscheidungen und Arbeitsschritten. Neueste Einträge oben.
 Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
+
+---
+
+## 2026-06-27 · Rebrand „HopfenBlick" → „DoldenBlick" (alle Artefakte, Deliverables neu gerendert)
+**Was:** Produktname durchgängig umgestellt.
+- **Quelltext/Doku/Mockups/Report:** Marken-Token in allen forward-facing Artefakten ersetzt
+  (CLAUDE.md, READMEs, REFERENCE.md, REPORT.md, `app/*`, `mockups/*.html`, `report/report.html`,
+  `build.sh`, `scripts/stamp_pages.py`) — inkl. Zwei-Ton-Wortmarke `Dolden<small>Blick</small>`.
+  Der **Agrarbegriff „Hopfen"** (Hopfenbau, Hopfendolde, Hopfen-Dashboard) wurde bewusst NICHT
+  angetastet — nur das Marken-Kompositum.
+- **Identifier:** localStorage-Keys `hopfenblick.*` → `doldenblick.*`; npm-Paket `doldenblick-app`
+  (`package.json` + `package-lock.json`). Bestehende Demo-localStorage verwaist (neu ladbar).
+- **Deliverables:** alte `HopfenBlick_*`-Dateien entfernt; mit dem **lokalen wkhtmltopdf/-image-Binary**
+  (`~/.local/wkhtmltox/bin`, v0.12.6 patched-qt) + pymupdf neu gerendert → `DoldenBlick_Mockup1–4_*.png`,
+  `report/img/*.jpg`, `DoldenBlick_Report.pdf` (11 S.). Neuer Name jetzt **in den Pixeln** (visuell geprüft).
+- **History bewusst erhalten:** frühere LOGBOOK-Einträge und `docs/naming.md` (Namensvergleich)
+  behalten „HopfenBlick" als Beleg; nur forward-facing Artefakte umbenannt.
+- **„from now on":** in `CLAUDE.md` (Titel/Produktname) verankert + Projekt-Memory gespeichert.
+
+**Warum:** Nutzerentscheidung (s. Namensfindungs-Eintrag). Der Engine-Blocker der Vorrunde
+(kein wkhtmltopdf) entfiel, weil der Nutzer ein funktionierendes Binary bereitstellte.
+
+**Verifikation:** repo-weite Suche zeigt keine Marken-Token mehr außerhalb der History;
+Mockup- (m1) und PDF-Cover visuell geprüft (Wortmarke „DoldenBlick"); `tsc` sauber,
+`npm test` grün (37/37), `build.sh` exit 0.
+
+**Verweise:** TODO.md „Name/Marke" + „Report-PDF" abgehakt; `docs/naming.md` als Entscheidungs-Record.
 
 ---
 

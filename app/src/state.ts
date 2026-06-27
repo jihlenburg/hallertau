@@ -1,7 +1,7 @@
 import type { FieldCollection, FieldFeature } from './types'
 
-const LS_FIELDS = 'hopfenblick.fields.v1'
-const LS_SELECTED = 'hopfenblick.selected.v1'
+const LS_FIELDS = 'doldenblick.fields.v1'
+const LS_SELECTED = 'doldenblick.selected.v1'
 
 type Listener = () => void
 

@@ -10,7 +10,7 @@ mit PyMuPDF aufgestempelt.
 import sys
 import fitz  # PyMuPDF
 
-FOOTER_LEFT = "HopfenBlick · Konzeptstudie · Hopfen-Dashboard Hallertau"
+FOOTER_LEFT = "DoldenBlick · Konzeptstudie · Hopfen-Dashboard Hallertau"
 GREY = (0.54, 0.60, 0.56)
 LINE = (0.88, 0.90, 0.88)
 

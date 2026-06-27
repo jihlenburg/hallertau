@@ -1,4 +1,4 @@
-# HopfenBlick
+# DoldenBlick
 
 **Konzept für ein webbasiertes Feld-Dashboard im Hopfenbau der Hallertau.**
 Offene Satelliten-, Wetter- und Geodaten, gebündelt zu einem täglichen Feld-Check,
@@ -18,7 +18,7 @@ der auch für nicht-technische Betriebe nutzbar ist.
 |---|---|
 | ![Mobil](report/img/m2_mobile_doc.jpg) | ![Onboarding](report/img/m4_onboarding_doc.jpg) |
 
-Der vollständige Bericht liegt unter [`deliverables/HopfenBlick_Report.pdf`](deliverables/HopfenBlick_Report.pdf).
+Der vollständige Bericht liegt unter [`deliverables/DoldenBlick_Report.pdf`](deliverables/DoldenBlick_Report.pdf).
 
 ## Inhalt
 - `mockups/` — vier Bildschirm-Entwürfe als eigenständiges HTML (Übersicht, Mobil, Karte, Onboarding).
@@ -38,7 +38,7 @@ Dann:
 ./build.sh
 ```
 Das Skript lädt die Schrift **Barlow** (SIL Open Font License), rendert die Mockups
-nach `deliverables/*.png` und den Bericht nach `deliverables/HopfenBlick_Report.pdf`.
+nach `deliverables/*.png` und den Bericht nach `deliverables/DoldenBlick_Report.pdf`.
 
 > Hinweis zur Engine: `wkhtmltoimage`/`wkhtmltopdf` nutzt eine ältere WebKit-Engine.
 > Beim Bearbeiten der Mockups gelten daher CSS-Einschränkungen (kein Flexbox/Grid,
@@ -62,4 +62,4 @@ separat: die Schrift **Barlow** steht unter der **SIL OFL**, und die genannten
 haben jeweils **eigene Nutzungsbedingungen**, die unabhängig von der Projektlizenz gelten.
 
 ---
-*HopfenBlick ist ein Arbeitstitel; Gestaltung und Beispielwerte dienen der Veranschaulichung.*
+*DoldenBlick ist ein Arbeitstitel; Gestaltung und Beispielwerte dienen der Veranschaulichung.*

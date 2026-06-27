@@ -18,7 +18,7 @@ function shell(): HTMLElement {
     <header class="bar">
       ${trellis}
       ${logo}
-      <div class="wm">Hopfen<small>Blick</small></div>
+      <div class="wm">Dolden<small>Blick</small></div>
       <div class="seg">
         <button data-r="overview" class="${route === 'overview' ? 'act' : ''}">Übersicht</button>
         <button data-r="onboarding" class="${route === 'onboarding' ? 'act' : ''}">Felder</button>
@@ -29,7 +29,7 @@ function shell(): HTMLElement {
     </header>
     <main class="view" id="view"></main>
     <footer class="foot">
-      <b>HopfenBlick</b> — lauffähiger Prototyp · Datenquellen: Open-Meteo, DWD (Bright Sky),
+      <b>DoldenBlick</b> — lauffähiger Prototyp · Datenquellen: Open-Meteo, DWD (Bright Sky),
       LfL Bayern, Copernicus/Sentinel, Bayerische Vermessungsverwaltung · Kartenbasis OpenFreeMap/OpenMapTiles
     </footer>`
   app.querySelectorAll<HTMLButtonElement>('.seg button').forEach((b) =>

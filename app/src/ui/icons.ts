@@ -1,4 +1,4 @@
-// Inline-SVGs, übernommen aus den HopfenBlick-Mockups (Dolde, Spalier, Karten-Chips).
+// Inline-SVGs, übernommen aus den DoldenBlick-Mockups (Dolde, Spalier, Karten-Chips).
 
 export const logo = `
 <svg class="logo" width="36" height="42" viewBox="0 0 40 46" aria-hidden="true">

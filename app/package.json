@@ -1,13 +1,14 @@
 {
-  "name": "hopfenblick-app",
+  "name": "doldenblick-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "HopfenBlick — lauffähiger Prototyp der Übersicht-Ansicht (Desktop) mit echtem Feld-Onboarding.",
+  "description": "DoldenBlick — lauffähiger Prototyp der Übersicht-Ansicht (Desktop) mit echtem Feld-Onboarding.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "serve": "node server.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -1,4 +1,4 @@
-# HopfenBlick — Referenz (Single Source of Truth)
+# DoldenBlick — Referenz (Single Source of Truth)
 
 Kompakte, vollständige Nachschlage-Datei für das Projekt: Design-Tokens,
 Architektur, Datenquellen, API-Endpunkte, Domänen-Formeln und Konventionen.
@@ -23,7 +23,7 @@ Inhalt:
 
 ## 1. Überblick & Status
 
-**HopfenBlick** = Konzept + Prototyp für ein webbasiertes Feld-Dashboard für
+**DoldenBlick** = Konzept + Prototyp für ein webbasiertes Feld-Dashboard für
 Hopfenbetriebe in der Hallertau (Bayern). Leitidee: ein **abendliches Briefing**
 (wenige Ampel-Statuskarten mit je einer Empfehlung), keine Karten-Ebenen-Software.
 
@@ -56,6 +56,7 @@ statt Zuspitzung).
 ├─ assets/fonts/            Barlow (von build.sh geladen, nicht eingecheckt)
 └─ app/                     ← der Prototyp (siehe §4)
    ├─ index.html  package.json  tsconfig.json  vite.config.ts  README.md
+   ├─ server.mjs            Prod-Server: liefert dist/ + Bright-Sky-Proxy (npm run serve)
    ├─ data/demo-fields.geojson
    └─ src/
       ├─ main.ts            App-Hülle, Top-Bar, Routing (Übersicht/Felder)
@@ -71,8 +72,9 @@ statt Zuspitzung).
       │  ├─ wetbulb.ts      Feuchtkugel (Stull) + ΔT        (+ .test.ts)
       │  ├─ sprayWindow.ts  Spritzfenster-Ableitung          (+ .test.ts)
       │  ├─ waterBalance.ts ETc = ET0·Kc − Niederschlag      (+ .test.ts)
-      │  ├─ weather.ts      Wetterbewertung (DWD/abgeleitet)
+      │  ├─ weather.ts      Wetterbewertung (DWD/abgeleitet, Frost, alertsReachable)
       │  ├─ wmo.ts          WMO-Wettercode → Text/Schwere
+      │  ├─ grid.ts         gridCellKey: Snap auf ~2-km-Rasterzelle (Ehrlichkeits-Hinweis)
       │  └─ fields.ts       Zentroid, Fläche (turf), normalizeField
       ├─ onboarding/
       │  ├─ index.ts        Methoden-UI (m4), Dropzone, Review
@@ -154,8 +156,8 @@ einen Chip-Hintergrund in der Tint-Farbe und einen Statuspunkt (`.sdot`) in der 
   Ohne angelegte Felder wird auf Onboarding umgeleitet.
 - **State (`state.ts`):** zentraler Feld-Store mit pub/sub (`subscribe`).
   Persistenz im **localStorage**:
-  - `hopfenblick.fields.v1` → `FeatureCollection` der Schläge
-  - `hopfenblick.selected.v1` → ID des gewählten Schlags
+  - `doldenblick.fields.v1` → `FeatureCollection` der Schläge
+  - `doldenblick.selected.v1` → ID des gewählten Schlags
 - **Datenfluss Übersicht:**
   1. `getSelected()` → Schlag → `centroidLonLat()` (turf) = Abfrage-Standort.
   2. `fetchOpenMeteo(lat,lon)` + `fetchDwdAlerts(lat,lon)`.
@@ -187,9 +189,11 @@ einen Chip-Hintergrund in der Tint-Farbe und einen Statuspunkt (`.sdot`) in der 
 
 ### 5.2 DWD-Warnungen über Bright Sky — `api/brightSky.ts`
 - Echtes Ziel: `https://api.brightsky.dev/alerts?lat=..&lon=..`
-- Aufruf im Code über **Vite-Dev-Proxy**: `/api/brightsky/alerts?...`
-  (Konfig in `vite.config.ts`: rewrite `^/api/brightsky` → `''`, target brightsky).
-  → umgeht CORS im Dev; **nur** `npm run dev`. Prod bräuchte echten Proxy.
+- Aufruf im Code über Proxy: `/api/brightsky/alerts?...` (umgeht CORS, kein Key).
+  - **Dev:** Vite-Dev-Proxy (`vite.config.ts`: rewrite `^/api/brightsky` → `''`, target brightsky).
+  - **Prod:** `npm run serve` startet `app/server.mjs` — liefert `dist/` aus UND proxyt
+    `/api/brightsky` identisch. Serverlos genügt eine kleine Funktion am selben Pfad
+    (Cloudflare/Netlify/Vercel; Snippet in `app/README.md`).
 - Genutzte Felder je Alert: `event_de`, `headline_de`, `description_de`, `severity`
   (`minor|moderate|severe|extreme` → Rang 1–4 via `severityRank`).
 - Schlägt der Abruf fehl → `null` → Wetterkarte fällt auf abgeleitete Einschätzung zurück.
@@ -221,7 +225,9 @@ Tw = T·atan(0.151977·√(RH+8.313659))
    + 0.00391838·RH^1.5·atan(0.023101·RH) − 4.686035
 ```
 **ΔT (Feuchtkugeldepression) = T − Tw.** Referenz: T=20 °C, RH=50 % → Tw ≈ 13,7 °C.
-Gültig grob RH 5–99 %, T −20…50 °C, Meereshöhe. **Näherung** — bewusst grob gerundet.
+Gültig grob RH 5–99 %, T −20…50 °C, **Meereshöhe-Druck** (RMSE ~0,3 °C, Maximalfehler ~1 °C).
+Hallertau ~400–500 m → Druckeinfluss sub-°C, vernachlässigbar. **Näherung** — bewusst grob
+gerundet; mehrere Referenz-Stützpunkte über den Spritzbereich in `wetbulb.test.ts`.
 
 ### 6.2 Spritzfenster — `domain/sprayWindow.ts`
 Konstante `SPRAY` (dokumentiert, konservativ):
@@ -237,6 +243,11 @@ Konstante `SPRAY` (dokumentiert, konservativ):
 Eine Stunde ist „geeignet", wenn alle Bedingungen erfüllt sind (Tagstunde, Wind/Böen,
 `precip ≤ 0.1 mm`, Prob ≤ 30 %, ΔT in 2..8). Erstes zusammenhängendes Fenster ≥ 2 h
 wird gewählt. Status: **good** (Fenster ≤ 24 h), **warn** (erst später), **alert** (keins).
+- **Inversionsvorsicht:** liegt das Fenster in Dämmerungsstunden (≤ 8 / ≥ 19 Uhr) bei
+  Schwachwind (`< INVERSION_WIND_MAX = 4` km/h), wird `inversion=true` gesetzt und im Detail
+  vor möglicher Inversionslage/Abdrift gewarnt — als **Vorsicht, keine Sperre** (Bewölkung
+  fehlt in den Stundenwerten). Die Überschrift framt „Wetter geeignet" (Etikett & Auflagen
+  bleiben Sache des Anwenders), nicht „jetzt spritzen".
 
 ### 6.3 Wasserbilanz — `domain/waterBalance.ts`
 ```
@@ -245,15 +256,25 @@ Defizit = ETc − Σ Niederschlag(7 Tage)        (positiv = Wasserbedarf)
 ```
 - `KC_HOPS = 1.05` (mittsaisonal, pauschal; keine BBCH-Staffelung).
 - Schwellen `WB`: Defizit ≤ 5 → **good**; ≤ 20 → **warn**; > 20 → **alert** (mm/7 T).
+  **Heuristische Orientierungswerte** (nicht aus nutzbarer Feldkapazität abgeleitet).
 - **Klimatische** Bilanz, **kein Bodenmodell** (keine Speicherkapazität/Wurzeltiefe/Beregnung).
+- **UI zeigt Tendenz, keine Dosis:** Überschrift via `balanceLabel(status)`
+  (ausgeglichen / „Boden trocknet ab" / „Trockenstress wahrscheinlich") statt „Defizit X mm".
+  Die mm-Werte stehen nur klein in der Visualisierung („klim. Defizit ~X mm"), damit der
+  speicherfreie Index nicht als Beregnungsmenge gelesen wird.
 - Tagesindizes der letzten 7 Tage: `openMeteo.lastNDaysIndices(daily.time, 7, now)`.
 
 ### 6.4 Wetterbewertung — `domain/weather.ts` + `domain/wmo.ts`
 - Liegen **DWD-Alerts** vor: stärkster nach `severity` → Rang ≥ 3 ⇒ **alert**, sonst **warn**;
-  `warningSource='dwd'`.
-- Sonst aus Vorhersage abgeleitet (`warningSource='derived'`): Gewitter-Code ⇒ „Gewitter
-  möglich" (warn); schwerer Code oder Prob ≥ 70 % ⇒ „Wechselhaft" (warn); sonst „Ruhiges
-  Wetter" (good). UI kennzeichnet die Quelle (amtlich vs. abgeleitet).
+  `warningSource='dwd'`, `alertsReachable=true`.
+- Sonst aus Vorhersage abgeleitet (`warningSource='derived'`): **Frost zuerst** — Tiefstwert
+  (daily `temperature_2m_min`, nächste ~2 Tage) ≤ 0 °C ⇒ „Frostgefahr heute Nacht" (**alert**),
+  ≤ 2 °C ⇒ „Bodenfrost möglich" (**warn**); Schwellen `FROST = {ALERT_MAX:0, WARN_MAX:2}` (°C).
+  Danach Gewitter-Code ⇒ „Gewitter möglich" (warn); schwerer Code oder Prob ≥ 70 % ⇒
+  „Wechselhaft" (warn); sonst „Ruhiges Wetter" (good).
+- **`alertsReachable`** trennt `null` (Abruf fehlgeschlagen → UI: „amtliche Warnungen nicht
+  abrufbar") von `[]` (erreichbar, keine aktive Warnung). Die Wetterkarte trägt zusätzlich den
+  Standardhinweis „kein Echtzeit-Alarm — Frost/Hagel/Sturm: DWD-WarnWetterApp".
 - `wmo()` mappt WMO-Codes → deutscher Text + Flags `severe`/`thunder`.
 
 ### 6.5 Feld-Helfer — `domain/fields.ts`
@@ -277,10 +298,15 @@ Empfohlener Weg laut Report: **iBALIS-Export hochladen** — eigene Feldstücke 
 - **Review**: Tabelle zum Prüfen/Anpassen von Name/Sorte/Fläche; berechnete Fläche
   („aus Geometrie") als Kontrolle; Karten-Vorschau mit DOP-Luftbild.
 - **Übernehmen** → `setFields()` → localStorage → Übersicht.
+- **Plausibilitätsprüfung** nach Import (`assertPlausibleBavaria` / `isInBavaria`): Schwerpunkt
+  jeder Fläche muss in einer großzügigen Bayern-Bounding-Box liegen, sonst klarer Fehler
+  („Koordinaten konnten nicht nach WGS84 umgerechnet werden") — fängt fehlende/zerbrochene
+  `.prj` (Koordinaten blieben in UTM32-Metern) ab, statt Geometrie „im Ozean" zu zeigen.
 - „Auf der Karte antippen" (InVeKoS-WFS) und „Manuell zeichnen/GPS" sind als
   **„kommt noch"** markiert (siehe `TODO.md`).
 
-Hinweis: DBF-Encoding (Umlaute, cp1252/.cpg) ist noch nicht robust gehärtet (TODO).
+Hinweis: DBF-Encoding (Umlaute, cp1252/.cpg) ist noch nicht robust gehärtet (TODO; betrifft
+nur Attribut-Texte/Namen, im Review korrigierbar — nicht die Geometrie).
 
 ---
 
@@ -353,11 +379,23 @@ Voraussetzungen: `wkhtmltopdf`, `python3` mit `pymupdf`+`pillow`, `fontconfig`, 
 
 ## 12. Bewusste Vereinfachungen & Grenzen
 
-- Wasserbilanz ist **klimatisch**, kein Bodenmodell; Kc fix 1.05.
-- ΔT/Spritzfenster: Näherung + konservative Schwellen, keine Beratung.
-- Open-Meteo löst um Au grob auf → benachbarte Schläge liefern sehr ähnliche
-  Wetterwerte (Feldauswahl v. a. für Verortung & künftige feldspezifische Daten).
-- Bright-Sky-Proxy nur im Dev-Server (Prod-Proxy fehlt).
-- Bundle nicht code-gesplittet; DBF-Encoding nicht gehärtet; nur Polygone importierbar.
+- Wasserbilanz ist **klimatisch**, kein Bodenmodell; Kc fix 1.05. UI zeigt **Tendenz**
+  (`balanceLabel`), nicht „Defizit X mm" als Dosis; Schwellen 5/20 sind Heuristik.
+- ΔT/Spritzfenster: Näherung + konservative Schwellen, keine Beratung. Überschrift framt
+  „Wetter geeignet"; bei Schwachwind-Frühfenster **Inversionsvorsicht** (Abdrift), als
+  Hinweis, keine Sperre (Bewölkung fehlt in den Stundenwerten).
+- Wetter (abgeleitet) erkennt jetzt **Nachtfrost** aus dem Tagestiefstwert; amtliche
+  Warnungen via Bright Sky bleiben Vorrang, `alertsReachable` trennt „nicht abrufbar" von
+  „keine Warnung". **Kein Echtzeit-Alarm** — Karte verweist auf die DWD-WarnWetterApp.
+- Open-Meteo löst um Au grob auf (~2 km) → benachbarte Schläge derselben Rasterzelle liefern
+  sehr ähnliche Werte. Die Übersicht **kennzeichnet das on-screen** (`gridCellKey`-Hinweis);
+  Feldauswahl dient Verortung & künftigen feldspezifischen Daten.
+- Bright-Sky-Proxy: Dev via Vite, **Prod via `server.mjs`** (`npm run serve`) — die eigentliche
+  Bereitstellung/Hosting bleibt extern.
+- Whole-Farm-Tageskopf „N Hinweise für morgen" aggregiert über **distinkte Rasterzellen**
+  (ein Abruf je Zelle); per-Schlag-Detail in der Unterzeile.
+- Bundle nicht code-gesplittet; DBF-Encoding nicht gehärtet (nur Namen, im Review korrigierbar);
+  nur Polygone importierbar; nach Import **Bayern-Plausibilitätsprüfung**.
 - Demo-Geometrien sind fiktiv (rechteckig) und ersetzen später den echten Import.
-- Platzhalter-Karten (Peronospora, Feld-Check/Satellit, Wachstum) noch ohne Live-Daten.
+- Karten Peronospora, Feld-Check/Satellit, Wachstum noch ohne Live-Daten — jetzt als
+  **Roadmap-Streifen** unter den Live-Karten (nicht mehr als leere Kacheln im Raster).

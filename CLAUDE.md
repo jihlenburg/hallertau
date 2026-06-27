@@ -1,4 +1,4 @@
-# HopfenBlick — Projektleitfaden für Claude Code
+# DoldenBlick — Projektleitfaden für Claude Code
 
 ## Was ist das
 Konzeptstudie und gestaltete Mockups für ein webbasiertes Feld-Dashboard für

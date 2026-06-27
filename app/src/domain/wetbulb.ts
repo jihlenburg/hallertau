@@ -6,6 +6,14 @@
  * Wichtig: Das ist eine NÄHERUNG. Wir runden bewusst grob und framen die
  * Ableitung als Orientierung, nicht als exakte Messung.
  *
+ * Gültigkeits-Annahme: Die Formel ist auf **Meereshöhe-Druck** kalibriert
+ * (RMSE ~0,3 °C, Maximalfehler ~1 °C über RH 5–99 %, T −20…50 °C). Die
+ * Hallertau liegt bei ~400–500 m; der daraus folgende Druckeinfluss auf Tw ist
+ * klein (sub-°C) und für die grobe ΔT-Orientierung vernachlässigbar. Nahe der
+ * Spritzfenster-Grenzen (ΔT 2 bzw. 8 °C) kann ein Fehler dieser Größenordnung
+ * eine einzelne Stunde kippen — das geforderte 2-h-Fenster (siehe sprayWindow)
+ * glättet solche Einzelausreißer. Referenz-Stützpunkte: siehe wetbulb.test.ts.
+ *
  * @param tC  Lufttemperatur in °C
  * @param rh  relative Feuchte in % (0–100)
  * @returns   Feuchtkugeltemperatur in °C

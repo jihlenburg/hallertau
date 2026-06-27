@@ -1,12 +1,12 @@
-# HopfenBlick — Konzeptbericht (Markdown-Fassung)
+# DoldenBlick — Konzeptbericht (Markdown-Fassung)
 
 > Vollständige Textfassung des Konzeptberichts aus `report/report.html` (Quelle der
-> gerenderten PDF `deliverables/HopfenBlick_Report.pdf`). Diese Datei dient als leicht
+> gerenderten PDF `deliverables/DoldenBlick_Report.pdf`). Diese Datei dient als leicht
 > durchsuchbare Referenz; **maßgeblich** bleibt `report/report.html`. Bei inhaltlichen
 > Änderungen dort bitte hier mitziehen. Abbildungen sind als Verweise notiert.
 
 **Konzeptstudie · Juni 2026**
-**HopfenBlick — Abendlicher Feld-Check für die Hallertau**
+**DoldenBlick — Abendlicher Feld-Check für die Hallertau**
 **Webbasiertes Feld-Dashboard für den Hopfenbau in der Hallertau**
 
 Wie sich offene Satelliten-, Wetter- und Geodaten zu einem täglichen Feld-Check
@@ -37,7 +37,9 @@ Die Studie fasst drei Bausteine zusammen: (1) welche Datenebenen aus Google Eart
 Engine (GEE) bzw. Satellitendaten im Hopfenbau sinnvoll sind – und wo ihre Grenzen
 liegen; (2) den Aufbau des Abend-Dashboards mit sechs Entscheidungskarten; (3) einen
 Stapel offener Datenquellen (Open-Meteo, DWD über Bright Sky, LfL Bayern, Sentinel,
-bayerische Geobasisdaten), der den Betrieb ohne teure Lizenzen versorgt.
+bayerische Geobasisdaten), der den Betrieb ohne teure Lizenzen versorgt – kommerziell
+über Open-Meteos günstige Bezahlstufe (~30–100 €/Monat) bzw. Selbst-Hosting, DWD- und
+Geobasisdaten frei mit Namensnennung, die LfL-Weiterverbreitung vorab abzustimmen.
 
 > **KERNEMPFEHLUNG**
 > Vorhandene, lokal anerkannte Dienste bündeln statt sie nachzubauen: Der
@@ -78,11 +80,12 @@ Für Düngung, Pflanzenschutz und Bewässerung gelten u. a.:
   schneebedeckten Böden, Dokumentation (Düngebedarfsermittlung).
 - **Gewässerschutz:** Mindestabstände zu Gewässern (u. a. 3-m-Streifen nach
   GAP-Konditionalität), Bodenbedeckung (GLÖZ), Auflagen in Wasserschutzgebieten.
-- **Aktuelle Rechtslage „rote Gebiete":** Das Bundesverwaltungsgericht hat am
-  24.10.2025 die bayerische Ausführungsverordnung (AVDüV) für unwirksam erklärt; die
-  verschärften Vorgaben in den ausgewiesenen Nitrat-Gebieten sind damit in Bayern
-  derzeit ausgesetzt. Eine bundesrechtliche Neuregelung steht aus – die Lage ist im
-  Fluss und sollte beobachtet werden.
+- **Aktuelle Rechtslage „rote Gebiete" (Stand 24.10.2025):** Das Bundesverwaltungsgericht
+  hat am 24.10.2025 **§ 1 i.V.m. Anlagen 1 und 3** der bayerischen Ausführungsverordnung
+  (AVDüV) – die Ausweisung der roten/gelben Gebiete – für unwirksam erklärt
+  (BVerwG, Urt. v. 24.10.2025, Az. 10 CN 1.25 u.a.); die verschärften Vorgaben in den
+  ausgewiesenen Nitrat-Gebieten sind damit in Bayern derzeit ausgesetzt. Eine
+  bundesrechtliche Neuregelung steht aus – die Lage ist im Fluss und sollte beobachtet werden.
 - **Bewässerung:** Wasserentnahmen sind genehmigungspflichtig; verfügbare Mengen hängen
   von der wasserrechtlichen Erlaubnis ab.
 - **Integrierter Pflanzenschutz (IPS):** gesetzlich vorgegeben – ein Argument für
@@ -340,7 +343,7 @@ robuster gegen Ausfälle und Änderungen einzelner Dienste.
 > **ZU DEN MOCKUPS**
 > Die abgebildeten Ansichten sind gestaltete Konzept-Entwürfe mit Beispielwerten
 > (fiktiver Betrieb „Familie Huber", Au i.d.Hallertau). Sie zeigen Aufbau und
-> Bedienlogik, nicht echte Messdaten. Produktname „HopfenBlick" und Gestaltung dienen
+> Bedienlogik, nicht echte Messdaten. Produktname „DoldenBlick" und Gestaltung dienen
 > ausschließlich der Veranschaulichung.
 
 ---
@@ -348,7 +351,7 @@ robuster gegen Ausfälle und Änderungen einzelner Dienste.
 ## Anhang B · Design-/Farbschema des Berichts
 
 Aus dem `<style>`-Block von `report/report.html` (deckt sich weitgehend mit den globalen
-HopfenBlick-Tokens in `REFERENCE.md` §3):
+DoldenBlick-Tokens in `REFERENCE.md` §3):
 
 **Typografie**
 - Fließtext: `Barlow`, 10,5 pt, Zeilenhöhe 1,5, Textfarbe `#1d2a22`.
@@ -376,4 +379,4 @@ HopfenBlick-Tokens in `REFERENCE.md` §3):
 - Abbildungen: Bild mit feinem Rahmen + kursive Caption (fett-grünes Stichwort).
 - Tabellen (`.dt`): grün getönter Kopf, erste Spalte (`.k`) fett in `#234f37`.
 - Render-Pipeline: `report/report.html` → wkhtmltopdf → Seitenzahlen via
-  `scripts/stamp_pages.py` (PyMuPDF) → `deliverables/HopfenBlick_Report.pdf`.
+  `scripts/stamp_pages.py` (PyMuPDF) → `deliverables/DoldenBlick_Report.pdf`.
