@@ -12,3 +12,9 @@ deliverables/_report_raw.pdf
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets — niemals einchecken (echte Zugangsdaten)
+.env
+.env.local
+secrets/
+!.env.example

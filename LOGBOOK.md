@@ -5,6 +5,35 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-27 · .env-Format korrigiert & Secrets vor Git geschützt
+**Was:** `.env` aufgeräumt und abgesichert.
+- **Format:** Der Earth-Engine-Dienstkonto-Schlüssel lag als **mehrzeiliges, nicht
+  quotiertes JSON** direkt in `.env` — bricht zeilenorientierte Parser
+  (python-dotenv, Node `dotenv`, `source`). JSON ausgelagert nach
+  `secrets/ee-service-account.json`; `.env` referenziert es über die
+  Standardvariable `GOOGLE_APPLICATION_CREDENTIALS` (Google-Clientlibs lesen sie nativ).
+- **Schutz:** `.env` war **nicht** in `.gitignore` und untracked — ein `git add .`
+  hätte echte Zugangsdaten committed. `.gitignore` um `.env`, `.env.local`,
+  `secrets/` und `!.env.example` ergänzt.
+- **Schema-Doku:** `.env.example` mit leeren Platzhaltern angelegt (eincheckbar).
+- OpenWeatherMap- und Hetzner-Key bleiben als einzeilige `KEY=value` in `.env`
+  (kein Auslagern nötig — einfache String-Tokens; Auslagern war nur ein
+  Format-Fix für das JSON-Blob, kein Sicherheitsgewinn).
+
+**Warum:** Mehrzeiliges JSON ist im `.env`-Format unparsbar; ungetrackte echte
+Secrets sind ein Leak-Risiko.
+
+**Verifikation:** `git check-ignore` bestätigt `.env`/`secrets/` ignoriert,
+`.env.example` trackbar; `git status` zeigt keine Secrets mehr. JSON valide
+(`json.load` ok), `.env` parst zu 4 sauberen Keys (zuvor gebrochen).
+
+**Offen (Nutzer):** Zugangsdaten **rotieren**, falls die alte `.env` je geteilt/
+gepusht wurde (GCP-Key, OpenWeatherMap, Hetzner). Im Repo-Verlauf war sie nie.
+
+**Verweise:** Noch nicht committed (wartet auf Freigabe).
+
+---
+
 ## 2026-06-27 · Referenzdateien REFERENCE.md & REPORT.md
 **Was:** `REFERENCE.md` (Single Source of Truth: Design-Tokens inkl. Farb-/Status-
 Paletten, Typografie, App-Architektur, API-Endpunkte mit Parametern, Domänen-Formeln,
