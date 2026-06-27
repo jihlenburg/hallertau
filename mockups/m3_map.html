@@ -1,0 +1,224 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1600px;height:1040px;background:#f4f6f3;font-family:'Barlow',sans-serif;color:#182a20;-webkit-font-smoothing:antialiased}
+.stage{position:relative;width:1600px;height:1040px;overflow:hidden}
+.bar{position:absolute;left:0;top:0;width:1600px;height:88px;background:-webkit-linear-gradient(left,#1c3f2c,#2f6b4a);background:linear-gradient(90deg,#1c3f2c,#2f6b4a)}
+.wm{position:absolute;left:86px;top:26px;color:#fff;font-weight:700;font-size:30px;letter-spacing:.4px}
+.wm small{font-weight:500;color:#bcd6c6}
+.seg{position:absolute;left:560px;top:24px;height:40px;background:rgba(255,255,255,.12);border-radius:21px;padding:4px}
+.seg span{display:inline-block;height:32px;line-height:32px;padding:0 22px;border-radius:18px;font-weight:600;font-size:18px;color:#d4e6da}
+.seg span.act{background:#fff;color:#234f37}
+.tag-loc{position:absolute;right:200px;top:31px;width:420px;text-align:right;color:#d9e7df;font-size:20px;font-weight:500}
+.avatar{position:absolute;right:38px;top:22px;width:44px;height:44px;border-radius:50%;background:#e3b24e;color:#234f37;font-weight:700;font-size:19px;text-align:center;line-height:44px}
+/* left panel */
+.panel{position:absolute;left:24px;top:112px;width:340px;height:904px;background:#fff;border-radius:18px;-webkit-box-shadow:0 7px 20px rgba(24,42,32,.10);box-shadow:0 7px 20px rgba(24,42,32,.10)}
+.ptitle{position:absolute;left:48px;top:136px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:25px}
+.psub{position:absolute;left:48px;top:172px;color:#6b7d72;font-size:15px;font-weight:500}
+.ln{position:absolute;left:48px;width:268px;height:1px;background:#e9ede8}
+.lname{position:absolute;left:92px;font-weight:600;font-size:18px}
+.lsrc{position:absolute;left:92px;color:#93a399;font-size:13px;font-weight:500}
+.sw{position:absolute;left:296px;width:46px;height:26px;border-radius:13px}
+.sw.on{background:#2e9e63}.sw.off{background:#d4dbd5}
+.knob{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;-webkit-box-shadow:0 1px 2px rgba(0,0,0,.2);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw.on .knob{left:23px}.sw.off .knob{left:3px}
+.legt{position:absolute;left:48px;font-family:'Barlow Semi Condensed';font-weight:600;font-size:14px;letter-spacing:1px;text-transform:uppercase;color:#6b7d72}
+/* map */
+.map{position:absolute;left:388px;top:112px;width:1188px;height:904px;border-radius:18px;overflow:hidden;-webkit-box-shadow:0 7px 20px rgba(24,42,32,.10);box-shadow:0 7px 20px rgba(24,42,32,.10)}
+.mtitle{position:absolute;left:408px;top:132px;height:38px;line-height:38px;padding:0 16px;background:rgba(255,255,255,.92);border-radius:19px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:17px;color:#234f37}
+.mtitle .d{display:inline-block;width:10px;height:10px;border-radius:50%;background:#2f6fb0;margin-right:8px;vertical-align:middle}
+/* popup */
+.pop{position:absolute;width:340px;background:#fff;border-radius:16px;-webkit-box-shadow:0 14px 34px rgba(24,42,32,.22);box-shadow:0 14px 34px rgba(24,42,32,.22);overflow:hidden}
+.pop .hd{position:relative;height:8px;background:#d9962a}
+.pop .bd{padding:16px 18px 16px}
+.pop h3{font-family:'Barlow Semi Condensed';font-weight:700;font-size:23px;margin-bottom:2px}
+.pop .meta{color:#6b7d72;font-size:14px;margin-bottom:12px}
+.pop .vit{font-size:16px;font-weight:600;color:#a9701a;margin-bottom:10px}
+.pop .vit .d{display:inline-block;width:11px;height:11px;border-radius:50%;background:#d9962a;margin-right:7px;vertical-align:middle}
+.pop .ts{color:#93a399;font-size:13px;margin-top:8px}
+.pop .rec{margin-top:12px;background:#f9efd9;border-radius:10px;padding:8px 12px;color:#9a6a14;font-size:14.5px;font-weight:600}
+/* scrubber */
+.scrub{position:absolute;height:54px;background:rgba(255,255,255,.95);border-radius:27px;-webkit-box-shadow:0 8px 22px rgba(24,42,32,.16);box-shadow:0 8px 22px rgba(24,42,32,.16)}
+.play{position:absolute;left:8px;top:8px;width:38px;height:38px;border-radius:50%;background:#2f6b4a}
+.attrib{position:absolute;height:26px;line-height:26px;padding:0 12px;background:rgba(255,255,255,.86);border-radius:13px;color:#5d6f64;font-size:12.5px}
+.scale{position:absolute;color:#3c5147;font-size:12px;font-weight:600}
+</style></head><body><div class="stage">
+
+<!-- top bar -->
+<div class="bar">
+  <svg style="position:absolute;left:38px;top:22px" width="38" height="44" viewBox="0 0 40 46"><g fill="#e3b24e"><path d="M20 2 C9 8 7 18 9 27 C11 36 16 42 20 44 C24 42 29 36 31 27 C33 18 31 8 20 2 Z"/></g><g stroke="#234f37" stroke-width="1.6" opacity="0.8" fill="none"><path d="M11 16 H29 M10 23 H30 M11 30 H29 M14 37 H26"/><path d="M20 4 V44"/></g></svg>
+  <div class="wm">Hopfen<small>Blick</small></div>
+  <div class="seg"><span>Übersicht</span><span class="act">Karte</span><span>Felder</span></div>
+  <div class="tag-loc">Mittwoch · 12. Aug 2026 · 20:00 Uhr</div>
+  <div class="avatar">FH</div>
+</div>
+
+<!-- left panel -->
+<div class="panel"></div>
+<div class="ptitle">Kartenebenen</div>
+<div class="psub">Au i.d.Hallertau · 6 Schläge · 18,4 ha</div>
+<div class="ln" style="top:200px"></div>
+
+<!-- rows -->
+<!-- r1 -->
+<div style="position:absolute;left:48px;top:218px;width:30px;height:30px;border-radius:7px;background:#e7efe6;border:1px solid #cdd9cd"></div>
+<div class="lname" style="top:218px">Basiskarte</div><div class="lsrc" style="top:242px">OpenMapTiles</div>
+<div class="sw on" style="top:220px"><div class="knob"></div></div>
+<!-- r2 -->
+<div style="position:absolute;left:48px;top:290px;width:30px;height:30px;border-radius:7px;background:#cfe6d6;border:1.5px solid #9cc4ab"></div>
+<div class="lname" style="top:290px">Parzellen / Schläge</div><div class="lsrc" style="top:314px">ALKIS · iBALIS-Feldstücke</div>
+<div class="sw on" style="top:292px"><div class="knob"></div></div>
+<!-- r3 -->
+<div style="position:absolute;left:48px;top:362px;width:30px;height:30px;border-radius:7px;background:-webkit-linear-gradient(top,#cbb89a,#8a6a4f);background:linear-gradient(180deg,#cbb89a,#8a6a4f)"></div>
+<div class="lname" style="top:362px">Geländerelief</div><div class="lsrc" style="top:386px">DGM1 (1 m) · LDBV Bayern</div>
+<div class="sw off" style="top:364px"><div class="knob"></div></div>
+<!-- r4 -->
+<div style="position:absolute;left:48px;top:434px;width:30px;height:30px;border-radius:7px;background:-webkit-linear-gradient(top,#9ec0e6,#2f6fb0);background:linear-gradient(180deg,#9ec0e6,#2f6fb0)"></div>
+<div class="lname" style="top:434px">Niederschlagsradar</div><div class="lsrc" style="top:458px">DWD RADOLAN · Bright Sky</div>
+<div class="sw on" style="top:436px"><div class="knob"></div></div>
+<!-- r5 -->
+<div style="position:absolute;left:48px;top:506px;width:30px;height:30px;border-radius:7px;background:-webkit-linear-gradient(left,#cf4f3c,#e3b24e,#2e9e63);background:linear-gradient(90deg,#cf4f3c,#e3b24e,#2e9e63)"></div>
+<div class="lname" style="top:506px">Satellit-Vitalität</div><div class="lsrc" style="top:530px">Copernicus / Sentinel-2</div>
+<div class="sw on" style="top:508px"><div class="knob"></div></div>
+<!-- r6 -->
+<div style="position:absolute;left:48px;top:578px;width:30px;height:30px;border-radius:7px;background:#dbe8f4;border:1.5px dashed #2f6fb0"></div>
+<div class="lname" style="top:578px">Schutzgebiete</div><div class="lsrc" style="top:602px">Wasserschutz · LfU Bayern</div>
+<div class="sw on" style="top:580px"><div class="knob"></div></div>
+
+<div class="ln" style="top:656px"></div>
+<!-- legend vitality -->
+<div class="legt" style="top:676px">Vitalität (Sentinel-2)</div>
+<svg style="position:absolute;left:48px;top:700px" width="268" height="34" viewBox="0 0 268 34">
+  <defs><linearGradient id="vit" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#cf4f3c"/><stop offset="0.5" stop-color="#e3b24e"/><stop offset="1" stop-color="#2e9e63"/></linearGradient></defs>
+  <rect x="0" y="0" width="268" height="12" rx="6" fill="url(#vit)"/>
+  <text x="0" y="28" font-family="Barlow" font-size="12" fill="#93a399">schwächer</text>
+  <text x="214" y="28" font-family="Barlow" font-size="12" fill="#93a399">vitaler</text>
+</svg>
+<!-- legend radar -->
+<div class="legt" style="top:752px">Niederschlag (RADOLAN)</div>
+<svg style="position:absolute;left:48px;top:776px" width="268" height="34" viewBox="0 0 268 34">
+  <g><rect x="0" y="0" width="52" height="12" fill="#d7e7f4"/><rect x="52" y="0" width="52" height="12" fill="#9ecae9"/><rect x="104" y="0" width="52" height="12" fill="#5a9bd4"/><rect x="156" y="0" width="52" height="12" fill="#2f6fb0"/><rect x="208" y="0" width="52" height="12" fill="#1f4e87"/></g>
+  <text x="0" y="28" font-family="Barlow" font-size="12" fill="#93a399">leicht</text>
+  <text x="226" y="28" font-family="Barlow" font-size="12" fill="#93a399">stark</text>
+</svg>
+<div style="position:absolute;left:48px;top:838px;width:268px;color:#9aa9a0;font-size:13px;line-height:1.4">Alle Ebenen aus offenen Datenquellen – frei kombinierbar.</div>
+
+<!-- ===== MAP ===== -->
+<div class="map">
+  <svg width="1188" height="904" viewBox="0 0 1188 904">
+    <defs>
+      <radialGradient id="radar" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1f4e87" stop-opacity="0.5"/><stop offset="45%" stop-color="#2f6fb0" stop-opacity="0.33"/><stop offset="100%" stop-color="#2f6fb0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="radar2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#5a9bd4" stop-opacity="0.34"/><stop offset="100%" stop-color="#5a9bd4" stop-opacity="0"/></radialGradient>
+      <pattern id="wsz" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="9" stroke="#2f6fb0" stroke-width="1.5" opacity="0.45"/></pattern>
+    </defs>
+    <rect x="0" y="0" width="1188" height="904" fill="#e8efe6"/>
+    <!-- field texture blocks -->
+    <g opacity="0.6">
+      <path d="M0 0 H420 V210 Q220 250 0 200 Z" fill="#e2ebdf"/>
+      <path d="M760 0 H1188 V260 Q980 230 800 280 Q770 130 760 0Z" fill="#e1eade"/>
+      <path d="M0 560 Q230 520 360 600 L300 904 H0Z" fill="#e3ece0"/>
+      <path d="M820 620 Q1010 580 1188 640 V904 H880 Z" fill="#e1eade"/>
+    </g>
+    <!-- woodland -->
+    <path d="M40 70 q70 -34 150 -6 q40 70 -16 120 q-96 36 -150 -18 q-30 -66 16 -96z" fill="#d4e2d1"/>
+    <path d="M980 690 q80 -16 140 26 q24 76 -40 110 q-86 16 -120 -40 q-12 -70 20 -96z" fill="#d4e2d1"/>
+    <!-- river -->
+    <path d="M-10 300 C160 350 240 470 470 480 S840 560 1010 520 S1200 470 1210 470" fill="none" stroke="#cfe0ef" stroke-width="16" stroke-linecap="round"/>
+    <path d="M-10 300 C160 350 240 470 470 480 S840 560 1010 520 S1200 470 1210 470" fill="none" stroke="#bcd5ea" stroke-width="4"/>
+    <!-- roads -->
+    <path d="M120 904 C230 720 210 470 250 150 C260 80 300 40 360 0" fill="none" stroke="#ffffff" stroke-width="8"/>
+    <path d="M120 904 C230 720 210 470 250 150 C260 80 300 40 360 0" fill="none" stroke="#e7d9b8" stroke-width="2.4"/>
+    <path d="M250 470 H1140" fill="none" stroke="#ffffff" stroke-width="7"/>
+    <path d="M250 470 H1140" fill="none" stroke="#e7d9b8" stroke-width="2"/>
+    <path d="M620 0 C600 200 660 330 700 520 C730 680 700 800 760 904" fill="none" stroke="#ffffff" stroke-width="6"/>
+    <path d="M620 0 C600 200 660 330 700 520 C730 680 700 800 760 904" fill="none" stroke="#e7d9b8" stroke-width="1.8"/>
+
+    <!-- water protection zone (hatched) over lower-left parcels -->
+    <path d="M150 600 q120 -26 210 18 q40 96 -34 150 q-118 30 -170 -40 q-40 -88 -6 -128z" fill="url(#wsz)" stroke="#2f6fb0" stroke-width="1.6" stroke-dasharray="7 5" opacity="0.9"/>
+
+    <!-- ====== PARCELS ====== -->
+    <!-- helper visual: rounded rect + vertical trellis rows -->
+    <!-- group A (top-left) green -->
+    <g><rect x="300" y="120" width="120" height="78" rx="8" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.6"/>
+      <g stroke="#2f6b4a" stroke-width="1.6" opacity="0.5"><line x1="312" y1="130" x2="312" y2="188"/><line x1="326" y1="130" x2="326" y2="188"/><line x1="340" y1="130" x2="340" y2="188"/><line x1="354" y1="130" x2="354" y2="188"/><line x1="368" y1="130" x2="368" y2="188"/><line x1="382" y1="130" x2="382" y2="188"/><line x1="396" y1="130" x2="396" y2="188"/><line x1="410" y1="130" x2="410" y2="188"/></g></g>
+    <g><rect x="440" y="150" width="96" height="66" rx="8" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.6"/>
+      <g stroke="#2f6b4a" stroke-width="1.6" opacity="0.5"><line x1="452" y1="160" x2="452" y2="206"/><line x1="466" y1="160" x2="466" y2="206"/><line x1="480" y1="160" x2="480" y2="206"/><line x1="494" y1="160" x2="494" y2="206"/><line x1="508" y1="160" x2="508" y2="206"/><line x1="522" y1="160" x2="522" y2="206"/></g></g>
+    <!-- mild stress parcel (yellower) -->
+    <g><rect x="300" y="220" width="104" height="64" rx="8" fill="#e6e7bf" stroke="#c9c489" stroke-width="1.6"/>
+      <g stroke="#9aa05a" stroke-width="1.6" opacity="0.55"><line x1="312" y1="230" x2="312" y2="274"/><line x1="326" y1="230" x2="326" y2="274"/><line x1="340" y1="230" x2="340" y2="274"/><line x1="354" y1="230" x2="354" y2="274"/><line x1="368" y1="230" x2="368" y2="274"/><line x1="382" y1="230" x2="382" y2="274"/><line x1="396" y1="230" x2="396" y2="274"/></g></g>
+    <!-- lower-left parcels inside WSZ -->
+    <g><rect x="190" y="640" width="110" height="70" rx="8" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.6"/>
+      <g stroke="#2f6b4a" stroke-width="1.6" opacity="0.5"><line x1="202" y1="650" x2="202" y2="700"/><line x1="216" y1="650" x2="216" y2="700"/><line x1="230" y1="650" x2="230" y2="700"/><line x1="244" y1="650" x2="244" y2="700"/><line x1="258" y1="650" x2="258" y2="700"/><line x1="272" y1="650" x2="272" y2="700"/><line x1="286" y1="650" x2="286" y2="700"/></g></g>
+    <g><rect x="240" y="600" width="92" height="50" rx="8" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.6"/>
+      <g stroke="#2f6b4a" stroke-width="1.6" opacity="0.5"><line x1="252" y1="608" x2="252" y2="642"/><line x1="266" y1="608" x2="266" y2="642"/><line x1="280" y1="608" x2="280" y2="642"/><line x1="294" y1="608" x2="294" y2="642"/><line x1="308" y1="608" x2="308" y2="642"/><line x1="322" y1="608" x2="322" y2="642"/></g></g>
+    <!-- right cluster -->
+    <g><rect x="860" y="300" width="120" height="80" rx="8" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.6"/>
+      <g stroke="#2f6b4a" stroke-width="1.6" opacity="0.5"><line x1="872" y1="310" x2="872" y2="370"/><line x1="886" y1="310" x2="886" y2="370"/><line x1="900" y1="310" x2="900" y2="370"/><line x1="914" y1="310" x2="914" y2="370"/><line x1="928" y1="310" x2="928" y2="370"/><line x1="942" y1="310" x2="942" y2="370"/><line x1="956" y1="310" x2="956" y2="370"/><line x1="970" y1="310" x2="970" y2="370"/></g></g>
+    <g><rect x="1000" y="340" width="92" height="62" rx="8" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.6"/>
+      <g stroke="#2f6b4a" stroke-width="1.6" opacity="0.5"><line x1="1012" y1="350" x2="1012" y2="394"/><line x1="1026" y1="350" x2="1026" y2="394"/><line x1="1040" y1="350" x2="1040" y2="394"/><line x1="1054" y1="350" x2="1054" y2="394"/><line x1="1068" y1="350" x2="1068" y2="394"/><line x1="1082" y1="350" x2="1082" y2="394"/></g></g>
+
+    <!-- ===== SELECTED PARCEL: Attenhofen West ===== -->
+    <g>
+      <rect x="560" y="560" width="150" height="96" rx="9" fill="#f3e3bd" stroke="#d9962a" stroke-width="3.2"/>
+      <!-- anomaly sub-patch -->
+      <path d="M612 590 q34 -8 58 14 q10 32 -20 46 q-40 8 -52 -22 q-6 -28 14 -38z" fill="#d98b6a" opacity="0.5"/>
+      <g stroke="#b07f1f" stroke-width="1.6" opacity="0.55"><line x1="572" y1="572" x2="572" y2="644"/><line x1="586" y1="572" x2="586" y2="644"/><line x1="600" y1="572" x2="600" y2="644"/><line x1="614" y1="572" x2="614" y2="644"/><line x1="628" y1="572" x2="628" y2="644"/><line x1="642" y1="572" x2="642" y2="644"/><line x1="656" y1="572" x2="656" y2="644"/><line x1="670" y1="572" x2="670" y2="644"/><line x1="684" y1="572" x2="684" y2="644"/><line x1="698" y1="572" x2="698" y2="644"/></g>
+    </g>
+
+    <!-- radar overlay top-right -->
+    <ellipse cx="930" cy="150" rx="230" ry="150" fill="url(#radar)"/>
+    <ellipse cx="1020" cy="120" rx="120" ry="80" fill="url(#radar2)"/>
+
+    <!-- village markers -->
+    <g><rect x="300" y="455" width="9" height="9" fill="#b7c2ba"/><rect x="312" y="452" width="11" height="12" fill="#aab6ad"/><rect x="326" y="456" width="8" height="8" fill="#b7c2ba"/>
+      <text x="300" y="446" font-family="Barlow" font-size="15" font-weight="600" fill="#43544a">Au i.d.Hallertau</text></g>
+    <g><rect x="700" y="690" width="9" height="9" fill="#b7c2ba"/><rect x="712" y="687" width="11" height="12" fill="#aab6ad"/>
+      <text x="700" y="681" font-family="Barlow" font-size="14" font-weight="600" fill="#43544a">Attenhofen</text></g>
+    <g><rect x="980" y="455" width="9" height="9" fill="#b7c2ba"/><rect x="992" y="452" width="10" height="12" fill="#aab6ad"/>
+      <text x="980" y="446" font-family="Barlow" font-size="14" font-weight="600" fill="#43544a">Rudelzhausen</text></g>
+  </svg>
+
+  <!-- map title chip -->
+  <div class="mtitle"><span class="d"></span>Niederschlagsradar · live 20:00 Uhr</div>
+  <!-- north arrow -->
+  <svg style="position:absolute;right:24px;top:22px" width="34" height="46" viewBox="0 0 34 46"><circle cx="17" cy="24" r="16" fill="rgba(255,255,255,.85)"/><path d="M17 8 L23 26 L17 21 L11 26 Z" fill="#cf4f3c"/><text x="13" y="42" font-family="Barlow" font-size="12" font-weight="700" fill="#3c5147">N</text></svg>
+  <!-- scale bar -->
+  <div class="scale" style="left:24px;bottom:22px">
+    <svg width="130" height="20" viewBox="0 0 130 20"><line x1="2" y1="12" x2="122" y2="12" stroke="#3c5147" stroke-width="2"/><line x1="2" y1="7" x2="2" y2="17" stroke="#3c5147" stroke-width="2"/><line x1="62" y1="8" x2="62" y2="16" stroke="#3c5147" stroke-width="2"/><line x1="122" y1="7" x2="122" y2="17" stroke="#3c5147" stroke-width="2"/></svg>
+    <div style="margin-top:-2px">0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;250&nbsp;&nbsp;&nbsp;&nbsp;500 m</div>
+  </div>
+  <!-- attribution -->
+  <div class="attrib" style="right:18px;bottom:16px;height:auto;line-height:1.35;padding:7px 12px;text-align:right;max-width:300px">© OpenMapTiles · © DWD<br>© LDBV Bayern · © Copernicus/Sentinel</div>
+</div>
+
+<!-- popup for selected parcel (above the parcel) -->
+<div class="pop" style="left:846px;top:292px">
+  <div class="hd"></div>
+  <div class="bd">
+    <h3>Schlag „Attenhofen West“</h3>
+    <div class="meta">Flurstück 412/3 · 3,2 ha · Sorte Herkules</div>
+    <div class="vit"><span class="d"></span>Vitalität: auffällig (Teilfläche)</div>
+    <svg width="304" height="56" viewBox="0 0 304 56">
+      <text x="0" y="11" font-family="Barlow" font-size="12" fill="#93a399">NDRE-Verlauf (30 Tage)</text>
+      <polyline points="2,22 40,20 78,21 116,24 154,26 192,30 230,36 268,40 300,44" fill="none" stroke="#2e9e63" stroke-width="2.4"/>
+      <polyline points="192,30 230,36 268,40 300,44" fill="none" stroke="#d9962a" stroke-width="2.6"/>
+      <circle cx="300" cy="44" r="3.5" fill="#d9962a"/>
+    </svg>
+    <div class="ts">Quelle: Sentinel-2 · Aufnahme 11. Aug 2026 (wolkenfrei)</div>
+    <div class="rec">Empfehlung: Teilfläche vor Ort prüfen (Wasser/Nährstoff).</div>
+  </div>
+</div>
+
+<!-- radar scrubber bottom-center of map -->
+<div class="scrub" style="left:690px;top:946px;width:500px">
+  <div class="play"><svg style="position:absolute;left:13px;top:11px" width="14" height="16" viewBox="0 0 14 16"><path d="M0 0 L14 8 L0 16 Z" fill="#fff"/></svg></div>
+  <svg style="position:absolute;left:58px;top:0" width="436" height="54" viewBox="0 0 436 54">
+    <line x1="6" y1="27" x2="430" y2="27" stroke="#dfe5e0" stroke-width="4" stroke-linecap="round"/>
+    <line x1="6" y1="27" x2="250" y2="27" stroke="#2f6fb0" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="250" cy="27" r="9" fill="#fff" stroke="#2f6fb0" stroke-width="3"/>
+    <text x="2" y="48" font-family="Barlow" font-size="12.5" fill="#93a399">−60 Min</text>
+    <text x="222" y="16" font-family="Barlow" font-size="12.5" font-weight="700" fill="#255d97">jetzt</text>
+    <text x="392" y="48" font-family="Barlow" font-size="12.5" fill="#93a399">+60 Min</text>
+  </svg>
+</div>
+
+</div></body></html>

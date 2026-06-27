@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "name": "demo-fields",
+  "note": "Fiktiver Demo-Betrieb 'Familie Huber', Au i.d.Hallertau. Koordinaten WGS84 (lon,lat). Werte dienen nur der Veranschaulichung.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Attenhofen West", "sorte": "Herkules", "flaeche_ha": 3.2 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[11.7760, 48.4255], [11.778431, 48.4255], [11.778431, 48.427107], [11.7760, 48.427107], [11.7760, 48.4255]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Mitterfeld", "sorte": "Hallertauer Tradition", "flaeche_ha": 2.6 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[11.7820, 48.4262], [11.784190, 48.4262], [11.784190, 48.427648], [11.7820, 48.427648], [11.7820, 48.4262]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Sandlinse", "sorte": "Perle", "flaeche_ha": 1.9 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[11.7795, 48.4225], [11.781372, 48.4225], [11.781372, 48.423738], [11.7795, 48.423738], [11.7795, 48.4225]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Auer Berg", "sorte": "Herkules", "flaeche_ha": 4.1 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[11.7870, 48.4240], [11.789751, 48.4240], [11.789751, 48.425819], [11.7870, 48.425819], [11.7870, 48.4240]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Lange Wiese", "sorte": "Saphir", "flaeche_ha": 2.4 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[11.7900, 48.4288], [11.792105, 48.4288], [11.792105, 48.430192], [11.7900, 48.430192], [11.7900, 48.4288]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Kirchfeld", "sorte": "Hallertauer Tradition", "flaeche_ha": 4.2 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[11.7835, 48.4305], [11.786284, 48.4305], [11.786284, 48.432341], [11.7835, 48.432341], [11.7835, 48.4305]]]
+      }
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:820px;height:1480px;background:#eceee9;font-family:'Barlow',sans-serif;color:#182a20;-webkit-font-smoothing:antialiased}
+.stage{position:relative;width:820px;height:1480px;background:-webkit-linear-gradient(top,#eef1ec,#e3e7e1);background:linear-gradient(180deg,#eef1ec,#e3e7e1)}
+.disp{font-family:'Barlow Semi Condensed',sans-serif}
+.bezel{position:absolute;left:110px;top:70px;width:600px;height:1340px;background:#0e1512;border-radius:60px;-webkit-box-shadow:0 30px 70px rgba(20,35,26,.28);box-shadow:0 30px 70px rgba(20,35,26,.28)}
+.screen{position:absolute;left:124px;top:84px;width:572px;height:1312px;background:#f4f6f3;border-radius:46px;overflow:hidden}
+.notch{position:absolute;left:335px;top:96px;width:150px;height:26px;background:#0e1512;border-radius:14px;z-index:5}
+/* green header */
+.hdr{position:absolute;left:124px;top:84px;width:572px;height:200px;background:-webkit-linear-gradient(top,#234f37,#2f6b4a);background:linear-gradient(180deg,#234f37,#2f6b4a);border-top-left-radius:46px;border-top-right-radius:46px}
+.sb{position:absolute;top:96px;color:#eaf3ee;font-weight:600;font-size:16px}
+.wm2{position:absolute;left:152px;top:138px;color:#fff;font-weight:700;font-size:24px;letter-spacing:.3px}
+.wm2 small{color:#bcd6c6;font-weight:500}
+.hello2{position:absolute;left:152px;top:176px;color:#fff;font-weight:700;font-size:28px}
+.sub2{position:absolute;left:152px;top:220px;color:#c7ddcf;font-size:15px;font-weight:500}
+/* hero banner card */
+.hero{position:absolute;left:148px;top:250px;width:524px;height:98px;background:#fff;border-radius:18px;-webkit-box-shadow:0 10px 26px rgba(20,35,26,.14);box-shadow:0 10px 26px rgba(20,35,26,.14);overflow:hidden}
+.hero .sp{position:absolute;left:0;top:0;bottom:0;width:8px;background:#d9962a;border-top-left-radius:18px;border-bottom-left-radius:18px}
+.hero .t{position:absolute;left:64px;top:20px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:25px}
+.hero .s{position:absolute;left:64px;top:58px;color:#3c5147;font-size:16px}
+.hero .ic{position:absolute;left:24px;top:30px}
+.hero .chev{position:absolute;right:24px;top:38px;color:#b7c2ba}
+/* compact cards */
+.mc{position:absolute;left:148px;width:524px;height:148px;background:#fff;border-radius:18px;-webkit-box-shadow:0 6px 16px rgba(20,35,26,.08);box-shadow:0 6px 16px rgba(20,35,26,.08);overflow:hidden}
+.mc .sp{position:absolute;left:0;top:0;bottom:0;width:8px;border-top-left-radius:18px;border-bottom-left-radius:18px}
+.mc .chip{position:absolute;left:26px;top:24px;width:44px;height:44px;border-radius:12px;text-align:center;line-height:44px}
+.mc .ey{position:absolute;left:84px;top:28px;font-family:'Barlow Semi Condensed';font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#6b7d72}
+.mc .st{position:absolute;left:84px;top:50px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:30px;line-height:1}
+.mc .rc{position:absolute;left:84px;top:98px;right:24px;color:#3c5147;font-size:16px}
+.mc .val{position:absolute;right:24px;top:30px;text-align:right}
+.good .sp{background:#2e9e63}.good .st{color:#1f7d4c}.good .chip{background:#e4f3ea}
+.warn .sp{background:#d9962a}.warn .st{color:#a9701a}.warn .chip{background:#f9efd9}
+.alert .sp{background:#cf4f3c}.alert .st{color:#b23e2c}.alert .chip{background:#f9e2dd}
+.pill{display:inline-block;height:34px;line-height:34px;padding:0 14px;border-radius:17px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:18px}
+.pill.g{background:#e4f3ea;color:#1f7d4c}.pill.a{background:#f9efd9;color:#a9701a}
+/* map preview */
+.mapp{position:absolute;left:148px;top:1026px;width:524px;height:250px;border-radius:18px;overflow:hidden;-webkit-box-shadow:0 6px 16px rgba(20,35,26,.08);box-shadow:0 6px 16px rgba(20,35,26,.08)}
+.mapcap{position:absolute;left:18px;bottom:14px;background:rgba(255,255,255,.92);border-radius:14px;padding:7px 14px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:16px;color:#234f37}
+/* tab bar */
+.tabs{position:absolute;left:124px;top:1306px;width:572px;height:90px;background:#fff;border-top:1px solid #e4e8e3}
+.tab{position:absolute;top:16px;width:143px;text-align:center;font-size:13px;font-weight:600;color:#9aa9a0}
+.tab.act{color:#2f6b4a}
+</style></head><body><div class="stage">
+<div class="bezel"></div>
+<div class="screen"></div>
+<div class="notch"></div>
+
+<!-- header -->
+<div class="hdr"></div>
+<div class="sb" style="left:152px">20:14</div>
+<svg class="sb" style="right:0;left:auto;top:98px;margin-right:0" width="0" height="0"></svg>
+<svg style="position:absolute;left:610px;top:98px" width="64" height="18" viewBox="0 0 64 18"><g fill="#eaf3ee"><rect x="0" y="6" width="3" height="8" rx="1"/><rect x="5" y="4" width="3" height="10" rx="1"/><rect x="10" y="2" width="3" height="12" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1"/></g><g fill="none" stroke="#eaf3ee" stroke-width="1.6"><path d="M30 9a7 7 0 0 1 12 0"/><path d="M33 12a3.5 3.5 0 0 1 6 0"/></g><circle cx="36" cy="14.5" r="1.4" fill="#eaf3ee"/><rect x="48" y="3" width="14" height="9" rx="2" fill="none" stroke="#eaf3ee" stroke-width="1.4"/><rect x="50" y="5" width="9" height="5" rx="1" fill="#eaf3ee"/></svg>
+<svg style="position:absolute;left:150px;top:132px" width="30" height="34" viewBox="0 0 40 46"><g fill="#e3b24e"><path d="M20 2 C9 8 7 18 9 27 C11 36 16 42 20 44 C24 42 29 36 31 27 C33 18 31 8 20 2 Z"/></g><g stroke="#234f37" stroke-width="1.6" opacity="0.8" fill="none"><path d="M11 16 H29 M10 23 H30 M11 30 H29 M14 37 H26"/><path d="M20 4 V44"/></g></svg>
+<div class="wm2" style="left:188px;top:138px">Hopfen<small>Blick</small></div>
+<div class="hello2">Guten Abend, Familie Huber</div>
+<div class="sub2">Mittwoch · 12. Aug · 20:00 Uhr · Au i.d.Hallertau</div>
+
+<!-- hero summary -->
+<div class="hero">
+  <div class="sp"></div>
+  <div class="ic"><svg width="28" height="28" viewBox="0 0 28 28"><g fill="none" stroke="#a9701a" stroke-width="2" stroke-linecap="round"><path d="M14 3v2M14 23v2M3 14h2M23 14h2M6 6l1.5 1.5M22 6l-1.5 1.5"/><circle cx="14" cy="14" r="5.5"/><text x="11.2" y="18" font-family="Barlow" font-size="9" font-weight="700" fill="#a9701a" stroke="none">!</text></g></svg></div>
+  <div class="t">2 Hinweise für morgen</div>
+  <div class="s">Wetter (Gewitter) · Bewässerung (Defizit)</div>
+  <div class="chev"><svg width="14" height="24" viewBox="0 0 14 24"><path d="M2 2l9 10-9 10" fill="none" stroke="#b7c2ba" stroke-width="2.6" stroke-linecap="round"/></svg></div>
+</div>
+
+<!-- card 1 spritzfenster -->
+<div class="mc good" style="top:368px">
+  <div class="sp"></div>
+  <div class="chip"><svg width="24" height="24" viewBox="0 0 26 26"><g fill="none" stroke="#1f7d4c" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h5v4H9z"/><path d="M11.5 7v3M11.5 10c0 0-4 1-4 5v6h8v-6c0-4-4-5-4-5z"/><path d="M17 6l4-1M18 9l4 0M18 12l3 1"/></g></svg></div>
+  <div class="ey">Spritzfenster</div>
+  <div class="st">Gutes Fenster</div>
+  <div class="rc">Wind 6 km/h · trocken · ΔT günstig</div>
+  <div class="val"><span class="pill g">06–10 Uhr</span></div>
+</div>
+
+<!-- card 2 bewässerung -->
+<div class="mc warn" style="top:532px">
+  <div class="sp"></div>
+  <div class="chip"><svg width="24" height="24" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><path d="M13 3c-4 5-6 8-6 11a6 6 0 0 0 12 0c0-3-2-6-6-11z"/><path d="M5 22h16" stroke="#8a6a4f"/></g></svg></div>
+  <div class="ey">Bewässerung</div>
+  <div class="st">Defizit</div>
+  <div class="rc">7 Tage trocken · Schlag 3 zuerst prüfen</div>
+  <div class="val"><span class="pill a">−18 mm</span></div>
+</div>
+
+<!-- card 3 peronospora -->
+<div class="mc warn" style="top:696px">
+  <div class="sp"></div>
+  <div class="chip"><svg width="24" height="24" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><path d="M13 4c-5 4-7 8-7 12a7 7 0 0 0 14 0c0-4-2-8-7-12z"/><path d="M13 9v9M9.5 13l3.5 2 3.5-2"/></g></svg></div>
+  <div class="ey">Peronospora</div>
+  <div class="st">Druck steigend</div>
+  <div class="rc">Sporenflug erhöht · LfL-Warndienst</div>
+  <div class="val"><svg width="74" height="44" viewBox="0 0 74 44"><g><rect x="0" y="30" width="14" height="12" rx="2" fill="#e7d3a3"/><rect x="20" y="22" width="14" height="20" rx="2" fill="#e7d3a3"/><rect x="40" y="14" width="14" height="28" rx="2" fill="#e0b96a"/><rect x="60" y="4" width="14" height="38" rx="2" fill="#d9962a"/></g></svg></div>
+</div>
+
+<!-- card 4 feld-check -->
+<div class="mc warn" style="top:860px">
+  <div class="sp"></div>
+  <div class="chip"><svg width="24" height="24" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="6" width="18" height="14" rx="2"/><path d="M4 11h18M10 6v14"/><circle cx="16" cy="15" r="2.4" fill="#d9962a" stroke="none"/></g></svg></div>
+  <div class="ey">Feld-Check · Satellit</div>
+  <div class="st">1 Schlag prüfen</div>
+  <div class="rc">„Attenhofen West“ schwächere Vitalität</div>
+  <div class="val"><svg width="70" height="44" viewBox="0 0 70 44"><rect x="2" y="4" width="18" height="16" rx="3" fill="#d6efdf"/><rect x="26" y="4" width="18" height="16" rx="3" fill="#f3d9a0" stroke="#d9962a" stroke-width="2"/><rect x="50" y="4" width="18" height="16" rx="3" fill="#d6efdf"/><rect x="2" y="24" width="18" height="16" rx="3" fill="#d6efdf"/><rect x="26" y="24" width="18" height="16" rx="3" fill="#d6efdf"/><rect x="50" y="24" width="18" height="16" rx="3" fill="#d6efdf"/></svg></div>
+</div>
+
+<!-- map preview -->
+<div class="mapp">
+  <svg width="524" height="250" viewBox="0 0 524 250">
+    <defs><radialGradient id="r2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2f6fb0" stop-opacity="0.4"/><stop offset="100%" stop-color="#2f6fb0" stop-opacity="0"/></radialGradient></defs>
+    <rect x="0" y="0" width="524" height="250" fill="#e7efe6"/>
+    <path d="M0 60 q60 -25 120 0 q25 50 -15 80 q-70 25 -110 -10 q-20 -55 5 -70z" fill="#dce8da"/>
+    <path d="M-5 150 C120 175 200 110 320 130 S520 200 540 170" fill="none" stroke="#cfe0ef" stroke-width="12"/>
+    <path d="M60 240 C150 170 150 90 130 30" fill="none" stroke="#fff" stroke-width="6"/>
+    <path d="M60 240 C150 170 150 90 130 30" fill="none" stroke="#e7d9b8" stroke-width="1.8"/>
+    <g><rect x="70" y="70" width="78" height="52" rx="6" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.4"/><g stroke="#2f6b4a" stroke-width="1.3" opacity="0.5"><line x1="80" y1="78" x2="80" y2="114"/><line x1="92" y1="78" x2="92" y2="114"/><line x1="104" y1="78" x2="104" y2="114"/><line x1="116" y1="78" x2="116" y2="114"/><line x1="128" y1="78" x2="128" y2="114"/><line x1="140" y1="78" x2="140" y2="114"/></g></g>
+    <g><rect x="180" y="140" width="92" height="58" rx="6" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.4"/><g stroke="#2f6b4a" stroke-width="1.3" opacity="0.5"><line x1="190" y1="148" x2="190" y2="190"/><line x1="202" y1="148" x2="202" y2="190"/><line x1="214" y1="148" x2="214" y2="190"/><line x1="226" y1="148" x2="226" y2="190"/><line x1="238" y1="148" x2="238" y2="190"/><line x1="250" y1="148" x2="250" y2="190"/><line x1="262" y1="148" x2="262" y2="190"/></g></g>
+    <g><rect x="320" y="80" width="84" height="56" rx="6" fill="#f3e3bd" stroke="#d9962a" stroke-width="2.4"/><g stroke="#b07f1f" stroke-width="1.3" opacity="0.55"><line x1="330" y1="88" x2="330" y2="128"/><line x1="342" y1="88" x2="342" y2="128"/><line x1="354" y1="88" x2="354" y2="128"/><line x1="366" y1="88" x2="366" y2="128"/><line x1="378" y1="88" x2="378" y2="128"/><line x1="390" y1="88" x2="390" y2="128"/></g></g>
+    <ellipse cx="450" cy="60" rx="90" ry="60" fill="url(#r2)"/>
+    <g transform="translate(362,58)"><path d="M0 22 C-9 8 -9 0 0 -6 C9 0 9 8 0 22 Z" fill="#cf4f3c"/><circle cx="0" cy="3" r="4" fill="#fff"/></g>
+  </svg>
+  <div class="mapcap">Karte ansehen ›</div>
+</div>
+
+<!-- tabs -->
+<div class="tabs">
+  <div class="tab act" style="left:0px">
+    <svg width="26" height="24" viewBox="0 0 26 24"><path d="M3 12l10-8 10 8M6 11v9h14v-9" fill="none" stroke="#2f6b4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div>Übersicht</div></div>
+  <div class="tab" style="left:143px">
+    <svg width="26" height="24" viewBox="0 0 26 24"><path d="M3 6l7-3 6 3 7-3v15l-7 3-6-3-7 3z M10 3v15M16 6v15" fill="none" stroke="#9aa9a0" stroke-width="2" stroke-linejoin="round"/></svg>
+    <div>Karte</div></div>
+  <div class="tab" style="left:286px">
+    <svg width="26" height="24" viewBox="0 0 26 24"><rect x="3" y="4" width="20" height="16" rx="2" fill="none" stroke="#9aa9a0" stroke-width="2"/><path d="M3 10h20M11 4v16" stroke="#9aa9a0" stroke-width="2"/></svg>
+    <div>Felder</div></div>
+  <div class="tab" style="left:429px">
+    <svg width="26" height="24" viewBox="0 0 26 24"><g fill="#9aa9a0"><circle cx="6" cy="12" r="2.4"/><circle cx="13" cy="12" r="2.4"/><circle cx="20" cy="12" r="2.4"/></g></svg>
+    <div>Mehr</div></div>
+</div>
+
+</div></body></html>

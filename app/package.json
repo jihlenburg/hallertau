@@ -1,0 +1,31 @@
+{
+  "name": "hopfenblick-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "HopfenBlick — lauffähiger Prototyp der Übersicht-Ansicht (Desktop) mit echtem Feld-Onboarding.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fontsource/barlow": "^5.0.13",
+    "@fontsource/barlow-semi-condensed": "^5.0.12",
+    "@turf/area": "^7.1.0",
+    "@turf/centroid": "^7.1.0",
+    "maplibre-gl": "^4.7.1",
+    "proj4": "^2.12.1",
+    "shpjs": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.14",
+    "@types/proj4": "^2.5.5",
+    "@types/shpjs": "^3.4.7",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}

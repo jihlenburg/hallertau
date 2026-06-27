@@ -1,0 +1,14 @@
+# Fonts werden von build.sh geladen (SIL OFL), nicht eingecheckt
+assets/fonts/*
+!assets/fonts/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+
+# Build-Zwischendateien
+deliverables/_report_raw.pdf
+
+# OS
+.DS_Store
+Thumbs.db
