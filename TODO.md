@@ -18,24 +18,53 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 ### Übersicht / Karten
 - [ ] **Peronospora**: LfL-Warndienst (Hüll) anbinden (Quelle/Recht klären).
 - [ ] **Feld-Check (Satellit)**: Sentinel-Vitalität (regionales Screening, NDRE).
+      Vor Vermarktung als feldscharf: **NDRE-Backtest** auf typischen 0,5–2 ha Schlägen
+      (Red-Edge 20 m nativ, wenige saubere Pixel je Schlag).
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
 - [ ] 7-Tage-Vorhersagestreifen im Map-Panel (wie Mockup m1).
-- [ ] Pro-Gitterzelle cachen (benachbarte Schläge → gleiche Open-Meteo-Zelle).
+- [~] Pro-Gitterzelle cachen — Whole-Farm-Kopf bündelt bereits je Rasterzelle
+      (`gridCellKey`); per-Schlag-Abruf in `refresh()` noch nicht dedupliziert.
 - [ ] Kc nach BBCH/Phase staffeln statt fixem 1.05.
+- [ ] Inversionsvorsicht verfeinern: Bewölkung/Strahlung in die Stundenwerte einbeziehen
+      (derzeit Proxy aus Schwachwind + Dämmerungsstunde).
+- [ ] Optional: Tipping-Bucket/AWC-Bodenmodell als echte Bewässerungs-Stufe (über die
+      jetzige klimatische Tendenz hinaus).
 
 ### Technik / Qualität
-- [ ] Bright Sky im **Prod-Build**: kleiner Proxy (Dev-Proxy gilt nur für `npm run dev`).
+- [x] Bright Sky im **Prod-Build**: `server.mjs` (`npm run serve`) liefert `dist/` + Proxy;
+      Cloudflare-Worker-Snippet im `app/README`. — 2026-06-27 (Deployment noch offen, s. u.)
+- [ ] Prod-Proxy tatsächlich **deployen** (Cloudflare/Netlify/Vercel) — Scaffold vorhanden.
 - [ ] Optional: MapTiler-Key per `.env` als höherwertige Basemap-Alternative.
 - [ ] Bundle-Größe senken (Code-Splitting; maplibre/shpjs dynamisch importieren).
-- [ ] Mehr Tests: `weather`-Bewertung, `fields.normalizeField`, Import-Parser.
+- [~] Mehr Tests: `weather` (Frost/Quelle) ✓, `grid` ✓, `cards`/`balanceLabel` ✓,
+      Import-Bayern-Guard ✓; offen: `fields.normalizeField`, echte Shape-/GeoJSON-Parser.
 - [ ] Optionaler Export der angelegten Schläge als GeoJSON (Backup ohne Backend).
+
+## Name / Marke (s. `docs/naming.md`)
+- [x] Arbeitsname festgelegt: **„DoldenBlick"** (`doldenblick.de` frei). — 2026-06-27
+- [ ] Domain `doldenblick.de` registrieren/sichern (Momentaufnahme, keine Reservierung).
+- [ ] **Amtliche Markenrecherche** vor kommerziellem Einsatz: DPMAregister + EUIPO/TMview,
+      Nizza-Klassen 9 & 42 (Software) und 32 (Bier); Restrisiko „Dolden"-Biermarken
+      (Riedenburger *Dolden Sud*, *Dolden Mädel*) bewusst akzeptiert für jetzt.
+- [ ] Rename „HopfenBlick" → „DoldenBlick" quer durchs Repo (CLAUDE.md, README,
+      Mockups, Report, `deliverables/`-Dateinamen, app/) — separater, bewusster Schritt.
 
 ## Produkt / Konzept
 - [ ] Vom Prototyp zur kleinen API mit Caching (Open-Meteo / Bright Sky).
-- [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing).
+- [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing) — die Übersicht flaggt
+      Nachtfrost jetzt in-app und verweist auf die DWD-WarnWetterApp, ersetzt aber keinen
+      Echtzeit-Alarm; einziger HopfenBlick-eigener Push-Kandidat ist das Spritzfenster.
+- [ ] Primäre **Farmer-Research** (Hallertau) zur Validierung der Abend-Briefing-Kadenz
+      und Whole-Farm-Synthese (Persona in REPORT.md §3 ist bislang unbelegt).
+- [ ] **Report-PDF neu bauen**: Quelltexte (`REPORT.md`/`report.html`) sind korrigiert,
+      `deliverables/HopfenBlick_Report.pdf` ist veraltet — `./build.sh` braucht `wkhtmltopdf`
+      (+ pymupdf), war hier nicht installierbar.
 - [ ] Lizenzen vor produktivem Einsatz klären (Open-Meteo/Bright Sky nicht-kommerziell;
       LfL-Weiterverbreitung ggf. abstimmen).
 
 ## Erledigt (Kurzliste, Details im LOGBOOK)
 - [x] Repository initialisiert (Mockups, Report, Build). — 2026-06-27
 - [x] App-Prototyp „Übersicht" + reales iBALIS-/GeoJSON-Onboarding. — 2026-06-27
+- [x] Devil's-Advocate-Fixes: Frost-Erkennung, Inversionsvorsicht, Wasserbilanz als Tendenz,
+      Raster-Ehrlichkeitshinweis, Import-Plausibilitätscheck, Roadmap-Streifen,
+      Whole-Farm-Tageskopf, Prod-Proxy, Report-Faktenkorrektur (alle test-first). — 2026-06-27

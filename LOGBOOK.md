@@ -5,6 +5,70 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-27 · Namensfindung → Arbeitsname „DoldenBlick"
+**Was:** Brainstorming zum Produktnamen. Kandidaten in vier Richtungen (Akronym,
+Hopfen-Kompositum, regional, funktional) erzeugt, gegen **DENIC-Whois** auf freie
+`.de`-Domains gefiltert und für die Shortlist ein **Marken-Vorabscreening** (7 parallele
+Such-Agenten, DPMA/EUIPO-Webtreffer + offenes Web, Schwerpunkt Bier-Marken/Kl. 32)
+gemacht. Vollständige Liste + Domain-Status + Marken-Findings in **`docs/naming.md`**.
+
+**Entscheidung (Nutzer):** Neuer Arbeitsname **„DoldenBlick"** (`doldenblick.de` frei).
+*Dolde* = Hopfendolde, Schwester von „HopfenBlick".
+
+**Wichtig:** Nur Web-Vorabscreening, **keine** rechtsverbindliche Markenrecherche; die
+amtlichen Register (DPMAregister, TMview) ließen sich nicht automatisiert abfragen.
+Restrisiko (benachbarte „Dolden"-Biermarken wie Riedenburger *Dolden Sud*) **bewusst
+akzeptiert** für jetzt. Cleanere Alternativen wären „HopfenWacht"/„DoldenKompass" gewesen.
+
+**Warum:** Name sollte regional/evokativ sein **und** eine freie `.de`-Domain haben.
+
+**Offen:** Amtliche Markenrecherche (Kl. 9/42 + 32) vor kommerziellem Einsatz; Domain
+sichern; Rename „HopfenBlick" → „DoldenBlick" quer durchs Repo (separater Schritt). → `TODO.md`.
+
+**Verweise:** `docs/naming.md`. Noch nicht committed.
+
+---
+
+## 2026-06-27 · Fixes aus Devil's-Advocate-Review (Ehrlichkeit & Korrektheit)
+**Was:** Umsetzung der verifizierten Punkte aus einer adversariellen Review (12 Thesen,
+je gegengeprüft). Alle Code-Änderungen test-first (TDD).
+- **Wetter** (`weather.ts`): Nachtfrost-Zweig im abgeleiteten Pfad (Tagestiefstwert ≤ 0 →
+  Frostgefahr/alert, ≤ 2 → Bodenfrost/warn); `alertsReachable` trennt „nicht abrufbar"
+  (null) von „keine Warnung" ([]); Wetterkarte: Hinweis „kein Echtzeit-Alarm" (+ neue Tests).
+- **Spritzfenster** (`sprayWindow.ts`): Inversionsvorsicht bei Schwachwind-Dämmerung
+  (`inversion`-Flag, Abdrift-Hinweis), Überschrift „Wetter geeignet" statt Spritz-Anweisung.
+- **Feuchtkugel** (`wetbulb.test.ts`): Referenztabelle über den Spritzbereich; Meereshöhe-
+  Druck-Annahme + Hallertau-Höhe dokumentiert.
+- **Bewässerung** (`cards.ts`/`overview`): Überschrift als **Tendenz** (`balanceLabel`)
+  statt „Defizit X mm" (mm nur klein in der Viz); 5/20-Schwellen als Heuristik dokumentiert.
+- **Raster-Ehrlichkeit** (`grid.ts`): `gridCellKey` (~2 km); on-screen-Hinweis, wenn der
+  gewählte Schlag mit Nachbarn dieselbe Open-Meteo-Zelle teilt.
+- **Import-Härtung** (`importShape.ts`): `assertPlausibleBavaria`/`isInBavaria` —
+  klarer Fehler bei nicht reprojizierten Koordinaten (fehlende/zerbrochene .prj).
+- **Layout** (`overview`): drei „KOMMT NOCH"-Kacheln → ein **Roadmap-Streifen** unter den
+  Live-Karten; **Whole-Farm**-Tageskopf „N Hinweise für morgen" (ein Abruf je Rasterzelle).
+- **Prod-Proxy** (`server.mjs`, `npm run serve`): liefert `dist/` + proxt `/api/brightsky`
+  (Dev-Proxy galt nur für `npm run dev`); Cloudflare-Worker-Snippet im `app/README`.
+- **Report-Faktenkorrektur:** BVerwG-Urteil präzisiert (§ 1 i.V.m. Anlagen 1 u. 3 der AVDüV,
+  Az. 10 CN 1.25, Datumsstempel) und Kostenaussage „ohne teure Lizenzen" im Summary mit
+  kommerzieller Stufe ergänzt — in `REPORT.md` **und** `report/report.html`.
+
+**Warum:** Die Review fand keine grundsätzlichen Fehlentscheidungen, aber je einen realen,
+schmalen Punkt pro These — meist „Vorbehalt aus Code/README on-screen sichtbar machen" plus
+zwei echte Code-Lücken (frostblinder abgeleiteter Pfad; fehlender Prod-Proxy).
+
+**Verifikation:** `tsc --noEmit` sauber; `npm test` grün (37 Tests, 7 Dateien). `server.mjs`
+syntaxgeprüft (`node --check`).
+
+**Offen:** `deliverables/HopfenBlick_Report.pdf` ist **veraltet** — Neubau braucht
+`wkhtmltopdf` (+ pymupdf), hier nicht installierbar (Homebrew-Cask entfernt). Neubau via
+`./build.sh` auf einer Maschine/Docker mit der Toolchain. Roadmap-Punkte (Farmer-Research,
+NDRE-Backtest, WFS-Onboarding, Proxy-Deployment) siehe `TODO.md`.
+
+**Verweise:** REFERENCE.md §§5–7, 12 mitgepflegt; app/README aktualisiert.
+
+---
+
 ## 2026-06-27 · .env-Format korrigiert & Secrets vor Git geschützt
 **Was:** `.env` aufgeräumt und abgesichert.
 - **Format:** Der Earth-Engine-Dienstkonto-Schlüssel lag als **mehrzeiliges, nicht
