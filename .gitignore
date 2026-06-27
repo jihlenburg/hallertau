@@ -13,6 +13,9 @@ deliverables/_report_raw.pdf
 .DS_Store
 Thumbs.db
 
+# Browser-Automation-Artefakte (Playwright MCP: Snapshots/Logs)
+.playwright-mcp/
+
 # Secrets — niemals einchecken (echte Zugangsdaten)
 .env
 .env.local
