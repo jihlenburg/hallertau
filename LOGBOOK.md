@@ -5,6 +5,35 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-27 · Cloud-Server live + gehärtet, doldenblick.de mit HTTPS
+**Was:** Ersten Cloud-Server für DoldenBlick bei **Hetzner Cloud** (Projekt „Hallertau")
+aufgesetzt, Domain verdrahtet und gehärtet. Details + Reproduktion in `docs/infrastructure.md`,
+Skripte in `infra/`.
+- **Server** `doldenblick-01` (id 145742852): cx23, Nuremberg, Ubuntu 24.04 LTS,
+  IPv4 91.98.203.240 / IPv6 2a01:4f8:1c18:6e05::1, SSH nur per Key. cloud-init:
+  nginx + Platzhalterseite, ufw.
+- **DNS** (Hetzner Cloud DNS, Zone-ID 1421900): A/AAAA für `@` und `www` → Server,
+  CAA `letsencrypt.org`. Wichtig: Hetzner hat DNS in die **Cloud-API** integriert
+  (`/v1/zones/.../rrsets`) — alte `dns.hetzner.com`-API abgelöst (301 → console).
+- **HTTPS**: Let's Encrypt (certbot --nginx), 80→443-Redirect, Auto-Renewal (Dry-Run ok).
+- **Härtung** (`infra/harden.sh`): SSH-Drop-in (key-only root, MaxAuthTries 3, kein
+  Forwarding), fail2ban, unattended-upgrades, sysctl-Netzhärtung, Hetzner Cloud Firewall
+  (id 11207357, nur 22/80/443/icmp) zusätzlich zur ufw, nginx Security-Header + HSTS.
+
+**Warum:** Vom Konzept/Prototyp zum erreichbaren Produkt-Platzhalter unter der echten Domain.
+
+**Verifikation:** `https://doldenblick.de` + `www` → HTTP 200, gültiges LE-Zertifikat
+(ssl_verify=0), 80→443-Redirect; alle Security-Header gesetzt; A/AAAA/CAA an allen drei
+Hetzner-NS aufgelöst; SSH bleibt durch die Cloud Firewall erreichbar; certbot-Renewal-Dry-Run ok.
+
+**Offen (bewusst zurückgehalten, Lockout-/Workflow-Risiko):** Non-root-User +
+`PermitRootLogin no`, SSH-Port verschieben, HSTS-Preload, Backups/Snapshots, Monitoring.
+Lokaler Mac-Resolver hatte `doldenblick.de` als 127.0.0.1 gecacht → `dscacheutil -flushcache`.
+
+**Verweise:** `docs/infrastructure.md`, `infra/cloud-init.yml`, `infra/harden.sh`. Noch nicht committed.
+
+---
+
 ## 2026-06-27 · Namensfindung → Arbeitsname „DoldenBlick"
 **Was:** Brainstorming zum Produktnamen. Kandidaten in vier Richtungen (Akronym,
 Hopfen-Kompositum, regional, funktional) erzeugt, gegen **DENIC-Whois** auf freie

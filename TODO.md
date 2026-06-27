@@ -49,6 +49,20 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] Rename „HopfenBlick" → „DoldenBlick" quer durchs Repo (CLAUDE.md, README,
       Mockups, Report, `deliverables/`-Dateinamen, app/) — separater, bewusster Schritt.
 
+## Infrastruktur / Hosting (s. `docs/infrastructure.md`)
+- [x] Cloud-Server `doldenblick-01` bei Hetzner (Projekt „Hallertau"), Ubuntu 24.04, nginx. — 2026-06-27
+- [x] DNS-Zone `doldenblick.de` + A/AAAA/CAA, Delegation `.de` → Hetzner-NS. — 2026-06-27
+- [x] HTTPS via Let's Encrypt (certbot, Auto-Renewal). — 2026-06-27
+- [x] Basis-Härtung: SSH-Drop-in, fail2ban, unattended-upgrades, sysctl, ufw + Cloud Firewall,
+      nginx Security-Header/HSTS. — 2026-06-27
+- [ ] **Optional, schwerer/Workflow:** Non-root-Sudo-User + `PermitRootLogin no`; SSH-Port verschieben.
+- [ ] **Optional:** HSTS-Preload-Submission (erst nach längerem Stabilbetrieb, bindend).
+- [ ] **Backups/Snapshots** des Servers (Hetzner-Snapshots/Backups einschalten).
+- [ ] **Monitoring/Alerting** (Uptime, Zertifikatsablauf, Plattenplatz).
+- [ ] `doldenblick.info` registrieren (zurückgestellt) bzw. später Redirect auf `.de`.
+- [ ] Deployment der echten App (`app/`) auf den Server statt Platzhalterseite;
+      Prod-Proxy `/api/brightsky` hier betreiben (s. „Technik/Qualität").
+
 ## Produkt / Konzept
 - [ ] Vom Prototyp zur kleinen API mit Caching (Open-Meteo / Bright Sky).
 - [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing) — die Übersicht flaggt

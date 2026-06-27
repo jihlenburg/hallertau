@@ -1,0 +1,38 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - nginx
+  - ufw
+write_files:
+  - path: /var/www/html/index.html
+    permissions: '0644'
+    content: |
+      <!doctype html>
+      <html lang="de">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>DoldenBlick</title>
+        <style>
+          body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f4f6f3;color:#182a20;display:flex;min-height:100vh;align-items:center;justify-content:center}
+          .card{text-align:center;padding:3rem}
+          h1{font-size:2.6rem;margin:0 0 .4rem;color:#2f6b4a;letter-spacing:.5px}
+          p{color:#3c5147;font-size:1.1rem;margin:.2rem 0}
+          .dot{color:#c8902a}
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>DoldenBlick</h1>
+          <p>bald verf&uuml;gbar <span class="dot">&middot;</span> ein Blick auf die Dolden</p>
+        </div>
+      </body>
+      </html>
+runcmd:
+  - ufw allow OpenSSH
+  - ufw allow 'Nginx Full'
+  - ufw --force enable
+  - sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
+  - systemctl enable --now nginx
