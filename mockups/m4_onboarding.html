@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1600px;height:1120px;background:#f4f6f3;font-family:'Barlow',sans-serif;color:#182a20;-webkit-font-smoothing:antialiased}
+.stage{position:relative;width:1600px;height:1120px;overflow:hidden}
+.disp{font-family:'Barlow Semi Condensed',sans-serif}
+/* top bar */
+.bar{position:absolute;left:0;top:0;width:1600px;height:80px;background:-webkit-linear-gradient(left,#1c3f2c,#2f6b4a);background:linear-gradient(90deg,#1c3f2c,#2f6b4a)}
+.wm{position:absolute;left:84px;top:23px;color:#fff;font-weight:700;font-size:30px;letter-spacing:.4px}
+.wm small{font-weight:500;color:#bcd6c6}
+.blabel{position:absolute;right:104px;top:30px;color:#cfe0d5;font-size:18px;font-weight:600;letter-spacing:1px}
+.avatar{position:absolute;right:38px;top:18px;width:44px;height:44px;border-radius:50%;background:#e3b24e;color:#234f37;font-weight:700;font-size:19px;text-align:center;line-height:44px}
+/* title */
+.h1{position:absolute;left:40px;top:170px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:36px}
+.sub{position:absolute;left:42px;top:222px;color:#3c5147;font-size:20px;font-weight:500}
+/* method cards */
+.mcard{position:absolute;left:40px;width:600px;height:150px;background:#fff;border-radius:16px;-webkit-box-shadow:0 6px 16px rgba(24,42,32,.07);box-shadow:0 6px 16px rgba(24,42,32,.07);border:1.5px solid #edf0ec}
+.mcard.active{border:2.5px solid #2e9e63;-webkit-box-shadow:0 10px 26px rgba(46,158,99,.16);box-shadow:0 10px 26px rgba(46,158,99,.16)}
+.mchip{position:absolute;left:24px;top:30px;width:54px;height:54px;border-radius:14px;background:#e7efe6;text-align:center;line-height:54px}
+.mcard.active .mchip{background:#e4f3ea}
+.mt{position:absolute;left:98px;top:30px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:24px}
+.md{position:absolute;left:98px;top:68px;right:96px;color:#3c5147;font-size:16.5px;line-height:1.34}
+.badge{position:absolute;right:22px;top:24px;height:28px;line-height:28px;padding:0 13px;border-radius:14px;background:#e4f3ea;color:#1f7d4c;font-family:'Barlow Semi Condensed';font-weight:700;font-size:13px;letter-spacing:.5px}
+.radio{position:absolute;right:26px;top:60px;width:28px;height:28px;border-radius:50%;border:2px solid #cdd6cf;background:#fff}
+.mcard.active .radio{border-color:#2e9e63}
+.mcard.active .radio:after{content:"";position:absolute;left:5px;top:5px;width:14px;height:14px;border-radius:50%;background:#2e9e63}
+.num{position:absolute;left:98px;top:62px;color:#9aa9a0;font-size:14px;font-weight:600}
+/* right panel */
+.panel{position:absolute;left:672px;top:260px;width:888px;height:720px;background:#fff;border-radius:18px;-webkit-box-shadow:0 7px 22px rgba(24,42,32,.09);box-shadow:0 7px 22px rgba(24,42,32,.09)}
+.ptitle{position:absolute;left:704px;top:292px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:26px}
+.psub{position:absolute;left:704px;top:330px;color:#6b7d72;font-size:16px}
+.pill-i{position:absolute;right:32px;top:296px;height:30px;line-height:30px;padding:0 14px;border-radius:15px;background:#e2edf6;color:#255d97;font-family:'Barlow Semi Condensed';font-weight:700;font-size:14px}
+/* steps */
+.step{position:absolute;left:704px;width:856px}
+.snum{position:absolute;left:0;width:36px;height:36px;border-radius:50%;background:#2f6b4a;color:#fff;font-family:'Barlow Semi Condensed';font-weight:700;font-size:18px;text-align:center;line-height:36px}
+.stt{position:absolute;left:54px;font-weight:600;font-size:18px}
+.sdd{position:absolute;left:54px;color:#5d6f64;font-size:16px}
+.code{font-family:'Barlow';background:#eef3ee;color:#234f37;border-radius:6px;padding:1px 7px;font-weight:600;font-size:15px}
+.divln{position:absolute;left:704px;width:856px;height:1px;background:#e9ede8}
+/* dropzone */
+.drop{position:absolute;left:704px;width:856px;height:118px;border:2px dashed #bcccc0;border-radius:14px;background:#f6f8f5}
+.dropic{position:absolute;left:38px;top:34px}
+.dropt{position:absolute;left:104px;top:32px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:21px;color:#234f37}
+.dropd{position:absolute;left:104px;top:66px;color:#6b7d72;font-size:15.5px}
+.btn-sec{position:absolute;right:30px;top:38px;height:42px;line-height:42px;padding:0 22px;border-radius:21px;border:1.5px solid #2f6b4a;color:#2f6b4a;font-family:'Barlow Semi Condensed';font-weight:700;font-size:17px;background:#fff}
+/* preview */
+.prev{position:absolute;left:704px;width:856px;height:64px;background:#e9f4ee;border-radius:12px}
+.pv-dot{position:absolute;left:18px;top:22px;width:20px;height:20px;border-radius:50%;background:#2e9e63;text-align:center;line-height:20px}
+.pv-t{position:absolute;left:50px;top:13px;font-weight:700;font-size:17px;color:#1f7d4c}
+.pv-s{position:absolute;left:50px;top:36px;color:#3c7d5a;font-size:14.5px}
+.hint{position:absolute;left:704px;width:856px;color:#9a6a14;font-size:15px}
+/* primary button */
+.btn{position:absolute;right:32px;height:54px;line-height:54px;padding:0 30px;border-radius:27px;background:#2f6b4a;color:#fff;font-family:'Barlow Semi Condensed';font-weight:700;font-size:20px}
+.btn-ghost{position:absolute;left:704px;height:54px;line-height:54px;color:#6b7d72;font-weight:600;font-size:17px}
+/* footer */
+.divider{position:absolute;left:40px;top:1052px;width:1520px;height:1px;background:#e4e8e3}
+.foot{position:absolute;left:40px;top:1068px;width:1520px;color:#7c8d83;font-size:15px;text-align:center}
+.foot b{color:#2f6b4a;font-weight:600}
+</style></head><body><div class="stage">
+
+<!-- top bar -->
+<div class="bar">
+  <svg style="position:absolute;left:36px;top:18px" width="38" height="44" viewBox="0 0 40 46"><g fill="#e3b24e"><path d="M20 2 C9 8 7 18 9 27 C11 36 16 42 20 44 C24 42 29 36 31 27 C33 18 31 8 20 2 Z"/></g><g stroke="#234f37" stroke-width="1.6" opacity="0.8" fill="none"><path d="M11 16 H29 M10 23 H30 M11 30 H29 M14 37 H26"/><path d="M20 4 V44"/></g></svg>
+  <div class="wm">Hopfen<small>Blick</small></div>
+  <div class="blabel">ERSTEINRICHTUNG</div>
+  <div class="avatar">FH</div>
+</div>
+
+<!-- stepper -->
+<svg style="position:absolute;left:520px;top:96px" width="560" height="58" viewBox="0 0 560 58">
+  <line x1="40" y1="22" x2="200" y2="22" stroke="#2e9e63" stroke-width="3"/>
+  <line x1="200" y1="22" x2="360" y2="22" stroke="#dde3dd" stroke-width="3"/>
+  <line x1="360" y1="22" x2="520" y2="22" stroke="#dde3dd" stroke-width="3"/>
+  <!-- 1 done -->
+  <circle cx="40" cy="22" r="16" fill="#2e9e63"/><path d="M33 22 l5 5 l9 -10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 2 active -->
+  <circle cx="200" cy="22" r="19" fill="none" stroke="#2e9e63" stroke-width="2.5" opacity="0.4"/><circle cx="200" cy="22" r="16" fill="#2f6b4a"/><text x="200" y="28" font-family="Barlow Semi Condensed" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+  <!-- 3 -->
+  <circle cx="360" cy="22" r="16" fill="#d6ddd6"/><text x="360" y="28" font-family="Barlow Semi Condensed" font-size="18" font-weight="700" fill="#7c8d83" text-anchor="middle">3</text>
+  <!-- 4 -->
+  <circle cx="520" cy="22" r="16" fill="#d6ddd6"/><text x="520" y="28" font-family="Barlow Semi Condensed" font-size="18" font-weight="700" fill="#7c8d83" text-anchor="middle">4</text>
+  <text x="40" y="52" font-family="Barlow" font-size="15" fill="#6b7d72" text-anchor="middle">Betrieb</text>
+  <text x="200" y="52" font-family="Barlow" font-size="15" font-weight="700" fill="#2f6b4a" text-anchor="middle">Felder</text>
+  <text x="360" y="52" font-family="Barlow" font-size="15" fill="#9aa9a0" text-anchor="middle">Sorten</text>
+  <text x="520" y="52" font-family="Barlow" font-size="15" fill="#9aa9a0" text-anchor="middle">Fertig</text>
+</svg>
+
+<!-- title -->
+<div class="h1">Ihre Schläge anlegen</div>
+<div class="sub">Am einfachsten: die Flächen importieren, die Sie für den Mehrfachantrag ohnehin schon pflegen.</div>
+
+<!-- method cards -->
+<!-- 1 active -->
+<div class="mcard active" style="top:260px">
+  <div class="mchip"><svg width="30" height="30" viewBox="0 0 30 30"><g fill="none" stroke="#1f7d4c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20a5 5 0 0 1 1-9 7 7 0 0 1 13 1 4.5 4.5 0 0 1-1 9"/><path d="M15 14v9M11 18l4-4 4 4"/></g></svg></div>
+  <div class="badge">EMPFOHLEN</div>
+  <div class="mt">iBALIS-Export hochladen</div>
+  <div class="md">Ihre Feldstücke aus dem Mehrfachantrag als Shape-ZIP. Exakt, aktuell, Ihre eigenen Daten.</div>
+  <div class="radio"></div>
+</div>
+<!-- 2 -->
+<div class="mcard" style="top:426px">
+  <div class="mchip"><svg width="30" height="30" viewBox="0 0 30 30"><g fill="none" stroke="#3c5147" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3c-4 0-7 3-7 7 0 5 7 12 7 12s7-7 7-12c0-4-3-7-7-7z"/><circle cx="15" cy="10" r="2.4"/><path d="M19 24c2 .5 3 1.3 3 2.2 0 1.3-3.1 2.3-7 2.3s-7-1-7-2.3c0-.9 1-1.7 3-2.2"/></g></svg></div>
+  <div class="mt">Auf der Karte antippen</div>
+  <div class="md">Schläge direkt auf dem Luftbild auswählen – ganz ohne Datei.</div>
+  <div class="radio"></div>
+</div>
+<!-- 3 -->
+<div class="mcard" style="top:592px">
+  <div class="mchip"><svg width="30" height="30" viewBox="0 0 30 30"><g fill="none" stroke="#3c5147" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h8l5 5v17H9z"/><path d="M17 4v5h5"/><path d="M15 13v8M12 18l3 3 3-3"/></g></svg></div>
+  <div class="mt">Aus Schlagkartei importieren</div>
+  <div class="md">Aus 365FarmNet, NEXT Farming, FARMDOK u.&nbsp;a. (Shape&nbsp;/&nbsp;ISO-XML).</div>
+  <div class="radio"></div>
+</div>
+<!-- 4 -->
+<div class="mcard" style="top:758px">
+  <div class="mchip"><svg width="30" height="30" viewBox="0 0 30 30"><g fill="none" stroke="#3c5147" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 25l2-6 12-12 4 4-12 12-6 2z"/><path d="M16 9l4 4"/></g></svg></div>
+  <div class="mt">Manuell zeichnen oder abfahren</div>
+  <div class="md">Neue Anlagen selbst einzeichnen oder per GPS umfahren.</div>
+  <div class="radio"></div>
+</div>
+
+<!-- right panel: iBALIS guide -->
+<div class="panel"></div>
+<div class="ptitle">So exportieren Sie aus iBALIS</div>
+<div class="psub">Einmalig – dauert rund zwei Minuten.</div>
+<div class="pill-i">UTM32 wird automatisch erkannt</div>
+
+<div class="step" style="top:364px">
+  <div class="snum">1</div>
+  <div class="stt" style="top:0">Anmelden</div>
+  <div class="sdd" style="top:26px">Bei iBALIS einloggen (Betriebsnummer + PIN) · <span class="code">stmelf.bayern.de/ibalis</span></div>
+</div>
+<div class="step" style="top:428px">
+  <div class="snum">2</div>
+  <div class="stt" style="top:0">Menü öffnen</div>
+  <div class="sdd" style="top:26px"><span class="code">Betriebsinformationen</span> → <span class="code">Datenexport</span></div>
+</div>
+<div class="step" style="top:492px">
+  <div class="snum">3</div>
+  <div class="stt" style="top:0">Export wählen</div>
+  <div class="sdd" style="top:26px"><span class="code">Eigene Flächendaten exportieren</span> → alle Feldstücke → <span class="code">Abfrage durchführen</span></div>
+</div>
+<div class="step" style="top:556px">
+  <div class="snum">4</div>
+  <div class="stt" style="top:0">ZIP herunterladen</div>
+  <div class="sdd" style="top:26px"><span class="code">Ergebnisse</span> → <span class="code">ZIP</span> · diese Datei dann hier hochladen</div>
+</div>
+
+<div class="divln" style="top:632px"></div>
+
+<!-- dropzone -->
+<div class="drop" style="top:656px">
+  <div class="dropic"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="23" fill="#eaf3ee"/><g fill="none" stroke="#2f6b4a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 30a6 6 0 0 1 1.4-11.4 8.5 8.5 0 0 1 16 1.2A5.5 5.5 0 0 1 32 30"/><path d="M24 22v11M19 27l5-5 5 5"/></g></svg></div>
+  <div class="dropt">Shape-ZIP hier ablegen</div>
+  <div class="dropd">Export aus iBALIS oder Ihrer Schlagkartei · .zip mit .shp/.dbf/.prj</div>
+  <div class="btn-sec">Datei auswählen</div>
+</div>
+
+<!-- preview after import -->
+<div class="prev" style="top:792px">
+  <div class="pv-dot"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6 l3 3 l5 -6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="pv-t">6 Schläge erkannt · 18,4 ha</div>
+  <div class="pv-s">Namen &amp; Flächengrößen aus dem Mehrfachantrag übernommen.</div>
+  <svg style="position:absolute;right:20px;top:14px" width="170" height="36" viewBox="0 0 170 36">
+    <g><rect x="0" y="4" width="24" height="28" rx="4" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.2"/><g stroke="#2f6b4a" stroke-width="1.1" opacity="0.5"><line x1="6" y1="9" x2="6" y2="27"/><line x1="12" y1="9" x2="12" y2="27"/><line x1="18" y1="9" x2="18" y2="27"/></g></g>
+    <g><rect x="30" y="4" width="24" height="28" rx="4" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.2"/><g stroke="#2f6b4a" stroke-width="1.1" opacity="0.5"><line x1="36" y1="9" x2="36" y2="27"/><line x1="42" y1="9" x2="42" y2="27"/><line x1="48" y1="9" x2="48" y2="27"/></g></g>
+    <g><rect x="60" y="4" width="24" height="28" rx="4" fill="#f3e3bd" stroke="#d9962a" stroke-width="1.6"/><g stroke="#b07f1f" stroke-width="1.1" opacity="0.55"><line x1="66" y1="9" x2="66" y2="27"/><line x1="72" y1="9" x2="72" y2="27"/><line x1="78" y1="9" x2="78" y2="27"/></g></g>
+    <g><rect x="90" y="4" width="24" height="28" rx="4" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.2"/><g stroke="#2f6b4a" stroke-width="1.1" opacity="0.5"><line x1="96" y1="9" x2="96" y2="27"/><line x1="102" y1="9" x2="102" y2="27"/><line x1="108" y1="9" x2="108" y2="27"/></g></g>
+    <g><rect x="120" y="4" width="24" height="28" rx="4" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.2"/><g stroke="#2f6b4a" stroke-width="1.1" opacity="0.5"><line x1="126" y1="9" x2="126" y2="27"/><line x1="132" y1="9" x2="132" y2="27"/><line x1="138" y1="9" x2="138" y2="27"/></g></g>
+    <g><rect x="150" y="4" width="20" height="28" rx="4" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.2"/><g stroke="#2f6b4a" stroke-width="1.1" opacity="0.5"><line x1="156" y1="9" x2="156" y2="27"/><line x1="162" y1="9" x2="162" y2="27"/></g></g>
+  </svg>
+</div>
+
+<!-- trim hint -->
+<div class="hint" style="top:872px"><svg style="vertical-align:-2px;margin-right:6px" width="17" height="17" viewBox="0 0 17 17"><circle cx="8.5" cy="8.5" r="7.5" fill="none" stroke="#d9962a" stroke-width="1.6"/><path d="M8.5 7.5v4M8.5 4.8v.2" stroke="#d9962a" stroke-width="1.8" stroke-linecap="round"/></svg>Tipp: für die Satelliten-Auswertung auf die Gerüstfläche zuschneiden (Vorgewende &amp; Wege ausnehmen) – im nächsten Schritt möglich.</div>
+
+<!-- buttons -->
+<div class="btn-ghost" style="top:906px">Später erledigen</div>
+<div class="btn" style="top:906px">Schläge übernehmen ›</div>
+
+<!-- footer -->
+<div class="divider"></div>
+<div class="foot"><b>HopfenBlick</b> — Konzept-Mockup · Feld-Import aus iBALIS / Mehrfachantrag · offene Feldstück-Geometrien (InVeKoS) &amp; Luftbild DOP40 als Auswahlhilfe</div>
+
+</div></body></html>

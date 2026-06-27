@@ -1,0 +1,274 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1600px;height:1140px;background:#f4f6f3;font-family:'Barlow',sans-serif;color:#182a20;-webkit-font-smoothing:antialiased}
+.stage{position:relative;width:1600px;height:1140px;overflow:hidden}
+.disp{font-family:'Barlow Semi Condensed',sans-serif}
+/* top bar */
+.bar{position:absolute;left:0;top:0;width:1600px;height:96px;background:-webkit-linear-gradient(left,#1c3f2c,#2f6b4a);background:linear-gradient(90deg,#1c3f2c,#2f6b4a)}
+.wm{position:absolute;left:90px;top:30px;color:#fff;font-weight:700;font-size:34px;letter-spacing:.5px}
+.wm small{font-weight:500;color:#bcd6c6;font-size:34px}
+.tag-loc{position:absolute;right:250px;top:38px;width:430px;text-align:right;color:#dcebe;color:#d9e7df;font-size:21px;font-weight:500}
+.wpill{position:absolute;right:120px;top:30px;height:36px;line-height:36px;padding:0 16px;background:rgba(255,255,255,.14);border-radius:20px;color:#fff;font-size:19px;font-weight:600}
+.avatar{position:absolute;right:40px;top:26px;width:44px;height:44px;border-radius:50%;background:#e3b24e;color:#234f37;font-weight:700;font-size:19px;text-align:center;line-height:44px}
+/* greeting */
+.hello{position:absolute;left:40px;top:120px;font-weight:700;font-size:42px}
+.subhead{position:absolute;left:42px;top:180px;color:#3c5147;font-size:21px;font-weight:500}
+.summary{position:absolute;left:735px;top:130px;width:265px;height:50px;background:#f9efd9;border:1px solid #ead9ad;border-radius:14px;color:#9a6a14;font-weight:600;font-size:20px;line-height:50px;text-align:center}
+.summary .d{display:inline-block;width:12px;height:12px;border-radius:50%;background:#d9962a;margin-right:9px;vertical-align:middle}
+/* cards */
+.card{position:absolute;width:470px;height:256px;background:#fff;border-radius:18px;-webkit-box-shadow:0 7px 20px rgba(24,42,32,.09);box-shadow:0 7px 20px rgba(24,42,32,.09);overflow:hidden}
+.spine{position:absolute;left:0;top:0;bottom:0;width:8px;border-top-left-radius:18px;border-bottom-left-radius:18px}
+.chip{position:absolute;left:30px;top:24px;width:46px;height:46px;border-radius:13px;text-align:center;line-height:46px}
+.ey{position:absolute;left:90px;top:28px;font-family:'Barlow Semi Condensed';font-weight:600;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#6b7d72}
+.sdot{position:absolute;right:26px;top:34px;width:14px;height:14px;border-radius:50%}
+.stat{position:absolute;left:30px;top:78px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:38px;line-height:1}
+.rec{position:absolute;left:30px;top:122px;right:26px;color:#3c5147;font-size:19px;line-height:1.32}
+.src{position:absolute;right:26px;bottom:18px;color:#93a399;font-size:13.5px;font-weight:500}
+.dataz{position:absolute;left:30px;bottom:20px}
+/* status palettes */
+.good .spine{background:#2e9e63}.good .stat{color:#1f7d4c}.good .sdot{background:#2e9e63}.good .chip{background:#e4f3ea}
+.warn .spine{background:#d9962a}.warn .stat{color:#a9701a}.warn .sdot{background:#d9962a}.warn .chip{background:#f9efd9}
+.alert .spine{background:#cf4f3c}.alert .stat{color:#b23e2c}.alert .sdot{background:#cf4f3c}.alert .chip{background:#f9e2dd}
+.info .spine{background:#2f6fb0}.info .stat{color:#255d97}.info .sdot{background:#2f6fb0}.info .chip{background:#e2edf6}
+/* map panel */
+.panel{position:absolute;left:1040px;top:232px;width:520px;height:808px;background:#fff;border-radius:18px;-webkit-box-shadow:0 7px 20px rgba(24,42,32,.09);box-shadow:0 7px 20px rgba(24,42,32,.09);overflow:hidden}
+.ptitle{position:absolute;left:24px;top:22px;font-family:'Barlow Semi Condensed';font-weight:700;font-size:25px}
+.toggles{position:absolute;right:20px;top:26px}
+.tg{display:inline-block;height:30px;line-height:30px;padding:0 13px;border-radius:16px;font-size:14px;font-weight:600;margin-left:7px}
+.tg.on{background:#e4f3ea;color:#1f7d4c}.tg.off{background:#eef1ec;color:#6b7d72}
+.fc{position:absolute;left:24px;top:584px;width:472px}
+.fcd{display:inline-block;width:64px;text-align:center;vertical-align:top}
+.fcday{font-weight:700;font-size:16px;color:#3c5147}
+.fchi{font-weight:700;font-size:18px;color:#182a20}
+.fclo{font-size:15px;color:#93a399}
+.fcr{font-size:13px;color:#2f6fb0;font-weight:600}
+.attrib{position:absolute;left:24px;bottom:14px;color:#9aa9a0;font-size:13px}
+/* footer */
+.divider{position:absolute;left:40px;top:1058px;width:1520px;height:1px;background:#e4e8e3}
+.foot{position:absolute;left:40px;top:1074px;width:1520px;color:#7c8d83;font-size:15.5px;text-align:center}
+.foot b{color:#2f6b4a;font-weight:600}
+</style></head><body><div class="stage">
+
+<!-- ===== TOP BAR ===== -->
+<div class="bar">
+  <svg style="position:absolute;right:0;top:0" width="700" height="96" viewBox="0 0 700 96">
+    <g stroke="#e3b24e" stroke-width="2" opacity="0.16">
+      <line x1="60" y1="0" x2="60" y2="96"/><line x1="120" y1="0" x2="120" y2="96"/><line x1="180" y1="0" x2="180" y2="96"/>
+      <line x1="240" y1="0" x2="240" y2="96"/><line x1="300" y1="0" x2="300" y2="96"/><line x1="360" y1="0" x2="360" y2="96"/>
+      <line x1="420" y1="0" x2="420" y2="96"/><line x1="480" y1="0" x2="480" y2="96"/><line x1="540" y1="0" x2="540" y2="96"/>
+      <line x1="600" y1="0" x2="600" y2="96"/><line x1="660" y1="0" x2="660" y2="96"/></g>
+  </svg>
+  <!-- hop-cone logo mark -->
+  <svg style="position:absolute;left:38px;top:26px" width="40" height="46" viewBox="0 0 40 46">
+    <g fill="#e3b24e"><path d="M20 2 C9 8 7 18 9 27 C11 36 16 42 20 44 C24 42 29 36 31 27 C33 18 31 8 20 2 Z"/></g>
+    <g stroke="#234f37" stroke-width="1.6" opacity="0.8" fill="none">
+      <path d="M11 16 H29 M10 23 H30 M11 30 H29 M14 37 H26"/><path d="M20 4 V44"/></g>
+  </svg>
+  <div class="wm">Hopfen<small>Blick</small></div>
+  <div class="tag-loc">Mittwoch · 12. August 2026 · Au i. d. Hallertau</div>
+  <div class="wpill">24° · klar</div>
+  <div class="avatar">FH</div>
+</div>
+
+<!-- ===== GREETING ===== -->
+<div class="hello">Guten Abend, Familie Huber</div>
+<div class="subhead">Stand 20:00 Uhr · 6 Schläge · 18,4 ha · automatischer Abend-Check abgeschlossen</div>
+<div class="summary"><span class="d"></span>2 Hinweise für morgen</div>
+
+<!-- ===== CARD 1: WETTER & WARNUNGEN (amber) ===== -->
+<div class="card warn" style="left:40px;top:232px">
+  <div class="spine"></div>
+  <div class="chip"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="11" r="5"/><path d="M10 2v2M10 18v2M2 11h2M17 11h-1M4.5 5.5l1.4 1.4M15.5 5.5l-1.4 1.4"/><path d="M13 19h7M11 22h6" stroke="#d9962a"/></g></svg></div>
+  <div class="ey">Wetter &amp; Warnungen</div>
+  <div class="sdot"></div>
+  <div class="stat">Gewitter möglich</div>
+  <div class="rec">Heute 31° · morgen ab 16 Uhr Gewitterneigung,<br>kleinräumig Hagel nicht ausgeschlossen.</div>
+  <div class="dataz"><svg width="270" height="58" viewBox="0 0 270 58">
+    <polyline points="2,40 28,34 54,22 80,16 106,12 132,18 158,26 184,30 210,22 236,34 262,42" fill="none" stroke="#d9962a" stroke-width="2.5"/>
+    <circle cx="106" cy="12" r="3.5" fill="#d9962a"/>
+    <g transform="translate(214,4)" opacity="0.95"><path d="M6 8 l-5 9 h4 l-3 8 8-11 h-4 z" fill="#cf4f3c"/></g>
+  </svg></div>
+  <div class="src">DWD · Open-Meteo</div>
+</div>
+
+<!-- ===== CARD 2: SPRITZFENSTER (good) ===== -->
+<div class="card good" style="left:540px;top:232px">
+  <div class="spine"></div>
+  <div class="chip"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#1f7d4c" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h5v4H9z"/><path d="M11.5 7v3M11.5 10c0 0-4 1-4 5v6h8v-6c0-4-4-5-4-5z"/><path d="M17 6l4-1M18 9l4 0M18 12l3 1" /></g></svg></div>
+  <div class="ey">Spritzfenster</div>
+  <div class="sdot"></div>
+  <div class="stat">Morgen 06–10 Uhr</div>
+  <div class="rec">Wind 6 km/h · trocken · ΔT günstig.<br>Gutes Fenster für Pflanzenschutz.</div>
+  <div class="dataz"><svg width="300" height="58" viewBox="0 0 300 58">
+    <line x1="0" y1="46" x2="290" y2="46" stroke="#e4e8e3" stroke-width="1"/>
+    <rect x="70" y="14" width="48" height="32" rx="4" fill="#d6efdf"/>
+    <g fill="#cdd6cf">
+      <rect x="2" y="34" width="6" height="12" rx="2"/><rect x="14" y="32" width="6" height="14" rx="2"/><rect x="26" y="30" width="6" height="16" rx="2"/><rect x="38" y="33" width="6" height="13" rx="2"/><rect x="50" y="36" width="6" height="10" rx="2"/></g>
+    <g fill="#2e9e63"><rect x="74" y="22" width="6" height="24" rx="2"/><rect x="86" y="20" width="6" height="26" rx="2"/><rect x="98" y="22" width="6" height="24" rx="2"/><rect x="110" y="24" width="6" height="22" rx="2"/></g>
+    <g fill="#cdd6cf"><rect x="126" y="30" width="6" height="16" rx="2"/><rect x="138" y="28" width="6" height="18" rx="2"/><rect x="150" y="26" width="6" height="20" rx="2"/><rect x="162" y="30" width="6" height="16" rx="2"/><rect x="174" y="34" width="6" height="12" rx="2"/><rect x="186" y="33" width="6" height="13" rx="2"/></g>
+    <text x="74" y="56" font-family="Barlow" font-size="12" fill="#1f7d4c" font-weight="700">06</text>
+    <text x="100" y="56" font-family="Barlow" font-size="12" fill="#1f7d4c" font-weight="700">10 Uhr</text>
+  </svg></div>
+  <div class="src">Open-Meteo</div>
+</div>
+
+<!-- ===== CARD 3: PERONOSPORA (amber) ===== -->
+<div class="card warn" style="left:40px;top:508px">
+  <div class="spine"></div>
+  <div class="chip"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><path d="M13 4c-5 4-7 8-7 12a7 7 0 0 0 14 0c0-4-2-8-7-12z"/><path d="M13 9v9M9.5 13l3.5 2 3.5-2"/></g></svg></div>
+  <div class="ey">Krankheitsdruck · Peronospora</div>
+  <div class="sdot"></div>
+  <div class="stat">Druck steigend</div>
+  <div class="rec">Sporenflug erhöht – Behandlung prüfen.<br>LfL-Warndienst (Hüll) beachten.</div>
+  <div class="dataz"><svg width="250" height="58" viewBox="0 0 250 58">
+    <line x1="0" y1="16" x2="150" y2="16" stroke="#cf4f3c" stroke-width="1.4" stroke-dasharray="4 4"/>
+    <text x="156" y="20" font-family="Barlow" font-size="11" fill="#b23e2c" font-weight="600">Schwelle</text>
+    <g><rect x="6" y="38" width="20" height="10" rx="2" fill="#e7d3a3"/><rect x="40" y="32" width="20" height="16" rx="2" fill="#e7d3a3"/><rect x="74" y="26" width="20" height="22" rx="2" fill="#e0b96a"/><rect x="108" y="12" width="20" height="36" rx="2" fill="#d9962a"/></g>
+    <g font-family="Barlow" font-size="11" fill="#93a399"><text x="9" y="56">Mo</text><text x="43" y="56">Di</text><text x="77" y="56">Mi</text><text x="111" y="56">Do</text></g>
+  </svg></div>
+  <div class="src">LfL Bayern · Hopfen</div>
+</div>
+
+<!-- ===== CARD 4: BEWÄSSERUNG (amber) ===== -->
+<div class="card warn" style="left:540px;top:508px">
+  <div class="spine"></div>
+  <div class="chip"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><path d="M13 3c-4 5-6 8-6 11a6 6 0 0 0 12 0c0-3-2-6-6-11z"/><path d="M5 22h16" stroke="#8a6a4f"/></g></svg></div>
+  <div class="ey">Bewässerung · Wasserbilanz</div>
+  <div class="sdot"></div>
+  <div class="stat">Defizit −18 mm</div>
+  <div class="rec">7 Tage trocken · Boden trocknet ab.<br>Schlag 3 (Sandlinse) zuerst prüfen.</div>
+  <div class="dataz"><svg width="300" height="58" viewBox="0 0 300 58">
+    <text x="0" y="14" font-family="Barlow" font-size="13" fill="#3c5147" font-weight="600">Bodenfeuchte</text>
+    <text x="262" y="14" font-family="Barlow" font-size="13" fill="#a9701a" font-weight="700">42%</text>
+    <rect x="0" y="20" width="290" height="11" rx="5.5" fill="#eef1ec"/>
+    <rect x="0" y="20" width="122" height="11" rx="5.5" fill="#d9962a"/>
+    <text x="0" y="50" font-family="Barlow" font-size="13" fill="#93a399">ET₀ 7 T: 28 mm</text>
+    <text x="118" y="50" font-family="Barlow" font-size="13" fill="#93a399">Regen 7 T: 10 mm</text>
+  </svg></div>
+  <div class="src">Open-Meteo · RADOLAN</div>
+</div>
+
+<!-- ===== CARD 5: FELD-CHECK SATELLIT (amber) ===== -->
+<div class="card warn" style="left:40px;top:784px">
+  <div class="spine"></div>
+  <div class="chip"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#a9701a" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="6" width="18" height="14" rx="2"/><path d="M4 11h18M10 6v14"/><circle cx="16" cy="15" r="2.4" fill="#d9962a" stroke="none"/></g></svg></div>
+  <div class="ey">Feld-Check · Satellit</div>
+  <div class="sdot"></div>
+  <div class="stat">1 Schlag prüfen</div>
+  <div class="rec">„Attenhofen West“ zeigt schwächere<br>Vitalität (Sentinel-2, 11. Aug).</div>
+  <div class="dataz"><svg width="300" height="56" viewBox="0 0 300 56">
+    <g>
+      <rect x="2" y="14" width="40" height="30" rx="5" fill="#d6efdf"/>
+      <rect x="50" y="14" width="40" height="30" rx="5" fill="#d6efdf"/>
+      <rect x="98" y="14" width="40" height="30" rx="5" fill="#f3d9a0" stroke="#d9962a" stroke-width="2"/>
+      <rect x="146" y="14" width="40" height="30" rx="5" fill="#d6efdf"/>
+      <rect x="194" y="14" width="40" height="30" rx="5" fill="#d6efdf"/>
+      <rect x="242" y="14" width="40" height="30" rx="5" fill="#d6efdf"/>
+    </g>
+    <text x="100" y="54" font-family="Barlow" font-size="12" fill="#a9701a" font-weight="700">Attenhofen W.</text>
+  </svg></div>
+  <div class="src">Sentinel-1/2 · GEE</div>
+</div>
+
+<!-- ===== CARD 6: WACHSTUM & ERNTE (info) ===== -->
+<div class="card info" style="left:540px;top:784px">
+  <div class="spine"></div>
+  <div class="chip"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#255d97" stroke-width="1.8" stroke-linecap="round"><path d="M13 22V9"/><path d="M13 13c-3 0-6-2-6-6 3 0 6 1 6 6zM13 11c2.5 0 5-1.5 5-5-2.5 0-5 1-5 5z"/></g></svg></div>
+  <div class="ey">Wachstum &amp; Erntefenster</div>
+  <div class="sdot"></div>
+  <div class="stat">BBCH 75 · Dolden</div>
+  <div class="rec">Entwicklung im Soll für die Sorte Herkules.<br>Voraussichtliche Ernte in ~24 Tagen.</div>
+  <div class="dataz"><svg width="300" height="56" viewBox="0 0 300 56">
+    <rect x="0" y="14" width="252" height="10" rx="5" fill="#eef1ec"/>
+    <rect x="0" y="14" width="176" height="10" rx="5" fill="#2f6fb0"/>
+    <circle cx="176" cy="19" r="8" fill="#fff" stroke="#2f6fb0" stroke-width="3"/>
+    <text x="0" y="46" font-family="Barlow" font-size="12.5" fill="#93a399">Austrieb</text>
+    <text x="190" y="46" font-family="Barlow" font-size="12.5" fill="#255d97" font-weight="700">Ernte ~5. Sep · GTS 1.180</text>
+  </svg></div>
+  <div class="src">Open-Meteo · DWD</div>
+</div>
+
+<!-- ===== MAP PANEL ===== -->
+<div class="panel">
+  <div class="ptitle">Meine Schläge</div>
+  <div class="toggles"><span class="tg on">Radar</span><span class="tg on">Satellit</span><span class="tg off">Schutzgeb.</span></div>
+  <svg style="position:absolute;left:24px;top:64px" width="472" height="498" viewBox="0 0 472 498">
+    <defs>
+      <radialGradient id="rad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2f6fb0" stop-opacity="0.42"/><stop offset="70%" stop-color="#2f6fb0" stop-opacity="0.18"/><stop offset="100%" stop-color="#2f6fb0" stop-opacity="0"/></radialGradient>
+      <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#2f6fb0" stroke-width="1.4" opacity="0.5"/></pattern>
+    </defs>
+    <!-- base -->
+    <rect x="0" y="0" width="472" height="498" rx="12" fill="#eef2ec"/>
+    <rect x="0" y="0" width="472" height="498" rx="12" fill="#e7efe6"/>
+    <!-- woodland blobs -->
+    <path d="M20 40 q40 -20 80 0 q20 40 -10 70 q-50 20 -80 -10 q-15 -40 10 -60z" fill="#dce8da"/>
+    <path d="M360 360 q50 -10 80 20 q10 50 -30 70 q-50 10 -70 -25 q-5 -45 20 -65z" fill="#dce8da"/>
+    <!-- river -->
+    <path d="M-5 120 C90 150 120 230 240 250 S420 330 480 300" fill="none" stroke="#cfe0ef" stroke-width="12" stroke-linecap="round"/>
+    <path d="M-5 120 C90 150 120 230 240 250 S420 330 480 300" fill="none" stroke="#bcd5ea" stroke-width="3"/>
+    <!-- roads -->
+    <path d="M40 470 C140 380 150 250 130 80" fill="none" stroke="#ffffff" stroke-width="7"/>
+    <path d="M40 470 C140 380 150 250 130 80" fill="none" stroke="#e7d9b8" stroke-width="2"/>
+    <path d="M150 300 H460" fill="none" stroke="#ffffff" stroke-width="6"/>
+    <path d="M150 300 H460" fill="none" stroke="#e7d9b8" stroke-width="1.6"/>
+    <!-- water protection zone (hatched) -->
+    <path d="M300 150 q60 -10 95 25 q12 55 -28 80 q-58 8 -78 -32 q-8 -50 11 -73z" fill="url(#hatch)" stroke="#2f6fb0" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.85"/>
+    <!-- hop parcels with trellis rows -->
+    <!-- p1 -->
+    <g><rect x="60" y="150" width="92" height="64" rx="7" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.5"/>
+      <g stroke="#2f6b4a" stroke-width="1.5" opacity="0.55"><line x1="70" y1="158" x2="70" y2="206"/><line x1="82" y1="158" x2="82" y2="206"/><line x1="94" y1="158" x2="94" y2="206"/><line x1="106" y1="158" x2="106" y2="206"/><line x1="118" y1="158" x2="118" y2="206"/><line x1="130" y1="158" x2="130" y2="206"/><line x1="142" y1="158" x2="142" y2="206"/></g></g>
+    <!-- p2 -->
+    <g><rect x="170" y="120" width="74" height="58" rx="7" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.5"/>
+      <g stroke="#2f6b4a" stroke-width="1.5" opacity="0.55"><line x1="180" y1="128" x2="180" y2="170"/><line x1="192" y1="128" x2="192" y2="170"/><line x1="204" y1="128" x2="204" y2="170"/><line x1="216" y1="128" x2="216" y2="170"/><line x1="228" y1="128" x2="228" y2="170"/><line x1="240" y1="128" x2="240" y2="170"/></g></g>
+    <!-- p3 -->
+    <g><rect x="95" y="300" width="100" height="70" rx="7" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.5"/>
+      <g stroke="#2f6b4a" stroke-width="1.5" opacity="0.55"><line x1="105" y1="308" x2="105" y2="362"/><line x1="117" y1="308" x2="117" y2="362"/><line x1="129" y1="308" x2="129" y2="362"/><line x1="141" y1="308" x2="141" y2="362"/><line x1="153" y1="308" x2="153" y2="362"/><line x1="165" y1="308" x2="165" y2="362"/><line x1="177" y1="308" x2="177" y2="362"/><line x1="189" y1="308" x2="189" y2="362"/></g></g>
+    <!-- p4 -->
+    <g><rect x="250" y="330" width="80" height="58" rx="7" fill="#cfe6d6" stroke="#9cc4ab" stroke-width="1.5"/>
+      <g stroke="#2f6b4a" stroke-width="1.5" opacity="0.55"><line x1="260" y1="338" x2="260" y2="380"/><line x1="272" y1="338" x2="272" y2="380"/><line x1="284" y1="338" x2="284" y2="380"/><line x1="296" y1="338" x2="296" y2="380"/><line x1="308" y1="338" x2="308" y2="380"/><line x1="320" y1="338" x2="320" y2="380"/></g></g>
+    <!-- p5 highlighted (Attenhofen West) -->
+    <g><rect x="285" y="200" width="86" height="62" rx="7" fill="#f3e3bd" stroke="#d9962a" stroke-width="2.6"/>
+      <g stroke="#b07f1f" stroke-width="1.5" opacity="0.6"><line x1="295" y1="208" x2="295" y2="254"/><line x1="307" y1="208" x2="307" y2="254"/><line x1="319" y1="208" x2="319" y2="254"/><line x1="331" y1="208" x2="331" y2="254"/><line x1="343" y1="208" x2="343" y2="254"/><line x1="355" y1="208" x2="355" y2="254"/></g></g>
+    <!-- radar blob -->
+    <ellipse cx="395" cy="95" rx="95" ry="70" fill="url(#rad)"/>
+    <!-- pin on highlighted parcel -->
+    <g transform="translate(328,176)"><path d="M0 22 C-9 8 -9 0 0 -6 C9 0 9 8 0 22 Z" fill="#cf4f3c"/><circle cx="0" cy="3" r="4" fill="#fff"/></g>
+    <!-- village marker + label -->
+    <circle cx="150" cy="250" r="4.5" fill="#234f37"/>
+    <text x="160" y="255" font-family="Barlow" font-size="13" font-weight="600" fill="#2f4a3a">Au i.d.Hallertau</text>
+    <!-- parcel label chip -->
+    <g transform="translate(252,166)"><rect x="0" y="0" width="118" height="20" rx="10" fill="#ffffff" opacity="0.92"/><text x="9" y="14" font-family="Barlow" font-size="11.5" font-weight="700" fill="#a9701a">Attenhofen West · 3,2 ha</text></g>
+    <text x="10" y="490" font-family="Barlow" font-size="11" fill="#8aa090">© OpenMapTiles · Sentinel · DWD</text>
+  </svg>
+  <!-- 7 day forecast -->
+  <div class="fc">
+    <div class="fcd"><div class="fcday">Do</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><circle cx="17" cy="15" r="8" fill="none" stroke="#d9962a" stroke-width="2"/><g stroke="#d9962a" stroke-width="2" stroke-linecap="round"><path d="M17 3v3M17 27v-3M5 15h3M29 15h-3"/></g></svg>
+      <div class="fchi">29°</div><div class="fclo">15°</div><div class="fcr">5%</div></div>
+    <div class="fcd"><div class="fcday">Fr</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><path d="M9 19a5 5 0 0 1 1-9 7 7 0 0 1 13 1 4 4 0 0 1-1 8z" fill="#cdd6cf"/><g stroke="#2f6fb0" stroke-width="2" stroke-linecap="round"><path d="M12 24l-1 3M18 24l-1 3M24 24l-1 3"/></g></svg>
+      <div class="fchi">24°</div><div class="fclo">14°</div><div class="fcr">70%</div></div>
+    <div class="fcd"><div class="fcday">Sa</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><path d="M9 20a5 5 0 0 1 1-9 7 7 0 0 1 13 1 4 4 0 0 1-1 8z" fill="#bcc6bf"/></svg>
+      <div class="fchi">22°</div><div class="fclo">13°</div><div class="fcr">30%</div></div>
+    <div class="fcd"><div class="fcday">So</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><circle cx="17" cy="15" r="8" fill="none" stroke="#d9962a" stroke-width="2"/><g stroke="#d9962a" stroke-width="2" stroke-linecap="round"><path d="M17 3v3M17 27v-3M5 15h3M29 15h-3"/></g></svg>
+      <div class="fchi">26°</div><div class="fclo">12°</div><div class="fcr">10%</div></div>
+    <div class="fcd"><div class="fcday">Mo</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><circle cx="17" cy="15" r="8" fill="none" stroke="#d9962a" stroke-width="2"/><g stroke="#d9962a" stroke-width="2" stroke-linecap="round"><path d="M17 3v3M5 15h3M29 15h-3"/></g></svg>
+      <div class="fchi">28°</div><div class="fclo">14°</div><div class="fcr">5%</div></div>
+    <div class="fcd"><div class="fcday">Di</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><path d="M9 19a5 5 0 0 1 1-9 7 7 0 0 1 13 1 4 4 0 0 1-1 8z" fill="#cdd6cf"/></svg>
+      <div class="fchi">25°</div><div class="fclo">15°</div><div class="fcr">40%</div></div>
+    <div class="fcd"><div class="fcday">Mi</div>
+      <svg width="34" height="30" viewBox="0 0 34 30"><circle cx="17" cy="15" r="8" fill="none" stroke="#d9962a" stroke-width="2"/><g stroke="#d9962a" stroke-width="2" stroke-linecap="round"><path d="M17 3v3M5 15h3M29 15h-3"/></g></svg>
+      <div class="fchi">30°</div><div class="fclo">16°</div><div class="fcr">5%</div></div>
+  </div>
+  <div class="attrib">7-Tage-Vorhersage · Open-Meteo (ICON-D2)</div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="divider"></div>
+<div class="foot"><b>HopfenBlick</b> — Konzept-Mockup · Datenquellen: DWD Open Data, Open-Meteo, LfL Bayern (Agrarmeteorologie &amp; Peronospora-Warndienst), Copernicus/Sentinel, Bayerische Vermessungsverwaltung · Kartenbasis OpenMapTiles</div>
+
+</div></body></html>
