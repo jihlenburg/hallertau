@@ -65,6 +65,12 @@ CLI-Header/-Footer und Footer-HTML — deshalb werden Seitenzahlen **nachträgli
   offene **InVeKoS-Feldstückkarte**; **nicht** das Liegenschaftskataster
   (ALKIS-Vektor ist in Bayern kostenpflichtig).
 
+## Projektpflege — LOGBOOK.md & TODO.md (bitte führen)
+- `LOGBOOK.md` — chronologisches Arbeitslog (neueste Einträge oben): je Eintrag
+  Datum · Was · Warum · Ergebnis/Commit. Nach jedem nennenswerten Schritt ergänzen.
+- `TODO.md` — offene Punkte/nächste Schritte (`[ ]`/`[~]`/`[x]`). Erledigtes
+  abhaken und mit Datum/Commit ins `LOGBOOK.md` übernehmen.
+
 ## Sinnvolle nächste Schritte (Ideen)
 - Mobile Onboarding-Variante; „auf Gerüstfläche zuschneiden"-Screen.
 - Vom Mockup zum Prototyp: echtes **MapLibre**-Frontend + kleine API, die
