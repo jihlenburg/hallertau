@@ -5,6 +5,31 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · App auf doldenblick-01 deployt (https://doldenblick.de live)
+**Was:** Den Vite-Build (`app/dist/`) auf den Hetzner-Server ausgerollt und die Platzhalterseite
+ersetzt. Reproduzierbar über neues `infra/deploy.sh` + `infra/nginx-doldenblick.conf`.
+- **Statisch:** `npm run build` → `rsync --delete app/dist/ → /var/www/html`; Backups unter
+  `/root/webroot-backup.*` und `/root/nginx-default.bak.*`; Eigentümer auf `root:root` normalisiert.
+- **Proxy:** nginx-Snippet `/etc/nginx/snippets/doldenblick-app.conf` (Reverse-Proxy
+  `/api/brightsky/` → `api.brightsky.dev`) per einzeiligem `include` in den 443-Server-Block
+  (certbot-verwaltet) eingebunden — ersetzt den Vite-Dev-Proxy. `nginx -t` + Reload mit Rollback.
+- **Architektur:** rein statische SPA, kein Backend; Open-Meteo + Karten browser-direkt (CORS),
+  nur Bright Sky über den Proxy. Keine Secrets/API-Keys nötig.
+
+**Warum:** „Deploy please" — vom Prototyp auf die echte, öffentlich erreichbare Domain.
+
+**Verifikation:** `https://doldenblick.de` → HTTP 200, Titel „DoldenBlick — Übersicht";
+gehashte JS/CSS-Assets 200; `/api/brightsky/alerts` liefert echtes DWD-Alert-JSON (HTTP 200);
+80→443-Redirect intakt; Overview im Browser gerendert mit Live-Daten (0 Konsolenfehler),
+inkl. amtlicher DWD-Warnung über den neuen Proxy. `infra/deploy.sh` syntaxgeprüft.
+
+**Offen:** Auto-Deploy/CI optional; Monitoring/Alerting steht noch (s. TODO „Infrastruktur").
+docs/infrastructure.md + TODO.md nachgezogen.
+
+**Verweise:** `infra/deploy.sh`, `infra/nginx-doldenblick.conf`, `docs/infrastructure.md`.
+
+---
+
 ## 2026-06-27 · Rebrand „HopfenBlick" → „DoldenBlick" (alle Artefakte, Deliverables neu gerendert)
 **Was:** Produktname durchgängig umgestellt.
 - **Quelltext/Doku/Mockups/Report:** Marken-Token in allen forward-facing Artefakten ersetzt

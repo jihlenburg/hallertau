@@ -33,7 +33,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 ### Technik / Qualität
 - [x] Bright Sky im **Prod-Build**: `server.mjs` (`npm run serve`) liefert `dist/` + Proxy;
       Cloudflare-Worker-Snippet im `app/README`. — 2026-06-27 (Deployment noch offen, s. u.)
-- [ ] Prod-Proxy tatsächlich **deployen** (Cloudflare/Netlify/Vercel) — Scaffold vorhanden.
+- [x] Prod-Proxy **deployt**: nginx Reverse-Proxy `/api/brightsky` auf doldenblick-01
+      (`infra/deploy.sh` + `infra/nginx-doldenblick.conf`). — 2026-06-28
 - [ ] Optional: MapTiler-Key per `.env` als höherwertige Basemap-Alternative.
 - [ ] Bundle-Größe senken (Code-Splitting; maplibre/shpjs dynamisch importieren).
 - [~] Mehr Tests: `weather` (Frost/Quelle) ✓, `grid` ✓, `cards`/`balanceLabel` ✓,
@@ -61,8 +62,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [x] **Backups** des Servers aktiviert (Hetzner, täglich, 7 Slots, Fenster 18–22 UTC, +20%). — 2026-06-27
 - [ ] **Monitoring/Alerting** (Uptime, Zertifikatsablauf, Plattenplatz).
 - [ ] `doldenblick.info` registrieren (zurückgestellt) bzw. später Redirect auf `.de`.
-- [ ] Deployment der echten App (`app/`) auf den Server statt Platzhalterseite;
-      Prod-Proxy `/api/brightsky` hier betreiben (s. „Technik/Qualität").
+- [x] Deployment der echten App (`app/`) auf doldenblick-01 statt Platzhalter; Prod-Proxy
+      `/api/brightsky` via nginx; `https://doldenblick.de` live verifiziert. — 2026-06-28
 
 ## Produkt / Konzept
 - [ ] Vom Prototyp zur kleinen API mit Caching (Open-Meteo / Bright Sky).

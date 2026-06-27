@@ -20,10 +20,22 @@
 | IPv6 | `2a01:4f8:1c18:6e05::1` (/64-Block: `2a01:4f8:1c18:6e05::/64`) |
 | SSH | `ssh root@91.98.203.240` mit `~/.ssh/id_ed25519` — **nur Key**, kein Passwort |
 | SSH-Key in Projekt | id `114361592` (`jihlenburg@macbook-pro-m1`) |
-| Webserver | nginx 1.24, Platzhalterseite „DoldenBlick – bald verfügbar" |
+| Webserver | nginx 1.24; serviert die **DoldenBlick-App** (Vite-Build aus `app/dist/`) + Bright-Sky-Reverse-Proxy |
 
 Erstinstallation via **cloud-init** (`infra/cloud-init.yml`): nginx + Platzhalter, ufw,
-Passwort-Login aus.
+Passwort-Login aus. Die Platzhalterseite wurde durch die App ersetzt (s. Deployment).
+
+## Deployment der App
+- **Skript:** `infra/deploy.sh [user@host]` (Default `root@91.98.203.240`) — baut die App,
+  spielt `app/dist/` per `rsync --delete` nach `/var/www/html`, legt das nginx-Snippet
+  `infra/nginx-doldenblick.conf` als `/etc/nginx/snippets/doldenblick-app.conf` ab und bindet
+  es per `include` in den 443-Server-Block ein; `nginx -t` + Reload mit Rollback. Idempotent,
+  mit Backups (`/root/webroot-backup.*`, `/root/nginx-default.bak.*`).
+- **Architektur:** rein statische SPA (kein Backend, State im `localStorage`). Open-Meteo und
+  die Kartendienste laufen browser-direkt (CORS, HTTPS); **nur Bright Sky** (DWD-Warnungen) geht
+  über den nginx-Proxy `/api/brightsky/` → `https://api.brightsky.dev/`. Keine Secrets/API-Keys.
+- **Verifiziert (2026-06-28):** `https://doldenblick.de` liefert die App (HTTP 200), Assets laden,
+  `/api/brightsky/alerts` liefert JSON, 80→443-Redirect intakt; Overview rendert mit Live-Daten.
 
 ## DNS — Zone `doldenblick.de`
 | | |
@@ -68,3 +80,4 @@ Die alte `dns.hetzner.com`-API ist abgelöst (301 → console.hetzner.com).
 2. DNS-Zone + A/AAAA/CAA setzen (`/v1/zones/.../rrsets`), Delegation in der Console prüfen.
 3. Härtung + HTTPS: `ssh root@<ip> 'bash -s' < infra/harden.sh`
    (LE-E-Mail/Domains ggf. im Skript anpassen).
+4. App ausrollen: `./infra/deploy.sh root@<ip>` (baut + deployt + Proxy + Reload).
