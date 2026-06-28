@@ -23,7 +23,7 @@ export interface OpenMeteoData {
 /**
  * Holt Vorhersage inkl. ET0 (FAO-56) für einen Standort.
  * Open-Meteo ist CORS-fähig — kein Backend nötig.
- * past_days=7 liefert die Historie für die Wasserbilanz.
+ * past_days=60 liefert die Historie für den Warm-up der FAO-56-Wasserbilanz.
  */
 export async function fetchOpenMeteo(lat: number, lon: number, signal?: AbortSignal): Promise<OpenMeteoData> {
   const params = new URLSearchParams({
@@ -35,7 +35,7 @@ export async function fetchOpenMeteo(lat: number, lon: number, signal?: AbortSig
       'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,et0_fao_evapotranspiration',
     daily:
       'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,et0_fao_evapotranspiration',
-    past_days: '7',
+    past_days: '60',
     forecast_days: '7',
     wind_speed_unit: 'kmh',
   })
