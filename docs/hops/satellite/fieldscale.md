@@ -1,0 +1,84 @@
+# Field-Scale Resolution Reality + Fusion/Super-Resolution for Hop "Feld-Check"
+
+> Teil der Satelliten-Recherche (Deep-Research-Schwarm, 2026-06-28, Workflow `satellite-hops-research`).
+> Facette: `fieldscale`. Übersicht & Empfehlung: `README.md`. Geometrie-Vorabbefund: `field-scale-backtest.md`.
+
+**Zusammenfassung:** For 0.5–2 ha hop fields on a ~7 m vertical trellis with ~3 m row spacing, raw Sentinel-2 is honestly a regional-to-coarse-field screening tool, not a field-precise one. At 10 m a 1 ha field yields ~64 interior pixels after a one-pixel edge buffer, but a 0.5 ha field yields only ~25 and at 20 m (the red-edge/SWIR bands that matter most for canopy nitrogen and disease) a 0.5 ha field can drop to ~1 reliable pixel — many real, elongated parcels have effectively zero. Worse, even "interior" pixels are never pure canopy: the wide bare inter-rows and the vertical (not flat) canopy guarantee strong soil/shadow mixing, exactly the documented problem for VSP vineyards, so a single per-field NDVI is a row-cover-weighted mixture dominated by background early season. Spatiotemporal fusion (Sentinel-2 + daily PlanetScope ~3 m, validated R≈0.8 / RMSE<0.16 for fused NDVI) and DL super-resolution to 2.5 m (SEN2SR/OpenSR, ESTARFM, DSen2) push toward sub-field, but PlanetScope's ~3 m still cannot resolve 3 m rows and carries cross-sensor radiometric noise, while SR can hallucinate high-frequency detail and must be treated as enhanced-for-viewing, not measurement. Bottom line: per-field trend monitoring is viable from satellite at an effective ~10 m (Sentinel-2 anchor + PlanetScope-cadence fusion + Sentinel-1 for cloud-resilient structure/moisture), but genuinely sub-field, agronomically actionable mapping of a hop field requires UAV (cm-scale) — satellite is the regional/field-trend layer, UAV is the field-precise layer.
+
+**Feldskalen-Verdikt:** Field-precise only at UAV (cm) scale. Raw Sentinel-2 is regional-to-coarse-field screening: at 10 m a 1 ha field has ~64 usable interior pixels but a 0.5 ha field only ~25, and at 20 m (red-edge/SWIR — the most diagnostic bands) a 0.5 ha field collapses to ~1 reliable pixel, with many real elongated parcels at zero. Independently, the ~3 m row spacing and vertical 7 m trellis mean even interior pixels are an irreducible mix of bine-row + bare inter-row + shadow, so a per-field value is a relative within-season trend (growth-stage-dependent), not an absolute canopy metric and not a sub-field map. Verdict: per-field trend monitoring is viable at an effective ~10 m via fusion; genuine sub-field hop monitoring is NOT achievable from any current civilian satellite and requires UAV. The existing CLAUDE.md guardrail ('Satellit = regionales Screening, nicht teilflächengenau') is correct and research-backed.
+
+**Infrastruktur-Implikationen:** Ingest: Sentinel-2 L2A (anchor, 10/20 m) + Sentinel-1 GRD (cloud-resilient, 10 m) as the always-on free backbone; optional PlanetScope ARPS subscription (commercial, area-priced) only for high-value fields/decisions; UAV upload path as the field-precise calibration tier. Compute: per-field statistics gated by an exact field mask (from iBALIS/InVeKoS boundaries) with a mandatory 1-pixel inward edge buffer; a per-field 'pixel-purity / clean-pixel-count' quality score computed at ingest and surfaced in the UI (suppress or down-weight fields with <~9 interior 10 m pixels; never serve a 20 m-only index for sub-1 ha fields). Build a spatiotemporal-fusion job (ESTARFM/SSFIT-style) for daily ~3 m NDVI where PlanetScope is licensed, and a constraint-based super-resolution / DSen2 band-sharpening step used ONLY for visualization + edge-recovery, with native 10/20 m reflectance kept as the measurement of record. Storage: time-series cube per field (cloud-masked, per-band, with QA flags), not full scenes; cache provider tiles. Cron/cadence: S1+S2 every revisit, fusion/SR on demand. Always label outputs as relative trend + growth-stage context, and tag whether a value is measured (native S2) vs enhanced (SR/fusion). This extends the existing stateless api/ pattern with a remote-sensing ingest+quality-scoring service rather than a black-box 'satellite layer'.
+
+---
+
+## The load-bearing question, stated honestly
+
+Can a satellite resolve a hop field? For DoldenBlick's target geometry — fields of **0.5–2 ha**, grown on a **~7 m vertical trellis** with **~3 m row spacing and ~1 m in-row plant spacing** — the answer splits cleanly:
+
+- **Per-field trend/screening: YES**, at an effective ~10 m, with Sentinel-2 as the radiometric anchor.
+- **Sub-field (within-field) mapping that drives a spray/irrigation decision on one Schlag: NO from satellite alone** — that is a UAV job (cm-scale).
+
+Two independent problems stack here, and both must be communicated to growers, not hidden behind a pretty heatmap.
+
+## Problem 1 — Geometric: how many clean pixels actually remain?
+
+A square field, with a one-pixel inward edge buffer (boundary pixels are always mixed with neighbours, roads, hedgerows), gives:
+
+**Sentinel-2 10 m bands (B2/B3/B4 visible, B8 NIR):**
+| Field size | Side (square) | Gross 10 m px | Interior px (1-px buffer) |
+|---|---|---|---|
+| 0.5 ha | ~71 m | ~7×7 = 49 | **~5×5 = 25** |
+| 1.0 ha | ~100 m | 10×10 = 100 | **~8×8 = 64** |
+| 2.0 ha | ~141 m | 14×14 = 196 | **~12×12 = 144** |
+
+**Sentinel-2 20 m bands (B5/B6/B7/B8a red-edge; B11/B12 SWIR) — the bands most diagnostic for canopy chlorophyll/nitrogen, water and disease stress:**
+| Field size | Gross 20 m px | Interior px (1-px buffer) |
+|---|---|---|
+| 0.5 ha | ~3×3 = 9 | **~1×1 = 1** |
+| 1.0 ha | ~5×5 = 25 | **~3×3 = 9** |
+| 2.0 ha | ~7×7 = 49 | **~5×5 = 25** |
+
+The honest takeaways: (a) at 10 m, sub-half-hectare fields are statistically thin (≈25 px) and anything below ~0.3 ha is essentially a single-mixed-blob; (b) at 20 m, a 0.5 ha field has **~1 trustworthy red-edge/SWIR pixel and many real fields have zero** — so the most agronomically valuable Sentinel-2 bands are the *least* usable at hop-field scale. Real Hallertau parcels are frequently elongated and irregular (perimeter-to-area worse than a square), so these are optimistic upper bounds. This matches the literature: Sentinel-2 field-boundary/smallholder products are explicitly "not well suited" below ~1 ha, and sub-pixel/edge mixing dominates small parcels (Sentinel-Hub field-boundary techspec; Sentinel-2 sub-pixel detection, MDPI rs8060488).
+
+## Problem 2 — The trellis geometry makes even "pure" pixels impure
+
+This is the part generic crop-yield papers ignore and the part that actually bites hops. The 25–144 "interior" pixels above are pure of *neighbouring land cover* — they are **never pure canopy**. With ~3 m rows, a 10 m pixel always straddles **multiple bine rows + wide bare/grassed inter-rows + structural shadow**, and the canopy is **vertical on a 7 m trellis**, not a flat closed surface. So the at-nadir reflectance is a row-cover-weighted mixture that is background-dominated early season and only approaches a canopy signal at mid-summer closure near the trellis top.
+
+The closest validated analogue is **VSP-trellis viticulture**, and it is directly transferable: inter-row soil produces "high to full presence of mixed pixels"; VSP canopies "occupy a smaller proportion of the mixed pixel, leaving more room for the ground"; row orientation creates shadow artefacts; and Sentinel-2 between-block variability is inflated by non-canopy elements versus UAV (MDPI rs11212573 overhead-trellis validation; OENO-One vineyard/UAV comparisons; ScienceDirect S0168169924004836 on operational mixed-pixel correction). Hops are a *more extreme* version of this geometry (taller trellis, often wider effective gaps, strongly seasonal vertical fill), so a single per-field NDVI from Sentinel-2 conflates "how green is the canopy" with "how much soil/shadow is in view" and "what growth stage." It is usable as a **relative within-season trend per field**, not as an absolute canopy metric, and not as an intra-field map.
+
+Hop-specific evidence is thin but consistent: UAV studies (Acta Horticulturae 1328_13 and 1328_12; MDPI rs17060970 "Assessment of UAV Imageries for … Hop") derive NDVI/GNDVI/NDRE/SAVI and thermal at high resolution and explicitly liken hop canopies to vineyards; Sentinel-2 is used alongside but as the coarse partner. There is no published result showing Sentinel-2 delivering field-precise hop yield/alpha-acid at 10 m — the demonstrated precision lives at UAV scale.
+
+## Fusion option A — Spatiotemporal (Sentinel-2 + PlanetScope + UAV)
+
+- **Sentinel-2 + PlanetScope fusion** (ESTARFM / SSFIT) produces **daily ~3 m surface reflectance and NDVI**; SSFIT reported **RMSE < 0.16 and R > 0.8** vs PlanetScope NDVI, beating ESTARFM, and the fused product "enables more accurate monitoring of small and heterogeneous fields" (ScienceDirect S030324342030903X wheat-LAI; PMC12389983). 2024 work shows PlanetScope+Sentinel-2 fusion improves yield prediction.
+- **PlanetScope reality check:** daily revisit, ~3 m pixel, SuperDove 8 bands incl. red-edge — but the *true* GSD is coarser than 3 m, and the constellation's hundreds of Dove cameras give **cross-sensor radiometric/geometric inconsistency** ("anomalous pixels," calibration gaps). NDVI is relatively robust to this; absolute reflectance is not. Planet's **Analysis-Ready PlanetScope (ARPS)** harmonizes to a reference and is the version to use. License is commercial/area-based (per Planet pricing; research access via NASA CSDA/ESA third-party). Crucially, **3 m still cannot resolve 3 m hop rows** — it sharpens field shape and field-edge effects and improves cadence/cloud-gap filling, but the within-pixel soil/canopy mix persists.
+- **UAV** is the only layer that resolves individual rows and pure canopy (cm-scale), and is the natural "ground truth / calibrate-the-satellite" tier. The defensible architecture is a tiered fusion: UAV (occasional, field-precise) calibrates Sentinel-2/PlanetScope (frequent, field-trend).
+
+## Fusion option B — Sentinel-1 + Sentinel-2 (radar+optical)
+
+Sentinel-1 C-band SAR (10 m, ~6–12 day revisit, cloud-independent) is a strong complement in cloudy Bavaria. SAR-optical fusion reaches ~82–86% crop-classification accuracy (MDPI rs17122095; Springer applied-geomatics 2023). For hops specifically, the **vertical 7 m trellis is a radar-relevant 3-D structure** (volume/double-bounce scattering, VH/VV ratios track canopy development and biomass), and SAR adds soil-moisture/wetness signal that optical can't see through cloud. Treat S1 as the **cloud-resilient continuity + structure/moisture** layer feeding the same per-field time series — not as a standalone field-precise sensor. LfL Bayern already uses Sentinel-1 operationally (grassland cut detection), which is a useful local precedent.
+
+## Fusion option C — Deep-learning super-resolution of Sentinel-2 (→2.5–5 m)
+
+State of the art (2024–2026): **SEN2VENµS** (5 m VENµS reference, 132k patches), **SEN2NAIP v2 / SEN2SR–OpenSR** (ESA-funded, **2.5 m**, low-frequency hard constraint to suppress hallucination, demonstrated downstream transfer), **DSen2** (20→10 m band sharpening, robust and quantitatively safe), and diffusion/GAN approaches (DiffFuSR, latent-diffusion "trustworthy SR"). Reported image-quality metrics sit around **low-30s dB PSNR, SSIM ~0.8** with low SAM.
+
+Honest caveat that must shape the product: SR introduces *synthetic* high-frequency detail. Multiple papers warn of **hallucination and reflectance distortion**, geographic-transfer failure, and that users must be cautious "for quantitative tasks requiring absolute radiometric precision." For a 3 m-row hop trellis, SR cannot invent the true inter-row pattern it never sampled — best case it sharpens **field boundaries** and reduces edge contamination (effectively recovering a few more usable interior pixels for small fields), which is real value. So: use SR/band-sharpening (DSen2-style, constraint-based SEN2SR) for **visualization and edge-recovery**, label it as enhanced, and keep **native 10/20 m reflectance as the measurement of record** for any index/biophysical number.
+
+## Honest bottom line and the effective resolution
+
+- **Regional screening (Hallertau-wide phenology, drought/heat onset, anomaly flags): solid** at native Sentinel-2 10 m + S1.
+- **Per-field trend monitoring (this Schlag vs its own history / vs neighbours): viable** at an effective **~10 m** by anchoring on Sentinel-2, gap-filling with Sentinel-1, and densifying cadence/sharpening edges with PlanetScope-fusion and constraint-based SR — but reported as a **relative within-season trend**, with explicit growth-stage context and a minimum-clean-pixel guard (suppress/flag fields below ~0.3–0.5 ha or with <~9 interior 10 m pixels; never serve a 20 m-only index for sub-1 ha fields).
+- **Sub-field / intra-Schlag maps that justify a spray or irrigation zone: NOT from satellite** at current civilian resolution — that needs **UAV**. To make satellite "field-useful" rather than merely regional you need: (1) accurate field boundaries from iBALIS/InVeKoS for clean masking + edge buffering; (2) a per-field pixel-purity/quality score surfaced in the UI; (3) Sentinel-1 fusion for cloud resilience; (4) optional PlanetScope cadence + UAV calibration for the few fields/decisions that warrant it. This is consistent with the existing CLAUDE.md guardrail ("Satellit = regionales Screening, nicht teilflächengenau") — the research backs that line precisely.
+
+## Quellen
+- **Assessment of UAV Imageries for Estimating Growth Vitality, Yield and Quality of Hop (MDPI Remote Sensing rs17060970, 2025)** _(paper)_ — Hops-specific: UAV multispectral/thermal NDVI/GNDVI/NDRE/SAVI for vitality, yield, alpha-acid. Field-precision lives at UAV (cm) scale; Sentinel-2 only as coarse partner. Likens hop canopy to vineyards.
+- **Evaluation of UAV and Sentinel-2 images to estimate condition of hop plants (Acta Horticulturae 1328_13) + Thermal UAV hopyard (1328_12)** _(paper)_ — Closest hop literature directly pairing UAV vs Sentinel-2; multi-year. Establishes UAV-as-field-precise, S2-as-screening pattern.
+- **Assessing mixed-pixel effects in vineyard mapping from satellite: operational solution (ScienceDirect S0168169924004836)** _(paper)_ — Best analogue for the trellis mixed-pixel problem; quantifies inter-row soil contamination and an operational pure-pixel correction. Vineyard analogue (flag).
+- **Sentinel-2 validation in overhead-trellis viticulture vs UAV (MDPI rs11212573); OENO-One vineyard/UAV + shadow-effect studies** _(paper)_ — VSP-trellis: canopy occupies small fraction of mixed pixel, ground dominates, row-orientation shadow artefacts; S2 between-block variance inflated vs UAV. Directly transferable to 7 m hop trellis (analogue).
+- **Fusion of Sentinel-2 and PlanetScope into daily 3 m reflectance / wheat LAI (ScienceDirect S030324342030903X); SSFIT vs ESTARFM (PMC12389983)** _(paper)_ — Spatiotemporal fusion numbers: fused NDVI RMSE<0.16, R>0.8; daily ~3 m; 'more accurate monitoring of small heterogeneous fields'.
+- **SEN2SR / OpenSR (ESA) + SEN2NAIP v2 + SEN2VENµS + DSen2** _(dataset)_ — DL super-resolution to 2.5 m with low-frequency hard constraint vs hallucination; SEN2VENµS 5 m reference; DSen2 safe 20→10 m sharpening. PSNR low-30s dB, SSIM~0.8. Use for edge-recovery/visualization, not measurement.
+- **Hallucination/quantitative-caution SR literature (Trustworthy latent-diffusion SR IEEE 10887321; 'Beyond Pretty Pictures' arXiv 2505.24799; channel-attention SR Frontiers 2025)** _(paper)_ — Explicit warnings: SR hallucinates high-frequency detail, distorts reflectance, fails on geographic transfer; caution for absolute-radiometry/index use.
+- **PlanetScope SuperDove specs + ARPS + radiometric-consistency review (Planet docs; Technical Review of Planet Smallsat Data; PlanetScope forest-monitoring review S2666017225001208)** _(platform)_ — Daily ~3 m, 8 bands incl. red-edge; true GSD coarser; cross-sensor radiometric/geometric inconsistency; NDVI relatively robust; use ARPS harmonized product. Commercial/area license.
+- **Sentinel-1+2 SAR-optical fusion for crop monitoring (MDPI rs17122095 TCN-attention 85.7%; Springer applied-geomatics 2023 ~82%)** _(paper)_ — Cloud-independent C-band 10 m complement; VH/VV tracks canopy/biomass; vertical trellis is radar-relevant 3-D structure + soil moisture. LfL Bayern uses S1 operationally.
+- **Sentinel-2 field-boundary techspec (Planet/Sentinel-Hub) + sub-pixel detection (MDPI rs8060488)** _(standard)_ — Documents that 10 m S2 products are 'not well suited' to sub-1 ha smallholder fields; basis for the pixel-purity/edge-buffer reality.
+- **Harmonized Landsat Sentinel-2 (HLS) v2 — NASA** _(dataset)_ — 30 m, ~1.4-day cadence anchor; good for regional/field-trend continuity, too coarse for sub-1 ha hop fields. Useful low-cost backbone.

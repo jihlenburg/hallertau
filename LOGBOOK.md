@@ -5,6 +5,18 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Satelliten-Recherche-Schwarm abgeschlossen → Synthese + 7-stufige Bau-Reihenfolge
+**Was:** Der Deep-Research-Schwarm (8 Agenten, ~294k Tokens, 6 Facetten + Synthese + Vollständigkeits-Kritik)
+ist fertig; Ergebnisse unter `docs/hops/satellite/`. **Kernbefund:** kein freier Satellit ist auf 0,5–2 ha
+Hopfen-Gerüst teilflächengenau → **gestaffelter Stack**: S2 (+S1, +HLS) frei = Screening-Backbone;
+Weltraum-Thermal (ECOSTRESS/Landsat-ET) + S1-Bodenfeuchte als Inputs in den **bestehenden FAO-56-Dienst**;
+PlanetScope (~3 m) = bezahlte Feld-Delta; **UAV/VHR = einzige im Hopfen peer-reviewed validierte teilflächen-
+genaue Quelle** (Štofaj/Kumhálová 2025, Žatec). **Datenzugang: CDSE Sentinel Hub Statistical API** (server-
+seitige Per-Schlag-Zonalstatistik, ~€0/Monat im Demo-Maßstab) — GEE vom kritischen Pfad fern. Ehrlichkeit
+bestätigt: Screening-Label Pflicht, **keine Qualitäts-/Alpha-Claims**, **keine RS-Krankheitsdiagnose**
+(an LfL/ISIP deferieren). 7-stufige Bau-Reihenfolge; 12 Lücken/Risiken in `research-gaps.md`.
+**Verweise:** `docs/hops/satellite/{README,sensors,indices,literature,stress,infra,fieldscale,research-gaps}.md`.
+
 ## 2026-06-28 · Prämissenwechsel „Infrastruktur vor Nachfrage" + Satelliten-Recherche & Pixel-Purity-Backtest
 **Was:** Nutzerentscheidung (endgültig): das **Nachfrage-Gate ist aufgehoben** — ALLE Datenquellen werden
 genutzt, Infrastruktur wird **proaktiv** gebaut. (1) Deep-Research-Schwarm (Workflow `satellite-hops-research`,

@@ -1,0 +1,93 @@
+# Satellite & airborne sensors for field-scale hop monitoring: a best-in-class comparison for 0.5–2 ha Hallertau trellis fields
+
+> Teil der Satelliten-Recherche (Deep-Research-Schwarm, 2026-06-28, Workflow `satellite-hops-research`).
+> Facette: `sensors`. Übersicht & Empfehlung: `README.md`. Geometrie-Vorabbefund: `field-scale-backtest.md`.
+
+**Zusammenfassung:** No freely-available satellite is teleflächengenau (within-field precise) on a hop Schlag: a 0.5–2 ha field grown on a ~7 m vertical Gerüst with ~3 m wide rows produces a pixel that always mixes bine canopy, shaded soil and sunlit ground, so 10–30 m optical (Sentinel-2, Landsat, HLS) is honest regional/field-average screening only. PlanetScope (~3 m, near-daily, commercial) is the practical bridge that begins to resolve field-internal patterns, and sub-meter VHR tasking (Pléiades Neo 30 cm, WorldView, SkySat) plus UAV multispectral/thermal are the only sources that resolve individual trellis rows and deliver true Feld-Check diagnosis. The best-in-class stack is therefore layered, not a single sensor: Sentinel-2 (red-edge, 5-day, free) + Sentinel-1 SAR (all-weather structure/moisture) + HLS to densify the optical cadence as the always-on regional backbone; ECOSTRESS/Landsat thermal as a coarse water-stress cross-check feeding the existing FAO-56 service; PlanetScope as a paid field-delta layer; and on-demand UAV (and occasional VHR tasking) as the field-precise diagnostic. The single hops-specific peer-reviewed signal (Štofaj et al. 2025, UAV over Czech hop) confirms UAV multispectral/thermal — not satellite — is what the hop literature actually validates for yield/quality. For DoldenBlick this means building a STAC/COG ingest of the free Copernicus + NASA archives with per-Schlag zonal statistics, plus an optional commercial-API and a UAV-orthomosaic upload path for the genuinely field-precise tier.
+
+**Feldskalen-Verdikt:** Honest answer: no FREE satellite is teleflächengenau on a 0.5–2 ha hop trellis. A 7 m vertical Gerüst with ~3 m rows guarantees every nadir pixel mixes bine, shadow and soil, so Sentinel-2 (10/20 m), Landsat and HLS (30 m) are field-AVERAGE / regional screening only — good for phenology, vigor trends and anomaly triage per Schlag, not within-field maps (a 0.5 ha field is ~25–49 S2 pixels, ~5 HLS pixels, mostly edge-contaminated). Sentinel-1 SAR adds an all-weather structure/moisture channel but stays at screening (10 m + speckle + complex vertical scattering). PlanetScope (~3 m, near-daily, paid) is FIELD-RESOLVING but not row-pure (3 m ≈ one row + one alley) — the practical bridge for sub-field deltas. Genuinely FIELD-PRECISE / teleflächengenau (resolving individual trellis rows and plants) requires sub-meter VHR tasking (Pléiades Neo 30 cm, WorldView, SkySat) or — the only tier the HOP literature actually validates — UAV multispectral+thermal at ~5–8 cm GSD. So: satellite for screening/alerting, UAV (and occasional VHR tasking) for the real Feld-Check. The UI must label these tiers honestly ("regionales Screening" vs "teilflächengenau").
+
+**Infrastruktur-Implikationen:** Ingest (free, build now per 'Infrastruktur vor Nachfrage'): STAC-based pulls from Copernicus Data Space Ecosystem (Sentinel-2 L2A, Sentinel-1 GRD), NASA HLS via LP DAAC AND Microsoft Planetary Computer (cheapest integration — cloud-optimized STAC/COG already hosted), and ECOSTRESS via LP DAAC. Treat everything as Cloud-Optimized GeoTIFF + a per-Schlag STAC catalog keyed to the iBALIS/InVeKoS field geometries the product already imports. Compute/processing pipeline: cloud/shadow masking (s2cloudless or Fmask), red-edge/NIR/SWIR index stack (NDVI, NDRE, NDWI, chlorophyll), Sentinel-1 speckle filtering + VH/VV ratio, and S1+S2 fusion; reduce to per-field zonal statistics time series (mean/median/percentiles + valid-pixel count so the UI can warn on edge-contaminated tiny fields). To avoid hosting petabytes, prefer server-side reductions via openEO or the Sentinel Hub Statistical API and only persist the per-field index time series in a time-series store. Wire the space-thermal (ECOSTRESS/Landsat ET) as a coarse cross-check INTO the existing stateless FAO-56 water-balance service in api/ (it already computes the water balance — satellite ET becomes a validation/assimilation input, not a parallel system). Optional commercial tier behind feature flags/credentials: Planet API (PlanetScope subscriptions) for the paid field-delta layer and Airbus/Maxar tasking APIs for one-off VHR snapshots. Crucially, build a separate UAV-orthomosaic INGEST PATH (GSD-aware upload, georeferencing to the Schlag, index + thermal processing) — that, not any satellite feed, is the channel that delivers the genuinely teleflächengenaue 'Feld-Check'. Architecturally keep the same strong-separation pattern as the water-balance api/: a stateless remote-sensing service exposing per-field index/stress endpoints with a version contract, client cutover later.
+
+---
+
+## The crux: why pixel size is destiny for a hop Gerüst
+
+A hop field is one of the hardest agronomic targets in optical remote sensing. The canopy is **vertical** on a ~7 m trellis (Gerüst), planted in **wide rows (~3 m spacing, ~1.5 m within-row)**, so at any given moment a nadir-looking pixel integrates four very different surfaces: sunlit bine foliage, self-shaded foliage, bare/shaded inter-row soil, and sunlit soil. Two consequences follow that govern every sensor choice below:
+
+1. **Spatial mixing.** A 10 m Sentinel-2 pixel is wider than 2–3 hop rows; it can never be "pure canopy." A 0.5 ha field (~70 × 70 m) contains only ~25–49 Sentinel-2 pixels, most contaminated by field edges, headlands and access lanes. At 30 m (Landsat/HLS) a 0.5 ha field is ~5 pixels — a field *average* at best, not a within-field map.
+2. **Vertical vs. flat canopy.** Indices and ET models tuned for flat row crops underperform on a vertical curtain; off-nadir geometry, row orientation and sun-azimuth change the soil/shadow fraction day to day. This is also why side-looking SAR and UAV (which can fly low and even oblique) carry information nadir optical misses.
+
+Bottom line up front: **satellite = regional/field-average screening; sub-meter VHR + UAV = field-precise.** Everything else is choosing the best screening backbone and the best precise tier.
+
+## The hops-specific evidence base (thin — flag as such)
+
+The peer-reviewed hop remote-sensing literature is small and **UAV-dominated**. The most directly relevant recent paper is **Štoraj/Štoffel et al., "Assessment of UAV Imageries for Estimating Growth Vitality, Yield and Quality of Hop (Humulus lupulus L.)," *Remote Sensing* 17(6):970 (2025)** — UAV multispectral over Czech (Žatec-region) hop, 4 seasons (2020–2023), conventional vs. organic, using NDVI and related vegetation indices as indirect indicators of vitality/health/structure to predict yield and quality. The very existence of a UAV (not satellite) study as the state-of-the-art hop paper is itself the headline finding: **the hop literature validates drones, because satellites cannot resolve the crop.** For satellite specifics we therefore lean on the closest analogues — **vineyards, orchards and trellised/row crops** — and flag them as analogues throughout.
+
+## Sensor-by-sensor verdict
+
+### Sentinel-2 (free) — the optical backbone, regional screening
+- 13 bands; **10 m** (blue/green/red/NIR B8), **20 m** (three **red-edge** bands B5/6/7, B8A narrow-NIR, SWIR B11/12), 60 m atmospheric. Twin satellites → **~5-day** revisit at the equator, better at Hallertau's latitude.
+- Free/open (Copernicus, Sentinel-2C operational since 2024 sustaining the constellation). Red-edge bands enable **NDRE/chlorophyll/N** indices that NDVI alone misses — genuinely useful for vigor and stress trends.
+- **Hop verdict:** the best *free* option and the right default backbone for phenology, season-long vigor curves and anomaly flagging at the *field* level — but 10/20 m on a 7 m vertical trellis with 3 m rows means **regional/field-average screening, not teilflächengenau** (consistent with the project's standing "10-m pixel on 7-m Gerüst" line).
+
+### Sentinel-1 SAR (free) — structure & moisture, cloud-proof
+- C-band (5.4 GHz), VV+VH dual-pol, IW mode **~10 m** (GRD), all-weather/day-night. Revisit fell to ~12 days after Sentinel-1B's 2022 failure; **Sentinel-1C (launched Dec 2024)** is restoring the ~6-day cadence.
+- C-band backscatter and the **VH/VV ratio** are sensitive to canopy **structure**, biomass/LAI and **soil/canopy moisture**; cross-pol correlates with biomass/LAI in row-crop literature. Its real value for DoldenBlick is **filling cloud gaps** in the Hallertau's cloudy summers and adding a moisture/structure channel the optical sensors lack.
+- **Hop verdict:** valuable *complement*, not standalone — speckle plus 10 m resolution and complex vertical-canopy scattering keep it at regional screening; best used fused with Sentinel-2 (S1+S2 fusion is now standard for crop condition).
+
+### Landsat 8/9 (free) — thermal heritage, coarse optical
+- 30 m optical (OLI), **thermal TIRS at 100 m resampled to 30 m**, 16-day each → **~8-day** combined. Free, long archive.
+- Its differentiator is **thermal** (land-surface temperature → ET / water stress). At 30/100 m a 1 ha hop field is a handful of pixels: useful for **trend and regional water-stress context**, not within-field.
+
+### Harmonized Landsat-Sentinel (HLS, free) — densified 30 m time series
+- NASA blends Landsat 8/9 + Sentinel-2 to a common **30 m** grid, radiometrically harmonized; combined revisit **~2–3 days (now <~1.4 day average with S2C)**. USDA uses HLS to map crop emergence at field scale in the Corn Belt; crop-classification overall accuracies ~0.90–0.93 in the literature.
+- Available on **Microsoft Planetary Computer** and LP DAAC as cloud-optimized STAC — low integration cost.
+- **Hop verdict:** best *free* way to get a dense, gap-resistant phenology/vigor time series, but 30 m caps it at field-average screening. Excellent backbone densifier; not a within-field map.
+
+### PlanetScope (~3 m, commercial) — the practical field-delta bridge
+- SuperDove: 8 bands incl. red-edge & coastal-blue, native ~3.7–4.8 m resampled to **3 m**, **near-daily** revisit from a large CubeSat constellation. Surface reflectance harmonized to Sentinel-2 with strong consistency (reported **R² ≈ 0.89 (SuperDove) to 0.98 (Dove-R)** vs. S2 over winter wheat).
+- 3 m begins to **resolve within-field structure** and the near-daily cadence beats clouds — recent work argues PlanetScope "could rival Sentinel-2 in small-scale precision agriculture." Caveat: **inter-satellite cross-calibration** of the CubeSat fleet is a known consistency risk; commercial license, area-based pricing, research/education access programs exist.
+- **Hop verdict:** the best **paid bridge** between free satellite screening and UAV — still mixes the 3 m row geometry somewhat (3 m pixel ≈ one row + one alley), so "field-resolving" but not row-pure. Right choice when you need frequent, region-wide, sub-field deltas without flying drones.
+
+### Very-high-res optical tasking (Pléiades Neo, WorldView/Maxar, SkySat) — resolves rows, but snapshot economics
+- **Pléiades Neo:** native **30 cm pan / 1.2 m multispectral**, 6 bands incl. red-edge & deep-blue, daily revisit *capacity*, tasked. Marketed explicitly as bridging "the gap between drones and open satellite imagery," with per-tree/per-vine analysis for grapes/orchards. **Maxar WorldView ~31 cm pan**; **SkySat ~50 cm.**
+- These **do resolve individual trellis rows and within-field patterns** — the first satellite tier that is plausibly field-precise. But they are **tasked, commercial, area-priced** (typically tens of €/km² with minimum-order areas), and a hop field is tiny relative to minimum scenes → poor cost-per-hectare and not a cheap dense time series.
+- **Hop verdict:** the satellite answer to "I need a sharp within-field snapshot of one Schlag" (e.g., a one-off disease/lodging map), not an everyday layer.
+
+### Thermal (water stress) — coarse from space, precise only from UAV
+- **Landsat TIRS** 100 m/16-day; **ECOSTRESS** (ISS) **~70 m**, variable revisit (~1–5 day, varying overpass time — useful for diurnal ET), free via LP DAAC; sub-field ET interoperability with Landsat is demonstrated. **Sentinel-3 SLSTR ~1 km** is regional-only. Emerging commercial thermal (e.g., constellr ~few-tens-of-m, SatVu ~3.5 m) targets larger/urban use and is not yet a hop-field tool.
+- **Hop verdict:** space thermal gives **regional water-stress context** that can **cross-check the existing FAO-56 water-balance service in `api/`** — but at 70–100 m it is not field-precise. True canopy-temperature stress mapping on a single hop field needs **UAV thermal**.
+
+### UAV / drone multispectral + thermal — the only true field-precise tier
+- Multispectral (MicaSense RedEdge/Altum, DJI P4M / Mavic 3M): **~5–8 cm GSD** at 75–120 m AGL; integrated/standalone thermal at decimeter scale. On-demand, weather-window flexible, can fly low and oblique to address the **vertical** canopy.
+- This is what the **hop literature actually validates** (Štoraj 2025); row-crop/analogue yield models reach **R² ≈ 0.8–0.93**. Costs are operational (pilot/flight/processing, regulatory) rather than per-km² licensing.
+- **Hop verdict:** **best-in-class for field-precise hop diagnosis** — resolves rows, plants and canopy structure, supports thermal stress and structure-from-motion canopy height. The "Feld-Check" in the truest sense.
+
+## Best-in-class combination for hops (layered, honest)
+
+1. **Always-on regional backbone (free):** Sentinel-2 (red-edge, 5-day) + Sentinel-1 (all-weather structure/moisture) + HLS to densify → phenology, season vigor curves, anomaly/triage flags **per Schlag as a field average**.
+2. **Water-stress context (free):** ECOSTRESS/Landsat thermal as a coarse cross-check feeding the existing FAO-56 `api/` water balance.
+3. **Field-delta layer (paid, optional):** PlanetScope ~3 m near-daily for frequent within-region, sub-field change detection without flying.
+4. **Field-precise diagnosis:** **UAV multispectral + thermal** on demand (the validated hop tier), with **occasional Pléiades Neo / WorldView tasking** for a sharp one-off satellite snapshot of a single field.
+
+This honors "Infrastruktur vor Nachfrage": ingest the entire free archive proactively, wire optional commercial APIs, and treat UAV as the genuine teleflächengenau channel rather than pretending any free satellite delivers it.
+
+## What to tell the farmer in the UI
+
+Keep the project's honesty rule: label the satellite layer **"regionales Screening / Feld-Durchschnitt"** and reserve **"teilflächengenau / Feld-Check"** for UAV (and tasked VHR). Naming the resolution limit in-product is both accurate and trust-building.
+
+## Quellen
+- **Štoraj/Štoffel et al., Assessment of UAV Imageries for Estimating Growth Vitality, Yield and Quality of Hop (Humulus lupulus L.), Remote Sensing 17(6):970, 2025 (doi:10.3390/rs17060970)** _(paper)_ — The most directly hop-specific recent peer-reviewed study; UAV multispectral over Czech (Žatec-region) hop, 4 seasons 2020–2023, conventional vs organic, NDVI/VIs as indirect indicators of vitality/yield/quality. Confirms UAV — not satellite — is the validated hop tier.
+- **Copernicus Sentinel-2 (ESA)** _(platform)_ — 10/20/60 m, 13 bands incl. 3 red-edge + 2 SWIR, ~5-day revisit, free/open. S2C operational 2024. Best free optical backbone; field-average screening only on hop Gerüst due to 10 m mixed pixels.
+- **Copernicus Sentinel-1 SAR (ESA)** _(platform)_ — C-band VV+VH ~10 m, all-weather. VH/VV sensitive to canopy structure, biomass/LAI, moisture. Revisit ~12 d post-S1B failure; S1C (Dec 2024) restoring ~6 d. Cloud-gap filler / structure channel, complement not standalone.
+- **Harmonized Landsat Sentinel-2 (HLS), NASA** _(dataset)_ — 30 m blended Landsat 8/9 + S2, ~2–3 day (now <~1.4 d avg) combined revisit, free. On Microsoft Planetary Computer + LP DAAC as STAC. USDA uses for field-scale crop emergence; crop-class OA ~0.90–0.93. Densifies optical cadence but 30 m = field-average.
+- **Landsat 8/9 OLI/TIRS (USGS/NASA)** _(platform)_ — 30 m optical, 100 m thermal (TIRS), ~8-day combined, free. Thermal heritage for ET/water stress but too coarse for within-field on 1 ha hop.
+- **ECOSTRESS (NASA/JPL, ISS)** _(platform)_ — ~70 m thermal, variable revisit (~1–5 d, varying overpass time), free via LP DAAC. Sub-field ET interoperability with Landsat demonstrated. Regional water-stress context for FAO-56 cross-check; not field-precise.
+- **Pléiades Neo (Airbus)** _(platform)_ — 30 cm pan / 1.2 m MS, 6 bands incl. red-edge + deep-blue, daily tasking capacity. Marketed as bridging drones and open satellite imagery; resolves vines/trees. Tasked, area-priced — good for one-off sharp field snapshots, not cheap time series.
+- **Maxar WorldView (~31 cm) and Planet SkySat (~50 cm)** _(platform)_ — Sub-meter VHR optical tasking. Like Pléiades Neo, can resolve individual trellis rows; commercial tasking economics poor for tiny hop fields as a dense layer.
+- **PlanetScope / SuperDove (Planet Labs)** _(platform)_ — ~3 m (8 bands incl. red-edge), near-daily, commercial. SR harmonized to S2 (R²≈0.89–0.98 vs S2 over winter wheat). Inter-CubeSat cross-calibration is a known risk. Best paid field-delta bridge between free satellite and UAV.
+- **Quintano/Mzid et al. & related, Evaluating consistency between Sentinel-2 and Planet at field scale (winter wheat), Precision Agriculture, Springer, 2025 (s11119-025-10226-4)** _(paper)_ — Source for PlanetScope↔Sentinel-2 consistency R² figures and the 'PlanetScope could rival S2 in small-scale precision ag' conclusion. Analogue (wheat), flag as such.
+- **CubeSat constellations: New era for precision agriculture? Computers and Electronics in Agriculture, 2024 (S0168169924011554)** _(paper)_ — Frames CubeSat (PlanetScope) ~3 m near-daily as the small-field precision-ag bridge to fill Sentinel-2 cloud/resolution gaps. Analogue/general crop context.
+- **Interoperability of ECOSTRESS and Landsat for ET at sub-field scales, Remote Sensing of Environment (S0034425720305629)** _(paper)_ — Evidence that 70 m ECOSTRESS + Landsat thermal can be fused toward sub-field ET; basis for using space thermal as a coarse water-stress cross-check to FAO-56.
+- **Vineyard/orchard/row-crop remote sensing (e.g. almond orchard within-field zones, S2/PlanetScope vineyard work)** _(analogue)_ — Closest analogues for trellised/row geometry given the thin hop literature; used to reason about resolution/index behavior on vertical/row canopies. Explicitly analogue, not hop-validated.
