@@ -5,6 +5,15 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · RS-Dienst (Satelliten-Feld-Check) gestartet: Scaffold + CDSE-Auth (live)
+**Was:** Neuer **zustandsloser Fastify-5-Dienst `rs/`** (CDSE-primär, Muster wie `api/`; Nutzerentscheid
+„stateless-first, CDSE primär"). Diese Scheibe: Scaffold + Versionsvertrag (`/api/rs/health`,
+`/api/rs/version`, `X-API-Version`) + **CDSE-OAuth-Client** (`rs/src/cdse/auth.ts`, Client-Credentials +
+Token-Cache, injizierbar). 6 Tests grün (TDD), Build sauber. **Live gegen echte CDSE-Creds validiert**
+(Token len 1593, nicht geloggt; Cache greift). Nächste Schritte (R3–R6): Statistical-API-Client,
+Indizes/Pixel-Purity-Konfidenz, `POST /api/field-vigor`, Deploy.
+**Verweise:** `rs/` (`src/{version,app,server}.ts`, `src/cdse/auth.ts`).
+
 ## 2026-06-28 · GEE-Imagery-Backtest (echtes Sentinel-2) + CDSE/GEE-Zugang validiert
 **Was:** Mit dem bereitgestellten **GEE-Service-Account** (`.env`, gitignored) den echten
 Sentinel-2-Backtest gefahren (`scripts/gee-backtest.py`, `COPERNICUS/S2_SR_HARMONIZED`, Saison 2025,
