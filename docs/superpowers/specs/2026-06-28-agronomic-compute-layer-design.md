@@ -9,6 +9,17 @@ Frontend-Cutover) bleibt unverändert die Grundlage. **Faktenbasis:** die Hopfen
 `docs/hops/` (kanonische Parameter in `docs/hops/README.md`) und die GEE-Datenquellen-Recherche
 (Workflow-Auswertung 2026-06-28; deren Kernzahlen sind hier und in der Kanontabelle gespiegelt).
 
+> **Architektur-Update (2026-06-28, Nutzerentscheidung):** **Strong Separation of Concerns.**
+> Der **Client** macht nur Präsentation + Kartenkacheln (Tiles bleiben client-seitig, direkt vom
+> Tile-CDN mit Namensnennung). **Alle Datenquellen UND alle Berechnungen laufen im Backend** (BFF):
+> der Client ruft ausschließlich same-origin `/api/*` und rendert. Damit ist die Compute-Schicht
+> **nicht mehr gegated** — sie wird gebaut. **Erste Scheibe:** ein **zustandsloser** Wasserbilanz-
+> Compute-Dienst (`api/`, Fastify) — holt Open-Meteo server-seitig, rechnet die FAO-56-Bilanz über
+> das verfügbare `past_days`-Fenster (Init Feldkapazität am Fensteranfang; kein DB-State nötig).
+> Multi-Tenant-Persistenz (Postgres/Auth/RLS) bleibt die separate Backend-Phase-1; der erste
+> Compute-Dienst braucht sie nicht. Die Domänen-Mathematik lebt damit **server-seitig in `api/`**
+> (nicht mehr im Client) — kein geteiltes Paket nötig, da der Client nicht mehr rechnet.
+
 > **Revisions-Hinweis:** Diese Fassung folgt einem Vier-Linsen-Review (Konsistenz, Architektur-
 > Devil's-Advocate, FAO-56-Korrektheit, Spec-Hygiene). Wesentliche Korrekturen: (a) die schwere
 > Server-Compute-Schicht ist **gegated**, nicht „jetzt"; (b) „verbatim-Port" gilt nur für die
