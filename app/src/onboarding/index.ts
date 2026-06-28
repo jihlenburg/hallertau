@@ -5,9 +5,11 @@ import demoGeojson from '../../data/demo-fields.geojson?raw'
 import { normalizeField } from '../domain/fields'
 import { setFields } from '../state'
 import { FieldMap } from '../map'
+import { SOIL_TYPES, DEFAULT_SOIL, type SoilType } from '../domain/soil'
 import type { FieldFeature } from '../types'
 
 const SORTEN = ['Herkules', 'Perle', 'Hallertauer Tradition', 'Saphir', 'Hallertauer Mittelfrüh', 'Spalter Select', 'unbekannt']
+const titleCase = (s: string) => s.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
 export function mountOnboarding(root: HTMLElement, onDone: () => void): void {
   let draft: FieldFeature[] = []
@@ -130,11 +132,11 @@ export function mountOnboarding(root: HTMLElement, onDone: () => void): void {
     root.innerHTML = `
       <div class="onb">
         <h1>Erkannte Schläge prüfen</h1>
-        <p class="lead">${draft.length} Schläge · ${totalReported.toFixed(1)} ha gemeldet. Namen, Sorte und Fläche bei Bedarf anpassen.</p>
+        <p class="lead">${draft.length} Schläge · ${totalReported.toFixed(1)} ha gemeldet. Namen, Sorte, Boden und Fläche bei Bedarf anpassen. Der Boden bestimmt die Wasserbilanz je Schlag.</p>
         <div class="review">
           <h2>Schläge</h2>
           <table>
-            <thead><tr><th>Name</th><th>Sorte</th><th>Fläche (ha, gemeldet)</th><th>aus Geometrie</th></tr></thead>
+            <thead><tr><th>Name</th><th>Sorte</th><th>Boden</th><th>Fläche (ha, gemeldet)</th><th>aus Geometrie</th></tr></thead>
             <tbody>
               ${draft
                 .map(
@@ -142,6 +144,9 @@ export function mountOnboarding(root: HTMLElement, onDone: () => void): void {
                     <td><input data-i="${i}" data-k="name" value="${esc(f.properties.name)}" /></td>
                     <td><select data-i="${i}" data-k="sorte">${SORTEN.map(
                       (s) => `<option ${s === f.properties.sorte ? 'selected' : ''}>${s}</option>`,
+                    ).join('')}</select></td>
+                    <td><select data-i="${i}" data-k="soilType" aria-label="Bodenart">${SOIL_TYPES.map(
+                      (t) => `<option value="${t}" ${t === (f.properties.soilType ?? DEFAULT_SOIL) ? 'selected' : ''}>${titleCase(t)}</option>`,
                     ).join('')}</select></td>
                     <td><input data-i="${i}" data-k="flaeche_ha" type="number" step="0.1" value="${f.properties.flaeche_ha}" /></td>
                     <td>${f.properties.flaeche_calc_ha ?? '—'} ha</td>
@@ -163,13 +168,18 @@ export function mountOnboarding(root: HTMLElement, onDone: () => void): void {
     root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-i]').forEach((el) => {
       el.addEventListener('input', () => {
         const i = Number(el.dataset.i)
-        const k = el.dataset.k as 'name' | 'sorte' | 'flaeche_ha'
+        const k = el.dataset.k as 'name' | 'sorte' | 'flaeche_ha' | 'soilType'
         if (k === 'flaeche_ha') draft[i].properties.flaeche_ha = parseFloat(el.value) || 0
+        else if (k === 'soilType') draft[i].properties.soilType = el.value as SoilType
         else draft[i].properties[k] = el.value
       })
     })
     root.querySelector('#back')!.addEventListener('click', () => renderChoose())
     root.querySelector('#commit')!.addEventListener('click', () => {
+      // Boden explizit setzen (Default Lehm), damit jeder Schlag die Wasserbilanz-Query trägt.
+      draft.forEach((f) => {
+        if (!f.properties.soilType) f.properties.soilType = DEFAULT_SOIL
+      })
       setFields(draft)
       onDone()
     })

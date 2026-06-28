@@ -14,7 +14,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] „Manuell zeichnen / GPS": Polygone selbst zeichnen (z. B. terra-draw).
 - [ ] DBF-Encoding robust behandeln (Umlaute, cp1252/.cpg) beim Shape-Import.
 - [ ] Mehrere Schlagkartei-Formate testen (365FarmNet, NEXT, FARMDOK; ISO-XML).
-- [ ] Sorten-Schritt der Ersteinrichtung (eigene Liste, Mapping aus Importdaten).
+- [x] **Boden-Auswahl je Schlag** in der Ersteinrichtung (SOIL_TYPES-Dropdown → `FieldProps.soilType`),
+      speist `/api/water-balance` je Schlag. — 2026-06-28
+- [ ] Sorten-Schritt verfeinern: eigene Sortenliste + Mapping aus Importdaten (Dropdown existiert).
 
 ### Übersicht / Karten
 - [ ] **Peronospora**: LfL-Warndienst (Hüll) anbinden (Quelle/Recht klären).

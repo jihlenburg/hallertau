@@ -5,6 +5,14 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Onboarding: Boden-Auswahl je Schlag
+**Was:** Spalte „Boden" (SOIL_TYPES, großgeschrieben) in der Schlag-Prüfung; schreibt
+`FieldProps.soilType` (Default Lehm beim Übernehmen). Speist die live `/api/water-balance` je Schlag
+(Client sendet `soilType`); Lead-Text ergänzt („Der Boden bestimmt die Wasserbilanz je Schlag").
+**Warum:** Macht die per-Schlag-Wasserbilanz farmer-steuerbar (vorher überall Lehm-Default).
+**Verifikation:** 45/45 Tests grün, Build sauber, Onboarding-Review-Screenshot zeigt die Spalte. Deployt.
+**Verweise:** `app/src/onboarding/index.ts`.
+
 ## 2026-06-28 · Backend-Cache für Open-Meteo (TTL + Anfrage-Bündelung)
 **Was:** In-Memory-TTL-Cache (`api/src/sources/cache.ts`, 30 min, Schlüssel ~1-km-Zelle) vor dem
 Open-Meteo-Abruf. Cacht die **Promise** (bündelt gleichzeitige identische Anfragen — z. B. Whole-Farm
