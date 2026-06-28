@@ -2,6 +2,19 @@
 
 export interface WmoInfo { text: string; severe: boolean; thunder: boolean }
 
+/** Wetterklasse für ein kompaktes Glyph im Vorhersagestreifen. */
+export type WmoCategory = 'clear' | 'partly' | 'cloud' | 'fog' | 'rain' | 'snow' | 'storm'
+
+export function wmoCategory(code: number): WmoCategory {
+  if (code === 0 || code === 1) return 'clear'
+  if (code === 2) return 'partly'
+  if (code === 3) return 'cloud'
+  if (code === 45 || code === 48) return 'fog'
+  if (code >= 95) return 'storm'
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow'
+  return 'rain' // 51–67, 80–82
+}
+
 export function wmo(code: number): WmoInfo {
   const t = (text: string, severe = false, thunder = false): WmoInfo => ({ text, severe, thunder })
   switch (code) {

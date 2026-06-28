@@ -7,7 +7,7 @@ import { fetchDwdAlerts, type DwdAlert } from '../api/brightSky'
 import { fetchWaterBalance, type WaterBalanceResult, type WbQuery } from '../api/waterBalance'
 import { assessWeather } from '../domain/weather'
 import { evaluateSprayWindow } from '../domain/sprayWindow'
-import { cardHtml, barsViz, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, type CardSpec } from './cards'
+import { cardHtml, barsViz, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip, type CardSpec } from './cards'
 import { fieldsToGeoJson, downloadText } from '../export'
 import { icons } from '../ui/icons'
 import type { FieldFeature, Status } from '../types'
@@ -29,6 +29,7 @@ export function mountOverview(root: HTMLElement): void {
           <div class="toggles"><button class="tg" id="tg-dop">Luftbild</button><button class="tg" id="tg-export" title="Schläge als GeoJSON sichern">Export</button></div>
         </div>
         <div id="map"></div>
+        <div class="fc7-wrap" id="fc7"></div>
         <ul class="fieldlist" id="flist"></ul>
         <div class="maphint">© OpenFreeMap · OpenMapTiles · DOP40: © Bayerische Vermessungsverwaltung</div>
       </div>
@@ -220,6 +221,8 @@ export function mountOverview(root: HTMLElement): void {
 
     const specs: CardSpec[] = [...weatherSpecs, waterBalanceCard(wb)]
     root.querySelector<HTMLDivElement>('#cards')!.innerHTML = specs.map(cardHtml).join('')
+    const fc = root.querySelector<HTMLDivElement>('#fc7')
+    if (fc) fc.innerHTML = data ? forecastStrip(data.daily, now) : ''
     updateGridHint(sel)
     if (data) updateSubhead(sel, [weatherStatus, sprayStatus, wbStatus(wb)])
     else

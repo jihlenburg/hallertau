@@ -1,4 +1,5 @@
 import type { Status } from '../types'
+import { wmoCategory, type WmoCategory } from '../domain/wmo'
 
 export interface CardSpec {
   status: Status | 'loading'
@@ -45,6 +46,59 @@ export function roadmapStrip(): string {
       ${item('Feld-Check', 'Sentinel')}
       ${item('Wachstum & Erntefenster', 'Phänologie')}
     </div>`
+}
+
+// ===== 7-Tage-Vorhersagestreifen (Karten-Panel) =====
+interface DailyForecast {
+  time: string[]
+  weather_code: number[]
+  temperature_2m_max: number[]
+  temperature_2m_min: number[]
+  precipitation_probability_max: number[]
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0')
+const isoDate = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+
+const fcSvg = (inner: string) => `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${inner}</svg>`
+const FC_CLOUD = '<path d="M7 16.5h9a3 3 0 0 0 .2-6A4.2 4.2 0 0 0 8.1 9 3.2 3.2 0 0 0 7 16.5z" fill="#b9c6bd"/>'
+
+/** Kompaktes Wetterglyph je Klasse (bewusst minimal, signage-tauglich). */
+function fcGlyph(cat: WmoCategory): string {
+  switch (cat) {
+    case 'clear': return fcSvg('<circle cx="12" cy="12" r="5.5" fill="#e3b24e"/>')
+    case 'partly': return fcSvg('<circle cx="9" cy="10" r="4" fill="#e3b24e"/>' + FC_CLOUD)
+    case 'cloud': return fcSvg(FC_CLOUD)
+    case 'fog': return fcSvg(FC_CLOUD + '<path d="M6 19h12M8 21h8" stroke="#b9c6bd" stroke-width="1.4" stroke-linecap="round"/>')
+    case 'rain': return fcSvg(FC_CLOUD + '<path d="M9 18.5l-1 2.5M13 18.5l-1 2.5" stroke="#2f6fb0" stroke-width="1.7" stroke-linecap="round"/>')
+    case 'snow': return fcSvg(FC_CLOUD + '<circle cx="9" cy="20" r="1" fill="#7aa6d0"/><circle cx="13" cy="20" r="1" fill="#7aa6d0"/>')
+    case 'storm': return fcSvg(FC_CLOUD + '<path d="M12 17l-2.2 3.2H12l-1 2.8 3.2-3.8H12z" fill="#c8902a"/>')
+  }
+}
+
+/**
+ * 7-Tage-Vorhersagestreifen ab „heute" aus den Open-Meteo-Tageswerten.
+ * Pro Tag: Wochentag · Wetterglyph · Max/Min · Regenwahrscheinlichkeit.
+ */
+export function forecastStrip(daily: DailyForecast, now: Date): string {
+  const today = isoDate(now)
+  let start = daily.time.findIndex((t) => t >= today)
+  if (start < 0) start = 0
+  const cells: string[] = []
+  for (let i = start; i < Math.min(start + 7, daily.time.length); i++) {
+    const d = new Date(daily.time[i] + 'T12:00')
+    const wd = i === start ? 'Heute' : d.toLocaleDateString('de-DE', { weekday: 'short' })
+    const max = daily.temperature_2m_max[i]
+    const min = daily.temperature_2m_min[i]
+    const maxS = isFinite(max) ? `${Math.round(max)}°` : '–'
+    const minS = isFinite(min) ? `${Math.round(min)}°` : '–'
+    const pp = Math.round(daily.precipitation_probability_max[i] ?? 0)
+    cells.push(
+      `<div class="fc"><span class="fcd">${wd}</span>${fcGlyph(wmoCategory(daily.weather_code[i] ?? 0))}` +
+        `<span class="fct">${maxS}<i>${minS}</i></span><span class="fcp">${pp > 0 ? pp + ' %' : '·'}</span></div>`,
+    )
+  }
+  return `<div class="fc7">${cells.join('')}</div>`
 }
 
 /** Balken-Visualisierung für die Spritzfenster-Stunden (grün = geeignet). */

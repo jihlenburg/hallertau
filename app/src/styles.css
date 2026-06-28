@@ -149,6 +149,16 @@ html, body {
 .fieldlist .fn { font-weight: 600; font-size: 17px; }
 .fieldlist .fm { color: var(--muted); font-size: 14px; margin-left: auto; }
 
+/* 7-Tage-Vorhersagestreifen */
+.fc7-wrap { border-top: 1px solid var(--line); }
+.fc7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 10px 10px 4px; }
+.fc { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px; border-radius: 10px; }
+.fc:first-child { background: var(--bg); }
+.fcd { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+.fct { font-size: 13px; font-weight: 600; color: var(--ink); }
+.fct i { color: var(--faint); font-style: normal; margin-left: 3px; font-weight: 500; }
+.fcp { font-size: 11px; color: var(--blue); font-weight: 600; }
+
 /* ===== Onboarding ===== */
 .onb { max-width: 1180px; margin: 0 auto; }
 .onb h1 { font-family: var(--font-disp); font-weight: 700; font-size: 34px; }
@@ -263,6 +273,10 @@ html { text-rendering: optimizeLegibility; -moz-osx-font-smoothing: grayscale; }
   .review { overflow-x: auto; } /* breite Tabelle nicht über den Viewport hinaus */
   .drop { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
   .rowbtns { flex-wrap: wrap; }
+  .fc7 { padding: 8px 4px; gap: 1px; }
+  .fcd { font-size: 11px; }
+  .fct { font-size: 12px; }
+  .fct i { margin-left: 2px; }
 }
 /* ≤420px: sehr schmale Telefone — Begrüßung etwas kleiner. */
 @media (max-width: 420px) {

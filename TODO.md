@@ -24,7 +24,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       Vor Vermarktung als feldscharf: **NDRE-Backtest** auf typischen 0,5–2 ha Schlägen
       (Red-Edge 20 m nativ, wenige saubere Pixel je Schlag).
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
-- [ ] 7-Tage-Vorhersagestreifen im Map-Panel (wie Mockup m1).
+- [x] 7-Tage-Vorhersagestreifen im Map-Panel (Wochentag · Wetterglyph · Max/Min · Regen-%),
+      aus Open-Meteo-Tageswerten. — 2026-06-28
 - [~] Pro-Gitterzelle cachen — Whole-Farm-Kopf bündelt Wetter je Rasterzelle (`gridCellKey`);
       Backend cacht zudem die Wasserbilanz je ~1-km-Zelle (TTL), sodass der doppelte
       `refresh()`/`refreshFarm()`-Abruf der gewählten Zelle billig ist. Client-Dedup noch offen (Nit).

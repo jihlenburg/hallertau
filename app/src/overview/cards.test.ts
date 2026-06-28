@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { soilBalanceLabel, soilWaterViz, roadmapStrip, countHints } from './cards'
+import { soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip } from './cards'
 
 describe('soilBalanceLabel — FAO-56 Wurzelraum-Bilanz (echte Empfehlung)', () => {
   it('good/warn: qualitative Überschrift', () => {
@@ -24,6 +24,23 @@ describe('soilWaterViz', () => {
   })
   it('weist aktiven Wasserstress aus, wenn Ks < 1', () => {
     expect(soilWaterViz({ dr: 130, raw: 90, taw: 180, ks: 0.56, days: 61 })).toMatch(/0\.56|Ks/i)
+  })
+})
+
+describe('forecastStrip', () => {
+  const daily = {
+    time: ['2026-06-27', '2026-06-28', '2026-06-29', '2026-06-30', '2026-07-01', '2026-07-02', '2026-07-03', '2026-07-04'],
+    weather_code: [0, 2, 61, 3, 95, 0, 1, 2],
+    temperature_2m_max: [28, 30, 24, 26, 22, 29, 31, 30],
+    temperature_2m_min: [14, 15, 13, 12, 11, 14, 16, 15],
+    precipitation_probability_max: [0, 10, 80, 40, 60, 0, 5, 10],
+  }
+  it('zeigt 7 Tage ab heute, erste Zelle „Heute", mit Max-Temperatur', () => {
+    const html = forecastStrip(daily, new Date(2026, 5, 28, 18, 0))
+    expect((html.match(/class="fc"/g) || []).length).toBe(7)
+    expect(html).toContain('Heute')
+    expect(html).toContain('30°') // Max heute (28.6.)
+    expect(html).toContain('80 %') // Regenwahrscheinlichkeit 29.6.
   })
 })
 

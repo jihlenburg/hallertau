@@ -5,6 +5,14 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · 7-Tage-Vorhersagestreifen im Karten-Panel
+**Was:** Kompakter Streifen unter der Karte: je Tag Wochentag (heute „Heute") · minimalistisches
+Wetterglyph (`wmoCategory` → clear/partly/cloud/fog/rain/snow/storm) · Max/Min · Regenwahrscheinlichkeit.
+Aus den Open-Meteo-Tageswerten des gewählten Schlags (`forecastStrip`, rein/getestet).
+**Verifikation:** 50 Tests grün (wmoCategory + forecastStrip, TDD); Build sauber; Desktop- und
+Mobil-Screenshot (7 Spalten passen auf 390 px) geprüft. Deployt.
+**Verweise:** `app/src/domain/wmo.ts`, `app/src/overview/cards.ts`, `app/src/styles.css`.
+
 ## 2026-06-28 · Initial-Bundle verkleinert (shpjs/proj4 lazy)
 **Was:** `importShapeZip` lädt shpjs (+ proj4) per dynamischem `import()` erst beim tatsächlichen
 ZIP-Import → eigener Lazy-Chunk (~142 KB / gzip 47 KB); Initial-Chunk 987→846 KB (gzip 280→233).
