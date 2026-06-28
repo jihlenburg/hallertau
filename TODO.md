@@ -16,7 +16,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] Mehrere Schlagkartei-Formate testen (365FarmNet, NEXT, FARMDOK; ISO-XML).
 - [x] **Boden-Auswahl je Schlag** in der Ersteinrichtung (SOIL_TYPES-Dropdown → `FieldProps.soilType`),
       speist `/api/water-balance` je Schlag. — 2026-06-28
-- [ ] Sorten-Schritt verfeinern: eigene Sortenliste + Mapping aus Importdaten (Dropdown existiert).
+- [~] Sorten-Schritt: importierte Sorte wird im Dropdown erhalten (Fidelity-Fix, kein stilles
+      Zurücksetzen auf „Herkules") ✓; offen: freie Sorten-Eingabe („andere …"). — 2026-06-28
 
 ### Übersicht / Karten
 - [ ] **Peronospora**: LfL-Warndienst (Hüll) anbinden (Quelle/Recht klären).

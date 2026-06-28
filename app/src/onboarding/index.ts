@@ -142,9 +142,12 @@ export function mountOnboarding(root: HTMLElement, onDone: () => void): void {
                 .map(
                   (f, i) => `<tr>
                     <td><input data-i="${i}" data-k="name" value="${esc(f.properties.name)}" /></td>
-                    <td><select data-i="${i}" data-k="sorte">${SORTEN.map(
-                      (s) => `<option ${s === f.properties.sorte ? 'selected' : ''}>${s}</option>`,
-                    ).join('')}</select></td>
+                    <td><select data-i="${i}" data-k="sorte">${(SORTEN.includes(f.properties.sorte)
+                      ? SORTEN
+                      : [f.properties.sorte, ...SORTEN]
+                    )
+                      .map((s) => `<option ${s === f.properties.sorte ? 'selected' : ''}>${esc(s)}</option>`)
+                      .join('')}</select></td>
                     <td><select data-i="${i}" data-k="soilType" aria-label="Bodenart">${SOIL_TYPES.map(
                       (t) => `<option value="${t}" ${t === (f.properties.soilType ?? DEFAULT_SOIL) ? 'selected' : ''}>${titleCase(t)}</option>`,
                     ).join('')}</select></td>
