@@ -16,6 +16,9 @@ Thumbs.db
 # Browser-Automation-Artefakte (Playwright MCP: Snapshots/Logs)
 .playwright-mcp/
 
+# Screenshot-Artefakte (regenerierbar; nur README/Checkliste wird versioniert)
+docs/screenshots/*.png
+
 # Secrets — niemals einchecken (echte Zugangsdaten)
 .env
 .env.local

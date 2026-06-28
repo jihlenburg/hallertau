@@ -12,7 +12,7 @@
   --ink: #182a20;
   --ink-soft: #3c5147;
   --muted: #6b7d72;
-  --faint: #93a399;
+  --faint: #74867b; /* angehoben für Lesbarkeit (Frutiger: Legibilität zuerst) */
   --brand: #2f6b4a;
   --brand-dark: #234f37;
   --gold: #c8902a;
@@ -32,6 +32,12 @@
   --shadow: 0 7px 20px rgba(24, 42, 32, 0.09);
   --font-text: 'Barlow', system-ui, sans-serif;
   --font-disp: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
+
+  /* Koordinierte Typo-Skala (~1.25) + Tracking — ein System statt vieler Einzelgrößen */
+  --track-label: 0.11em; /* Versal-Eyebrows / Labels: ruhig, gleichmäßig */
+  --track-tight: -0.012em; /* große Display-Werte: dichter, signage-tauglich */
+  --lh-tight: 1.06;
+  --lh-body: 1.45;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -197,3 +203,30 @@ code.k { font-family: var(--font-text); background: #eef3ee; color: var(--brand-
 .roadmap-h { font-family: var(--font-disp); font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 .roadmap .rm { color: var(--ink-soft); font-size: 15px; padding: 4px 12px; border-radius: 12px; background: var(--bg); }
 .roadmap .rm b { color: var(--brand-dark); font-weight: 600; }
+
+/* ===== Typografischer Feinschliff — Frutiger-Rubrik: System · Rhythmus · Lesbarkeit · Ruhe ===== */
+html { text-rendering: optimizeLegibility; -moz-osx-font-smoothing: grayscale; }
+
+/* Versal-Labels: ein einheitliches, ruhiges Tracking statt verschiedener px-Werte */
+.card .ey, .roadmap-h, .review th, .mcard .badge, .card .pending, .step .stt + *,
+.cm-l, .eyebrow, .kicker { letter-spacing: var(--track-label); }
+
+/* Display-Werte: dichteres Tracking + straffe Zeilenhöhe = ein klarer Anker je Karte */
+.hello, .card .stat, .onb h1, .panel .ptitle h2, .review h2, .guide h2, .wm {
+  letter-spacing: var(--track-tight);
+}
+.hello { line-height: var(--lh-tight); margin-bottom: 2px; }
+.card .stat { line-height: var(--lh-tight); }
+
+/* Fließtext: gleichmäßiger Rhythmus, angenehme Zeilenlänge */
+.card .rec, .onb .lead, .step .sdd, .summary { line-height: var(--lh-body); }
+.card .rec { max-width: 42ch; }
+
+/* Etwas mehr Luft im Masthead (Frutiger: großzügiger, gleichmäßiger Weißraum) */
+.view { padding-top: 32px; }
+
+/* Quality floor: sichtbarer Tastatur-Fokus + Reduced-Motion respektieren */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
