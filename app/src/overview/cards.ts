@@ -80,10 +80,12 @@ export function soilWaterViz(b: { dr: number; raw: number; taw: number; ks: numb
   const rawPct = b.taw > 0 ? Math.min(100, Math.max(0, (b.raw / b.taw) * 100)) : 0
   const color = b.dr >= b.raw ? 'var(--alert)' : b.dr >= 0.5 * b.raw ? 'var(--warn)' : 'var(--good)'
   const stress = b.ks < 1 ? ` · Wasserstress (Ks ${b.ks})` : ''
+  // Fachbegriffe (Dr/RAW/TAW) nur im title für Power-User; sichtbarer Text bleibt einfach.
+  const title = `FAO-56: Verarmung Dr ${b.dr.toFixed(0)} mm · Auslöser RAW ${b.raw.toFixed(0)} mm · nutzbare Kapazität TAW ${b.taw.toFixed(0)} mm`
   return `
-    <div class="meter meter-soil">
+    <div class="meter meter-soil" title="${title}">
       <span style="width:${pct.toFixed(0)}%;background:${color}"></span>
-      <i class="mark" style="left:${rawPct.toFixed(0)}%" title="Auslöser RAW ${b.raw.toFixed(0)} mm"></i>
+      <i class="mark" style="left:${rawPct.toFixed(0)}%" title="Auslöser ab ${b.raw.toFixed(0)} mm"></i>
     </div>
-    <div class="barlabel">Verarmung Dr ${b.dr.toFixed(0)} / ${b.taw.toFixed(0)} mm · Auslöser RAW ${b.raw.toFixed(0)} mm${stress} · ${b.days} T</div>`
+    <div class="barlabel">Verarmung ${b.dr.toFixed(0)} von ${b.taw.toFixed(0)} mm · Auslöser ab ${b.raw.toFixed(0)} mm${stress} · Fenster ${b.days} Tage</div>`
 }

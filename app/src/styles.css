@@ -12,7 +12,7 @@
   --ink: #182a20;
   --ink-soft: #3c5147;
   --muted: #6b7d72;
-  --faint: #74867b; /* angehoben für Lesbarkeit (Frutiger: Legibilität zuerst) */
+  --faint: #5e7065; /* AA-fest auf Weiß (≈4.6:1) — Frutiger: Legibilität zuerst */
   --brand: #2f6b4a;
   --brand-dark: #234f37;
   --gold: #c8902a;
@@ -88,7 +88,7 @@ html, body {
 .summary {
   display: inline-flex; align-items: center; gap: 9px;
   margin-top: 14px; padding: 9px 16px; border-radius: 14px;
-  background: var(--warn-tint); border: 1px solid #ead9ad; color: #9a6a14;
+  background: var(--warn-tint); border: 1px solid #ead9ad; color: #7d5410;
   font-weight: 600; font-size: 18px;
 }
 .summary .d { width: 12px; height: 12px; border-radius: 50%; background: var(--warn); }
@@ -130,8 +130,8 @@ html, body {
 .meter { height: 11px; border-radius: 6px; background: #eef1ec; overflow: hidden; }
 .meter > span { display: block; height: 100%; border-radius: 6px; }
 /* Wurzelraum-„Eimer": Verarmung Dr (Füllung) + Auslöser-Marke bei RAW. */
-.meter-soil { position: relative; }
-.meter-soil .mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #2a3a31; opacity: .5; }
+.meter-soil { position: relative; overflow: visible; }
+.meter-soil .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
 
 /* ===== Map-Panel ===== */
 .panel { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
@@ -230,6 +230,7 @@ html { text-rendering: optimizeLegibility; -moz-osx-font-smoothing: grayscale; }
 
 /* Quality floor: sichtbarer Tastatur-Fokus + Reduced-Motion respektieren */
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+.bar :focus-visible { outline-color: #fff; } /* heller Ring auf dunkelgrüner Leiste */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }

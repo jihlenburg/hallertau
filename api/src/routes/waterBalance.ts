@@ -26,11 +26,16 @@ function todayBerlin(): string {
   }).format(new Date())
 }
 
-const CAVEATS = [
-  'nFK ist 250-m-grob (ein Pixel ≈ ganzer Schlag) — nicht feldscharf.',
-  'Annahmen v1: kein Oberflächenabfluss (RO=0), keine Beregnung geloggt (I=0); Tagesregen voll als effektiv gezählt.',
-  'Init am Fensteranfang = Feldkapazität (Dr=0). Orientierung, keine verbindliche Beregnungsanweisung.',
-]
+/** Caveats provenienz-abhängig — nFK kommt aus Bodenart-Richtwert ODER Override (kein Raster). */
+function caveatsFor(soilType: SoilType | undefined): string[] {
+  return [
+    soilType
+      ? 'nFK aus Bodenart-Richtwert (KA5-Größenordnung) — nicht feldscharf gemessen.'
+      : 'nFK als Override vorgegeben — nicht feldscharf gemessen.',
+    'Annahmen v1: kein Oberflächenabfluss (RO=0), keine Beregnung geloggt (I=0); Tagesregen voll als effektiv gezählt.',
+    'Init am Fensteranfang = Feldkapazität (Dr=0). Orientierung, keine verbindliche Beregnungsanweisung.',
+  ]
+}
 
 /** Registriert GET /api/water-balance (Datenquelle injizierbar → testbar). */
 export function registerWaterBalanceRoute(app: FastifyInstance, deps: WaterBalanceDeps): void {
@@ -105,7 +110,7 @@ export function registerWaterBalanceRoute(app: FastifyInstance, deps: WaterBalan
           precip: 'Open-Meteo (Niederschlag)',
           soil: soilType ? `Bodenart „${soilType}" → nFK` : 'nFK-Override',
         },
-        caveats: CAVEATS,
+        caveats: caveatsFor(soilType),
       })
     } catch (err) {
       req.log.error(err)

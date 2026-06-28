@@ -5,6 +5,31 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Client-Cutover Wasserbilanz → Backend-API (live) + adversarielle Review
+**Was:** Die Übersicht rechnet die Wasserbilanz nicht mehr selbst, sondern rendert `GET /api/water-balance`.
+- **Client:** `api/waterBalance.ts` (typisierter Client, `X-Client-API`, 426→„App veraltet"); WB-Karte
+  aus dem API-Ergebnis (Dr/RAW/TAW, Ks, Netto-Empfehlung, Fenster) mit Wurzelraum-„Eimer"-Meter;
+  unabhängige Degradation; Farm-Header zählt WB je Schlag. Tot entfernt: client-`computeWaterBalance`/`kc`.
+- **Proxys:** vite.config.ts + server.mjs reichen `/api/water-balance` + `/api/version` ans Backend
+  durch (Prod: nginx). Capture-Wait gehärtet (`!lädt …`).
+- **Adversarielle Review** (Workflow, 4 Linsen × Refute/Confirm, 27 Agenten): 23 Befunde, **17 bestätigt**
+  (0 Blocker). Behoben: (M) Farm-Header fror bei Wetter-Fehler auf „lädt" ein → defensiv je Zelle +
+  terminaler ehrlicher Zustand; (M) Schlagliste tastaturbedienbar (`button`-Semantik, `aria-current`,
+  Enter/Space). (Minor) WB-Fehler/Inkompatibel jetzt RUHIG (info statt rotem Alarm); Disclaimer in allen
+  Zweigen; „Boden: Lehm" großgeschrieben; „Netto ≈ X mm … ggf. auf mehrere Gaben"; RO=0/I=0 in der Karte
+  sichtbar; Backend-Caveat provenienz-genau (Bodenart-Richtwert statt „250-m-Raster"); Kontrast AA
+  (`--faint`, Summary-Pill, Fokus-Ring auf der Leiste); RAW-Marke kräftiger; Klartext-Caption „61 Tage".
+
+**Warum:** „map tiles client, water balance … on the backend" — Strong Separation am Client vollzogen.
+
+**Verifikation:** App 45/45 + API 33/33 Tests grün, beide Builds sauber, Screenshots der Übersicht
+geprüft. Beide deployt (API-Caveat + SPA); HTTPS-Smoke grün, keine Regression (Root + brightsky 200).
+
+**Offen:** responsives Mobil-Layout (Viewport noch `width=1280`); Onboarding-Boden-Auswahl; doppelter
+Abruf der ausgewählten Zelle (refresh + refreshFarm) als Nit.
+
+**Verweise:** `app/src/{api/waterBalance,overview/index,overview/cards}.ts`; Review-Workflow `cutover-review`.
+
 ## 2026-06-28 · Backend `api/` auf doldenblick-01 deployt + auf Fastify 5 gehärtet
 **Was:** Den Wasserbilanz-Dienst produktiv ausgerollt (reproduzierbar via `infra/deploy-api.sh`).
 - **Runtime:** Node 22 LTS via NodeSource installiert; Dienst als eigener System-User `doldenblick`

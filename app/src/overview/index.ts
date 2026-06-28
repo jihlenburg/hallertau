@@ -54,15 +54,24 @@ export function mountOverview(root: HTMLElement): void {
     const list = root.querySelector<HTMLUListElement>('#flist')!
     list.innerHTML = getFields()
       .map(
-        (f) => `<li data-id="${f.properties.id}" class="${f.properties.id === sel ? 'sel' : ''}">
+        (f) => `<li data-id="${f.properties.id}" class="${f.properties.id === sel ? 'sel' : ''}"
+          tabindex="0" role="button"${f.properties.id === sel ? ' aria-current="true"' : ''}
+          aria-label="Schlag ${f.properties.name}, ${f.properties.sorte}, ${f.properties.flaeche_ha.toFixed(1)} ha">
           <span class="fn">${f.properties.name}</span>
           <span class="fm">${f.properties.sorte} · ${f.properties.flaeche_ha.toFixed(1)} ha</span>
         </li>`,
       )
       .join('')
-    list.querySelectorAll<HTMLLIElement>('li').forEach((li) =>
-      li.addEventListener('click', () => selectField(li.dataset.id!)),
-    )
+    list.querySelectorAll<HTMLLIElement>('li').forEach((li) => {
+      const pick = () => selectField(li.dataset.id!)
+      li.addEventListener('click', pick)
+      li.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          pick()
+        }
+      })
+    })
   }
 
   function renderLoading() {
@@ -108,26 +117,32 @@ export function mountOverview(root: HTMLElement): void {
   }
 
   /** Baut die Wasserbilanz-Karte aus dem Backend-Ergebnis (inkl. degradierter Zustände). */
+  const titleCase = (s: string) =>
+    s.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
   function waterBalanceCard(wb: WaterBalanceResult): CardSpec {
     const eyebrow = 'Bewässerung · Wasserbilanz'
     const icon = icons.water()
+    // Degradierte Zustände bleiben RUHIG (info, nicht alert) — kein roter Feld-Alarm für einen
+    // Abruf-/Versionsfehler; deckt sich mit wbStatus()='info' (Karte und Hinweiszählung stimmen überein).
     if (wb.kind === 'incompatible') {
-      return { status: 'alert', eyebrow, icon, stat: 'App veraltet', rec: 'Die Wasserbilanz-Schnittstelle hat sich geändert. Bitte die Seite neu laden.', src: 'DoldenBlick-API' }
+      return { status: 'info', eyebrow, icon, stat: 'App veraltet', rec: 'Die Wasserbilanz-Schnittstelle hat sich geändert. Bitte die Seite neu laden.', src: 'DoldenBlick-API' }
     }
     if (wb.kind === 'error') {
-      return { status: 'alert', eyebrow, icon, stat: 'Nicht abrufbar', rec: `Wasserbilanz konnte nicht geladen werden (${wb.message}). Bitte später erneut versuchen.`, src: 'DoldenBlick-API · Open-Meteo (FAO-56)' }
+      return { status: 'info', eyebrow, icon, stat: 'Nicht abrufbar', rec: `Wasserbilanz derzeit nicht abrufbar (${wb.message}). Bitte später erneut versuchen.`, src: 'DoldenBlick-API · Open-Meteo (FAO-56)' }
     }
     const d = wb.data
-    const soil = d.soil.soilType ?? `nFK ${d.soil.nfkMmPerM} mm/m`
+    const soilName = d.soil.soilType ? titleCase(d.soil.soilType) : `nFK ${d.soil.nfkMmPerM} mm/m`
+    const note = `<span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden: ${soilName}. Orientierung, keine verbindliche Beregnungsanweisung; eigene Beregnung und Oberflächenabfluss sind nicht berücksichtigt.</span>`
     let rec: string
     if (d.status === 'alert' && d.recommendMm > 0) {
-      rec = `Auf Feldkapazität auffüllen (≈ ${Math.round(d.recommendMm)} mm). <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil} · Ks ${d.ks}. Orientierung, keine verbindliche Beregnungsanweisung.</span>`
+      rec = `Netto ≈ ${Math.round(d.recommendMm)} mm bis Feldkapazität (ggf. auf mehrere Gaben verteilen). ${note}`
     } else if (d.status === 'warn') {
-      rec = `Noch keine Bewässerung nötig — Auslöser bei RAW ${d.raw.toFixed(0)} mm. <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil}.</span>`
+      rec = `Noch keine Bewässerung nötig. ${note}`
     } else if (d.status === 'alert') {
-      rec = `Trockenstress wahrscheinlich (Ks ${d.ks}). <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil}.</span>`
+      rec = `Trockenstress wahrscheinlich (Ks ${d.ks}). ${note}`
     } else {
-      rec = `Wurzelraum gut versorgt. <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil}. Orientierung, keine verbindliche Gabe.</span>`
+      rec = `Wurzelraum gut versorgt. ${note}`
     }
     return {
       status: d.status,
@@ -249,18 +264,27 @@ export function mountOverview(root: HTMLElement): void {
       const k = gridCellKey(centroidLonLat(f))
       if (!repByCell.has(k)) repByCell.set(k, f)
     }
+    const sum = root.querySelector<HTMLDivElement>('#summary')!
     try {
       const now = new Date()
-      const dataByCell = new Map<string, OpenMeteoData>()
+      const dataByCell = new Map<string, OpenMeteoData | null>()
       const alertsByCell = new Map<string, DwdAlert[] | null>()
+      // Wetter je Zelle — eine fehlschlagende Zelle darf den Tageskopf NICHT einfrieren.
       await Promise.all(
         [...repByCell].map(async ([k, f]) => {
           const [lon, lat] = centroidLonLat(f)
-          dataByCell.set(k, await fetchOpenMeteo(lat, lon, signal))
-          alertsByCell.set(k, await fetchDwdAlerts(lat, lon, signal))
+          try {
+            const d = await fetchOpenMeteo(lat, lon, signal)
+            const a = await fetchDwdAlerts(lat, lon, signal)
+            dataByCell.set(k, d)
+            alertsByCell.set(k, a)
+          } catch {
+            dataByCell.set(k, null)
+            alertsByCell.set(k, null)
+          }
         }),
       )
-      // Wasserbilanz je Schlag (Backend) — parallel; Fehler je Schlag zählt nicht als Hinweis.
+      // Wasserbilanz je Schlag (Backend) — wirft nie (Result-Union).
       const wbByField = new Map<string, WaterBalanceResult>()
       await Promise.all(
         all.map(async (f) => {
@@ -273,22 +297,24 @@ export function mountOverview(root: HTMLElement): void {
       for (const f of all) {
         const k = gridCellKey(centroidLonLat(f))
         const data = dataByCell.get(k)
-        if (!data) continue
-        const fieldStatuses: Status[] = [
-          assessWeather(data, alertsByCell.get(k) ?? null, now).status,
-          evaluateSprayWindow(data.hourly, now).status,
-          wbStatus(wbByField.get(f.properties.id) ?? { kind: 'error', message: '' }),
-        ]
-        if (countHints(fieldStatuses) > 0) hinted++
+        const statuses: Status[] = []
+        if (data) {
+          statuses.push(assessWeather(data, alertsByCell.get(k) ?? null, now).status)
+          statuses.push(evaluateSprayWindow(data.hourly, now).status)
+        }
+        statuses.push(wbStatus(wbByField.get(f.properties.id) ?? { kind: 'error', message: '' }))
+        if (countHints(statuses) > 0) hinted++
       }
-      const sum = root.querySelector<HTMLDivElement>('#summary')!
-      sum.className = `summary${hinted === 0 ? ' good' : ''}`
+      const anyWeather = [...dataByCell.values()].some(Boolean)
+      sum.className = `summary${hinted === 0 && anyWeather ? ' good' : ''}`
       sum.innerHTML = `<span class="d"></span>${
         hinted === 0 ? 'Keine offenen Hinweise' : `${hinted} Hinweis${hinted > 1 ? 'e' : ''}`
-      } für morgen · ${all.length} Schläge`
+      } für morgen · ${all.length} Schläge${anyWeather ? '' : ' · Wetter derzeit nicht abrufbar'}`
     } catch (err) {
       if ((err as Error).name === 'AbortError') return
-      // still — Detailkarten zeigen die Lage je Schlag.
+      // Terminaler, ehrlicher Zustand statt eingefrorenem „Daten werden geladen …".
+      sum.className = 'summary'
+      sum.innerHTML = `<span class="d"></span>Tagesüberblick derzeit nicht abrufbar · ${all.length} Schläge`
     }
   }
 

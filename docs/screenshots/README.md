@@ -53,6 +53,12 @@ System, Rhythmus, Ruhe. Ein Abend-Briefing ist ein **Wegeleit-Problem** (auf ein
       (Ziel) responsiv bis Mobil.
 
 ## Befund-Log
+- **2026-06-28 (v2 · Client-Cutover):** Adversarielle Multi-Linsen-Review (Workflow, 4 Linsen ×
+  Refute/Confirm) der Wasserbilanz-Karte nach dem Backend-Cutover. 23 Befunde, 17 bestätigt, 0 Blocker.
+  Behoben: Farm-Header-Einfrieren bei Wetter-Fehler (defensiv); Schlagliste tastaturbedienbar; WB-Fehler
+  ruhig (info statt Alarm); Disclaimer konsistent + RO=0/I=0 sichtbar; „Boden: Lehm"; „Netto ≈ X mm";
+  Backend-Caveat provenienz-genau; AA-Kontrast (`--faint`/Summary/Fokus); RAW-Marke kräftiger; „61 Tage".
+  Offen: responsives Mobil-Layout (Viewport `width=1280`).
 - **2026-06-28 (v1):** Erstbewertung. Typo war eine Sammlung von Einzelgrößen ohne System; mehrere
   fast gleichgewichtige Texte → kein klarer Anker; gedämpfte Texte unter Lesbarkeitsgrenze.
   Eingeführt: koordinierte Skala/Tracking-Tokens, `--faint` lesbarer (#74867b), straffes Display-
