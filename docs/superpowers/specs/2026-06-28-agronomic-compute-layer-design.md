@@ -176,8 +176,15 @@ Schwellen/Parameter aller Karten: `docs/hops/README.md` (SSoT), inkl. GTS-Basis 
 
 ## 8. Wasserbilanz v2 (detaillierte Auslegung — Kern dieses Plans)
 
+> **Umsetzungsnotiz (2026-06-28):** Gemäß Architektur-Update läuft die Berechnung nun **zustandslos
+> im Backend** (`api/`, Fastify), nicht client-seitig. Damit entfallen für die erste Scheibe der
+> persistente `Dr`-Carry-over, die `fields`-Bodenspalten (§8.4) und der `localStorage`-Cache: `Dr`
+> wird je Request über das `past_days`-Fenster (Init Feldkapazität am Fensteranfang) neu hergeleitet.
+> Die FAO-56-Mathematik (§8.1, inkl. Ks), die Bodendaten-Logik (§8.2) und die Grenzen (§8.7) gelten
+> unverändert. Umgesetzt in `api/src/{domain,sources,routes}` + `api/README.md`.
+
 **Ziel:** Aus der speicherlosen klimatischen Bilanz wird ein echter Wurzelraum-Eimer mit Carry-over
-und Signal „**X mm bewässern / abwarten**". Läuft **client-seitig** (reine Funktion + persistenter `Dr`).
+und Signal „**X mm bewässern / abwarten**". (Ursprünglich client-seitig geplant — jetzt Backend, s. o.)
 
 ### 8.1 Modell (FAO-56 Wurzelraum-Wasserbilanz, Allen et al. 1998)
 Einheiten: nFK in **mm/m**, Zr in **m**, alles übrige in **mm**.

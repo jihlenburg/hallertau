@@ -66,11 +66,15 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       `/api/brightsky` via nginx; `https://doldenblick.de` live verifiziert. — 2026-06-28
 
 ## Produkt / Konzept
-- [~] **Backend (`api/`) — Strong Separation of Concerns:** Client = Präsentation + Karten-Tiles;
-      Backend = alle Datenabrufe (BFF) + alle Berechnungen. Erste Scheibe: zustandsloser
-      Wasserbilanz-Compute-Service (FAO-56-Bucket + Ks), Open-Meteo-Warm-up serverseitig,
-      Endpoint `/api/water-balance` — **noch kein Postgres**. Spec:
-      `docs/superpowers/specs/2026-06-28-agronomic-compute-layer-design.md`. *(aktueller Fokus)*
+- [x] **Backend (`api/`) — Strong Separation of Concerns, erste Scheibe:** zustandsloser
+      Wasserbilanz-Compute-Service (FAO-56-Bucket + Ks), Open-Meteo-Warm-up serverseitig (BFF),
+      `GET /api/water-balance` + `GET /api/version` + Versionsvertrag (`X-API-Version`/426-Guard).
+      33 Vitest grün, Live-Smoke ok. **Kein Postgres.** — 2026-06-28
+- [ ] **Deploy `api/` auf doldenblick-01:** systemd-Service (Loopback) + nginx-`/api/`-Upstream
+      (additiv zum bestehenden `/api/brightsky`-Proxy), https-Smoke `/api/water-balance`.
+- [ ] **Client-Cutover Wasserbilanz:** Overview ruft `GET /api/water-balance` statt selbst zu rechnen;
+      altes `computeWaterBalance`/`KC_HOPS`/`WB` + clientseitige Boden-/Kc-Duplikate entfernen;
+      Client deklariert `X-Client-API`/preflightet `/api/version`.
 - [ ] Caching der Datenquellen (Open-Meteo / Bright Sky) im Backend.
 - [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing) — die Übersicht flaggt
       Nachtfrost jetzt in-app und verweist auf die DWD-WarnWetterApp, ersetzt aber keinen

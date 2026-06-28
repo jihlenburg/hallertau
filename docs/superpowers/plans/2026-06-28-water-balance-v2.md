@@ -1,5 +1,12 @@
 # Water Balance v2 (FAO-56 Tipping Bucket, client-side) Implementation Plan
 
+> **⚠️ TEILWEISE ÜBERHOLT (2026-06-28):** Tasks 1–5 (Domänen-Module `soil`/`kc`/`waterBalance`-Bucket
+> + Typen + `past_days=60`) sind umgesetzt und gelten weiter. Tasks 6–9 (**client-seitige** Berechnung,
+> Persistenz von `Dr`, Onboarding-/Overview-Verdrahtung) sind durch die **Strong-Separation**-Entscheidung
+> abgelöst: die Berechnung lebt nun **zustandslos im Backend** (`api/`, Fastify) — siehe Spec-Architektur-
+> Update und `api/README.md`. Der Client wird später nur noch `GET /api/water-balance` rendern
+> (Client-Cutover als eigene Folge-Aufgabe). Diese Datei bleibt als Historie/SSoT der Mathematik.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace DoldenBlick's storage-less climatic irrigation index with a real FAO-56 root-zone soil-water-balance ("tipping bucket") that carries soil moisture day-to-day and yields an actionable "irrigate X mm / wait" signal — all client-side.

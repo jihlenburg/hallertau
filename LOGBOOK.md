@@ -5,6 +5,35 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Backend `api/` — zustandsloser FAO-56-Wasserbilanz-Dienst (Strong Separation)
+**Was:** Erste Scheibe der Compute-Schicht als eigenständiger TypeScript-/Fastify-Dienst unter `api/`.
+Umsetzung der **Strong-Separation-of-Concerns**-Entscheidung: Client = Präsentation + Tiles; Backend =
+Datenabruf (BFF) **und** Rechnung.
+- **Domäne** (`api/src/domain/`): `soil`, `kc`, `waterBalance` (FAO-56-Bucket inkl. **Ks**) aus
+  `app/src/domain` portiert (Tests mitgezogen); neu: `waterBalanceSeries` (zustandsloser Warm-up:
+  Init Feldkapazität am Fensteranfang, historisches Kc je Tag, bis `asOf`).
+- **Quelle** (`api/src/sources/openMeteo.ts`): server-seitiger Open-Meteo-Abruf (BFF, globales `fetch`),
+  tägliche ET0+Niederschlag über `past_days=60` + `forecast_days=7`.
+- **Route** `GET /api/water-balance?lat&lon&soilType|nfkMmPerM&rootDepthM&asOf` → Status/Dr/Ks/
+  Empfehlung + Fenster + Provenienz + Caveats. Validierung (400), Quellenfehler → 502.
+- **Versionsvertrag** (`api/src/version.ts`): `API_VERSION` (Major) in jeder Antwort (Body
+  `apiVersion` + Header `X-API-Version`), `GET /api/version` zum Preflight, Datenrouten weisen
+  inkompatible Clients (Header `X-Client-API`/`?clientApi`) mit **426** ab; `/api/health` +
+  `/api/version` bleiben offen. *(Auf Nutzerwunsch ergänzt.)*
+
+**Warum:** Datenabruf raus aus dem Browser; eine Single Source of Truth für die Agronomie-Mathematik;
+zustandslos → heute ohne DB deploybar. Persistenz/Worker bleiben gegatet (Backend-Spec §13).
+
+**Verifikation:** 33/33 Vitest grün; `tsc` sauber. Live-Smoke gegen echtes Open-Meteo
+(Hallertau 48.42,11.78): `dr 76.7 mm`, `status warn`, Fenster 2026-04-29→06-28 (61 Tage),
+`asOf` = heute (Berlin). Versions-Header/`/api/version`/426-Guard live bestätigt.
+
+**Offen:** Deploy auf doldenblick-01 (systemd + nginx-`/api/`-Upstream); Client-Cutover (Overview ruft
+die Route statt selbst zu rechnen) als Folge-Aufgabe.
+
+**Verweise:** `api/` (`README.md`, `src/{domain,sources,routes,version,app,server}.ts`); Spec
+`docs/superpowers/specs/2026-06-28-agronomic-compute-layer-design.md` (Architektur-Update + §8-Notiz).
+
 ## 2026-06-28 · Screenshot-Capture + Frutiger-Review als Hook automatisiert
 **Was:** Die visuelle Review-Schleife (Screenshots aller Client-Zustände → Frutiger-Rubrik) als
 stehenden Prozess verankert.
