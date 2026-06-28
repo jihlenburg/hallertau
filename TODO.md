@@ -43,7 +43,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] Bundle-Größe senken (Code-Splitting; maplibre/shpjs dynamisch importieren).
 - [~] Mehr Tests: `weather` (Frost/Quelle) ✓, `grid` ✓, `cards`/`balanceLabel` ✓,
       Import-Bayern-Guard ✓; offen: `fields.normalizeField`, echte Shape-/GeoJSON-Parser.
-- [ ] Optionaler Export der angelegten Schläge als GeoJSON (Backup ohne Backend).
+- [x] Export der angelegten Schläge als GeoJSON (Backup ohne Backend) — „Export"-Button im
+      Karten-Panel. — 2026-06-28
 
 ## Name / Marke (s. `docs/naming.md`)
 - [x] Arbeitsname festgelegt: **„DoldenBlick"** (`doldenblick.de` frei). — 2026-06-27

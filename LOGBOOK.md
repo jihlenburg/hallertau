@@ -5,6 +5,13 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · GeoJSON-Export der Schläge (Backup ohne Backend)
+**Was:** „Export"-Button im Karten-Panel lädt die Schläge als GeoJSON-FeatureCollection herunter
+(`export.ts`: `fieldsToGeoJson` rein/getestet + `downloadText` via Blob/Anchor).
+**Warum:** Datensicherung ohne Server — der Nutzer behält seine angelegten Flächen.
+**Verifikation:** 47 Tests grün (2 neu, TDD), Build sauber, Übersicht-Screenshot zeigt den Button. Deployt.
+**Verweise:** `app/src/export.ts`, `app/src/overview/index.ts`.
+
 ## 2026-06-28 · Onboarding: Boden-Auswahl je Schlag
 **Was:** Spalte „Boden" (SOIL_TYPES, großgeschrieben) in der Schlag-Prüfung; schreibt
 `FieldProps.soilType` (Default Lehm beim Übernehmen). Speist die live `/api/water-balance` je Schlag

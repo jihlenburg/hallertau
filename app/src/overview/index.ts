@@ -8,6 +8,7 @@ import { fetchWaterBalance, type WaterBalanceResult, type WbQuery } from '../api
 import { assessWeather } from '../domain/weather'
 import { evaluateSprayWindow } from '../domain/sprayWindow'
 import { cardHtml, barsViz, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, type CardSpec } from './cards'
+import { fieldsToGeoJson, downloadText } from '../export'
 import { icons } from '../ui/icons'
 import type { FieldFeature, Status } from '../types'
 
@@ -25,7 +26,7 @@ export function mountOverview(root: HTMLElement): void {
       <div class="panel">
         <div class="ptitle">
           <h2>Meine Schläge</h2>
-          <div class="toggles"><button class="tg" id="tg-dop">Luftbild</button></div>
+          <div class="toggles"><button class="tg" id="tg-dop">Luftbild</button><button class="tg" id="tg-export" title="Schläge als GeoJSON sichern">Export</button></div>
         </div>
         <div id="map"></div>
         <ul class="fieldlist" id="flist"></ul>
@@ -43,6 +44,9 @@ export function mountOverview(root: HTMLElement): void {
     dop = !dop
     tgDop.classList.toggle('on', dop)
     map.setDop(dop)
+  })
+  root.querySelector<HTMLButtonElement>('#tg-export')!.addEventListener('click', () => {
+    downloadText('doldenblick-schlaege.geojson', fieldsToGeoJson(getFields()))
   })
 
   renderFieldList()
