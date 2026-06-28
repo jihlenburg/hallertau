@@ -30,8 +30,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       Backend cacht zudem die Wasserbilanz je ~1-km-Zelle (TTL), sodass der doppelte
       `refresh()`/`refreshFarm()`-Abruf der gewählten Zelle billig ist. Client-Dedup noch offen (Nit).
 - [ ] Kc nach BBCH/Phase staffeln statt fixem 1.05.
-- [ ] Inversionsvorsicht verfeinern: Bewölkung/Strahlung in die Stundenwerte einbeziehen
-      (derzeit Proxy aus Schwachwind + Dämmerungsstunde).
+- [x] Inversionsvorsicht verfeinert: Bewölkung (`cloud_cover`) einbezogen — Inversionswarnung nur
+      bei Schwachwind + Dämmerung UND klarem Himmel (≤50 %); fehlt der Wert, greift der Proxy. — 2026-06-28
 - [x] Tipping-Bucket/AWC-Bodenmodell als echte Bewässerungs-Stufe — umgesetzt im Backend
       (FAO-56 Wurzelraum-Bilanz + Ks, `/api/water-balance`), Client gecutovert. — 2026-06-28
 

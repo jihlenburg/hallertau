@@ -5,6 +5,15 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Spritzfenster: Inversionswarnung mit Bewölkung verfeinert
+**Was:** `cloud_cover` in den Open-Meteo-Stundenabruf aufgenommen; die Strahlungsinversions-Warnung
+greift nur noch bei Schwachwind (<4 km/h) + Dämmerungsstunde UND klarem Himmel (≤50 %). Fehlt der
+Bewölkungswert, bleibt der bisherige Schwachwind-Proxy (rückwärtskompatibel).
+**Warum:** Bedeckte Nächte unterdrücken die Ausstrahlung → keine (oder schwache) Inversion; die alte
+Heuristik warnte auch bei Bewölkung unnötig.
+**Verifikation:** 52 Tests grün (2 neue: bedeckt→keine Warnung, klar→Warnung, TDD), Build sauber. Deployt.
+**Verweise:** `app/src/domain/sprayWindow.ts`, `app/src/api/openMeteo.ts`.
+
 ## 2026-06-28 · 7-Tage-Vorhersagestreifen im Karten-Panel
 **Was:** Kompakter Streifen unter der Karte: je Tag Wochentag (heute „Heute") · minimalistisches
 Wetterglyph (`wmoCategory` → clear/partly/cloud/fog/rain/snow/storm) · Max/Min · Regenwahrscheinlichkeit.

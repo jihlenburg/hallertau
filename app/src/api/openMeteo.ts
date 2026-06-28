@@ -32,7 +32,7 @@ export async function fetchOpenMeteo(lat: number, lon: number, signal?: AbortSig
     timezone: 'Europe/Berlin',
     current: 'temperature_2m,weather_code,wind_speed_10m',
     hourly:
-      'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,et0_fao_evapotranspiration',
+      'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,cloud_cover,et0_fao_evapotranspiration',
     daily:
       'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,et0_fao_evapotranspiration',
     past_days: '60',

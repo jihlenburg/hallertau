@@ -10,6 +10,8 @@ export interface HourlySeries {
   precipitation_probability: number[]
   wind_speed_10m: number[]
   wind_gusts_10m: number[]
+  /** Bewölkungsgrad (%); optional — schärft die Inversionsabschätzung. */
+  cloud_cover?: number[]
 }
 
 /** Schwellen als dokumentierte Konstanten — bewusst konservativ. */
@@ -24,6 +26,7 @@ export const SPRAY = {
   MIN_HOURS: 2, // Mindestlänge eines Fensters
   HORIZON_H: 48, // Vorausschau
   INVERSION_WIND_MAX: 4, // km/h — darunter in Dämmerungsstunden Inversionsneigung
+  INVERSION_CLOUD_MAX: 50, // % — nur bei klarem/teils klarem Himmel (starke Ausstrahlung)
 }
 
 /** Dämmerungs-/Nachtstunden mit erhöhter Strahlungsinversions-Neigung. */
@@ -35,6 +38,8 @@ export interface SprayHour {
   wind: number
   precip: number
   dt: number
+  /** Bewölkung (%) sofern verfügbar. */
+  cloud?: number
 }
 
 export interface SprayAssessment {
@@ -44,9 +49,10 @@ export interface SprayAssessment {
   window: { start: Date; end: Date } | null
   hours: SprayHour[]
   /**
-   * Liegt das gewählte Fenster ganz oder teilweise in Schwachwind-Dämmerungsstunden?
-   * Dann besteht Inversionsneigung (Abdrift) — als Vorsicht ausgewiesen, NICHT als
-   * harte Sperre, da Bewölkung in den Stundenwerten fehlt.
+   * Liegt das gewählte Fenster ganz oder teilweise in Schwachwind-Dämmerungsstunden
+   * BEI KLAREM HIMMEL? Dann besteht Strahlungsinversions-Neigung (Abdrift) — als Vorsicht
+   * ausgewiesen, NICHT als harte Sperre. Bewölkung (sofern vorhanden) dämpft die Ausstrahlung
+   * und entschärft die Inversion; fehlt der Bewölkungswert, greift der reine Schwachwind-Proxy.
    */
   inversion: boolean
 }
@@ -66,6 +72,7 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
     const precip = h.precipitation[i]
     const prob = h.precipitation_probability[i] ?? 0
     const dt = deltaT(h.temperature_2m[i], h.relative_humidity_2m[i])
+    const cloud = h.cloud_cover?.[i]
     const hour = date.getHours()
     const ok =
       hour >= SPRAY.HOUR_START &&
@@ -76,7 +83,7 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
       prob <= SPRAY.PRECIP_PROB_MAX &&
       dt >= SPRAY.DT_MIN &&
       dt <= SPRAY.DT_MAX
-    hours.push({ date, ok, wind, precip, dt })
+    hours.push({ date, ok, wind, precip, dt, cloud })
   }
 
   const window = firstWindow(hours)
@@ -100,8 +107,14 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
   const windowHours = hours.filter((x) => inRange(x.date, start, end))
   const avgWind = avg(windowHours.map((x) => x.wind))
   const avgDt = avg(windowHours.map((x) => x.dt))
-  // Schwachwind in Dämmerungsstunden → mögliche Strahlungsinversion (Abdrift).
-  const inversion = windowHours.some((x) => x.wind < SPRAY.INVERSION_WIND_MAX && isInversionHour(x.date.getHours()))
+  // Schwachwind in Dämmerungsstunden bei klarem Himmel → mögliche Strahlungsinversion (Abdrift).
+  // Bewölkung (sofern vorhanden) dämpft die Ausstrahlung; fehlt sie, greift der Schwachwind-Proxy.
+  const inversion = windowHours.some(
+    (x) =>
+      x.wind < SPRAY.INVERSION_WIND_MAX &&
+      isInversionHour(x.date.getHours()) &&
+      (x.cloud == null || x.cloud <= SPRAY.INVERSION_CLOUD_MAX),
+  )
   const tail = within24
     ? ' — Wetter geeignet; Etikett & Auflagen beachten.'
     : ' — geeignetes Wetter erst später im Vorhersagezeitraum.'

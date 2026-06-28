@@ -4,7 +4,7 @@ import { evaluateSprayWindow, type HourlySeries } from './sprayWindow'
 function buildSeries(
   now: Date,
   good: (d: Date) => boolean,
-  opts: { goodWind?: number; goodGust?: number } = {},
+  opts: { goodWind?: number; goodGust?: number; cloud?: number } = {},
 ): HourlySeries {
   const gw = opts.goodWind ?? 5
   const gg = opts.goodGust ?? 10
@@ -15,6 +15,7 @@ function buildSeries(
   const precipitation_probability: number[] = []
   const wind_speed_10m: number[] = []
   const wind_gusts_10m: number[] = []
+  const cloud_cover: number[] = []
   for (let i = 0; i < 48; i++) {
     const d = new Date(now.getTime() + i * 3600_000)
     const yyyy = d.getFullYear()
@@ -29,8 +30,11 @@ function buildSeries(
     precipitation_probability.push(0)
     wind_speed_10m.push(g ? gw : 30)
     wind_gusts_10m.push(g ? gg : 45)
+    if (opts.cloud !== undefined) cloud_cover.push(opts.cloud)
   }
-  return { time, temperature_2m, relative_humidity_2m, precipitation, precipitation_probability, wind_speed_10m, wind_gusts_10m }
+  const series: HourlySeries = { time, temperature_2m, relative_humidity_2m, precipitation, precipitation_probability, wind_speed_10m, wind_gusts_10m }
+  if (opts.cloud !== undefined) series.cloud_cover = cloud_cover
+  return series
 }
 
 describe('evaluateSprayWindow', () => {
@@ -66,6 +70,33 @@ describe('evaluateSprayWindow', () => {
     )
     const r = evaluateSprayWindow(series, now)
     expect(r.window).not.toBeNull()
+    expect(r.inversion).toBe(true)
+    expect(r.detail).toMatch(/Inversion/)
+  })
+
+  it('bedeckter Himmel dämpft die Strahlungsinversion: Schwachwind-Frühfenster ohne Warnung', () => {
+    const now = new Date('2026-06-28T20:00:00')
+    const tomorrow = now.getDate() + 1
+    const series = buildSeries(
+      now,
+      (d) => d.getDate() === tomorrow && d.getHours() >= 6 && d.getHours() <= 9,
+      { goodWind: 2, goodGust: 6, cloud: 90 }, // bedeckt → kaum Ausstrahlung → keine Inversion
+    )
+    const r = evaluateSprayWindow(series, now)
+    expect(r.window).not.toBeNull()
+    expect(r.inversion).toBe(false)
+    expect(r.detail).not.toMatch(/Inversion/)
+  })
+
+  it('klarer Himmel + Schwachwind im Frühfenster → Inversionswarnung', () => {
+    const now = new Date('2026-06-28T20:00:00')
+    const tomorrow = now.getDate() + 1
+    const series = buildSeries(
+      now,
+      (d) => d.getDate() === tomorrow && d.getHours() >= 6 && d.getHours() <= 9,
+      { goodWind: 2, goodGust: 6, cloud: 10 }, // klar → starke Ausstrahlung → Inversion
+    )
+    const r = evaluateSprayWindow(series, now)
     expect(r.inversion).toBe(true)
     expect(r.detail).toMatch(/Inversion/)
   })
