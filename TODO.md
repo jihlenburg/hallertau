@@ -3,6 +3,23 @@
 Offene Punkte und nächste Schritte. `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit.
 Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 
+## Stand der offenen Punkte (2026-06-28, autonomer Lauf)
+Alle **autonom sicher umsetzbaren Engineering-Punkte sind erledigt** (s. Häkchen + LOGBOOK):
+Client-Cutover Wasserbilanz, responsives Mobil-Layout, Backend-Open-Meteo-Cache, Boden-Auswahl,
+GeoJSON-Export, Bundle-Verschlankung, fields-Tests, 7-Tage-Vorhersage, Inversion mit Bewölkung,
+Sorte-Fidelity. Die verbleibenden `[ ]` sind bewusst NICHT autonom umgesetzt:
+- **Gegated (Design/Spec, Nachfrage-Schwelle):** Peronospora (LfL), Feld-Check Sentinel, Wachstum/GTS,
+  Kc nach BBCH (braucht GTS). Erst bauen, wenn das Gate erreicht ist (Backend-Spec §13).
+- **Blockiert (extern/menschlich/Zugangsdaten):** Domain/`.info`-Registrierung, Markenrecherche,
+  MapTiler-Key, Push/E-Mail (Channel+Creds), Monitoring/Alerting (Alarm-Kanal nötig), Lizenzklärung,
+  Farmer-Research, „echte Beispieldateien" für DBF-Encoding/Format-Tests.
+- **Riskant unbeaufsichtigt:** SSH-Härtung (Non-root/Port — Aussperr-Risiko), HSTS-Preload (bindend).
+- **Größere Features (Design mit dir):** „auf Gerüstfläche zuschneiden", InVeKoS-WFS-Auswahl,
+  manuelles Zeichnen (terra-draw) — je eigener Brainstorm/Spec wert.
+- **Bewusste Entscheidung:** Bright-Sky-Cache zurückgestellt — DWD-Warnungen (sicherheitskritisch)
+  bleiben auf dem resilienten nginx-Direktpfad statt an die Node-Service-Uptime gekoppelt zu werden.
+- **Marginal:** Client-seitige Dedup (Backend-Cache mildert sie bereits); freie Sorten-Eingabe.
+
 ## Prototyp-App (`app/`)
 
 ### Onboarding
