@@ -1,5 +1,37 @@
 import { describe, it, expect } from 'vitest'
-import { soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip } from './cards'
+import { soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip, sprayHourDetail, sprayStrip } from './cards'
+import type { SprayHour, SprayAssessment } from '../domain/sprayWindow'
+
+describe('sprayHourDetail', () => {
+  it('enthält Uhrzeit, ΔT, Wind, Böen und den Grund', () => {
+    const h: SprayHour = { date: new Date(2026, 5, 28, 14, 0), ok: false, wind: 16, gust: 22, precip: 0, prob: 3, dt: 13, cloud: 18 }
+    const html = sprayHourDetail(h)
+    expect(html).toContain('14:00')
+    expect(html).toMatch(/ΔT\s*13/)
+    expect(html).toMatch(/Wind\s*16/)
+    expect(html).toMatch(/Böen\s*22/)
+    expect(html).toMatch(/zu stark/) // bindender Grund: Wind 16 > 15 schlägt vor ΔT zu (Priorität)
+  })
+})
+
+describe('sprayStrip', () => {
+  const base = new Date(2026, 5, 28, 9, 0)
+  const mk = (i: number, ok: boolean): SprayHour => ({
+    date: new Date(base.getTime() + i * 3600_000), ok, wind: 3, gust: 8, precip: 0, prob: 0, dt: ok ? 4 : 12, cloud: 80,
+  })
+  const hours = Array.from({ length: 30 }, (_, i) => mk(i, i >= 2 && i <= 4))
+  const a: SprayAssessment = {
+    status: 'good', headline: 'x', detail: 'y', inversion: false,
+    window: { start: hours[2].date, end: new Date(hours[4].date.getTime() + 3600_000) }, hours,
+  }
+  it('zeigt mind. 24 Balken, markiert das Fenster und hat eine Detailzeile', () => {
+    const html = sprayStrip(a, base)
+    expect((html.match(/data-idx=/g) || []).length).toBe(24)
+    expect(html).toMatch(/Fenster\s*11.?14/) // 11–14 Uhr
+    expect(html).toContain('spray-detail')
+    expect(html).toMatch(/geeignet/) // Legende
+  })
+})
 
 describe('soilBalanceLabel — FAO-56 Wurzelraum-Bilanz (echte Empfehlung)', () => {
   it('good/warn: qualitative Überschrift', () => {

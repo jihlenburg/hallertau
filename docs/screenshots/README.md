@@ -15,6 +15,7 @@ Die PNGs sind **regenerierbare Artefakte** (gitignored) — versioniert wird nur
 | `overview-error-*.png` | Übersicht — „Nicht abrufbar" | Open-Meteo blockieren (DevTools offline) → Karten zeigen Fehlerzustand |
 | `overview-mobile.png` | Übersicht — Telefon (390×844) | Capture-Skript erfasst den Mobil-Viewport automatisch |
 | `onboarding-methods-mobile.png` | Onboarding — Telefon (390×844) | dito |
+| `overview-spray-detail.png` | Übersicht — Spritzfenster-Balken fokussiert | Capture fokussiert einen Balken → Detailzeile mit Grund |
 
 Konvention: `*-before.png` / `*-after.png` für Vorher/Nachher einer Design-Iteration.
 

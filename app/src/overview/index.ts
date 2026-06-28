@@ -6,8 +6,8 @@ import { fetchOpenMeteo, type OpenMeteoData } from '../api/openMeteo'
 import { fetchDwdAlerts, type DwdAlert } from '../api/brightSky'
 import { fetchWaterBalance, type WaterBalanceResult, type WbQuery } from '../api/waterBalance'
 import { assessWeather } from '../domain/weather'
-import { evaluateSprayWindow } from '../domain/sprayWindow'
-import { cardHtml, barsViz, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip, type CardSpec } from './cards'
+import { evaluateSprayWindow, type SprayHour } from '../domain/sprayWindow'
+import { cardHtml, sprayStrip, sprayHourDetail, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip, type CardSpec } from './cards'
 import { fieldsToGeoJson, downloadText } from '../export'
 import { icons } from '../ui/icons'
 import type { FieldFeature, Status } from '../types'
@@ -176,6 +176,7 @@ export function mountOverview(root: HTMLElement): void {
     let weatherStatus: Status = 'info'
     let sprayStatus: Status = 'info'
     let weatherSpecs: CardSpec[]
+    let sprayHours: SprayHour[] | null = null
 
     if (data) {
       const weather = assessWeather(data, alerts, now)
@@ -203,10 +204,11 @@ export function mountOverview(root: HTMLElement): void {
           icon: icons.spray(),
           stat: spray.headline,
           rec: spray.detail,
-          viz: barsViz(spray.hours, 'Nächste 24 h · grün = geeignet (Wind, trocken, ΔT 2–8 °C)'),
+          viz: sprayStrip(spray, now),
           src: 'Open-Meteo',
         },
       ]
+      sprayHours = spray.hours
     } else {
       const msg = weatherErr ?? 'unbekannt'
       const unavailable = (eyebrow: string, icon: string, src: string): CardSpec => ({
@@ -221,6 +223,7 @@ export function mountOverview(root: HTMLElement): void {
 
     const specs: CardSpec[] = [...weatherSpecs, waterBalanceCard(wb)]
     root.querySelector<HTMLDivElement>('#cards')!.innerHTML = specs.map(cardHtml).join('')
+    if (sprayHours) wireSprayStrip(sprayHours)
     const fc = root.querySelector<HTMLDivElement>('#fc7')
     if (fc) fc.innerHTML = data ? forecastStrip(data.daily, now) : ''
     updateGridHint(sel)
@@ -228,6 +231,27 @@ export function mountOverview(root: HTMLElement): void {
     else
       root.querySelector<HTMLDivElement>('#subhead')!.textContent =
         `${getFields().length} Schläge · Daten für den gewählten Schlag derzeit nicht vollständig abrufbar`
+  }
+
+  /** Verdrahtet die Spritzfenster-Balken: Detailzeile bei Hover/Fokus/Tap, Legende beim Verlassen. */
+  function wireSprayStrip(hours: SprayHour[]) {
+    const detail = root.querySelector<HTMLElement>('#spray-detail')
+    if (!detail) return
+    const legend = detail.innerHTML
+    root.querySelectorAll<HTMLButtonElement>('.spraystrip .sb').forEach((bar) => {
+      const i = Number(bar.dataset.idx)
+      const show = () => {
+        detail.innerHTML = sprayHourDetail(hours[i])
+      }
+      const reset = () => {
+        detail.innerHTML = legend
+      }
+      bar.addEventListener('mouseenter', show)
+      bar.addEventListener('focus', show)
+      bar.addEventListener('mouseleave', reset)
+      bar.addEventListener('blur', reset)
+      bar.addEventListener('click', show)
+    })
   }
 
   /** Ehrlichkeitshinweis: liegt der gewählte Schlag mit Nachbarn in derselben ~2-km-Zelle? */

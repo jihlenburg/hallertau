@@ -1,5 +1,6 @@
 import type { Status } from '../types'
 import { wmoCategory, type WmoCategory } from '../domain/wmo'
+import { sprayReason, type SprayHour, type SprayAssessment } from '../domain/sprayWindow'
 
 export interface CardSpec {
   status: Status | 'loading'
@@ -101,13 +102,67 @@ export function forecastStrip(daily: DailyForecast, now: Date): string {
   return `<div class="fc7">${cells.join('')}</div>`
 }
 
-/** Balken-Visualisierung für die Spritzfenster-Stunden (grün = geeignet). */
-export function barsViz(values: { ok: boolean }[], label: string): string {
-  const slice = values.slice(0, 24)
-  const bars = slice
-    .map((v) => `<i class="${v.ok ? 'hot' : ''}" style="height:${v.ok ? 100 : 45}%"></i>`)
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+const hh = (d: Date) => String(d.getHours()).padStart(2, '0')
+
+/** Zwei-Zeilen-Detail einer Spritzfenster-Stunde (für die Detailzeile unter dem Streifen). */
+export function sprayHourDetail(h: SprayHour): string {
+  const wd = h.date.toLocaleDateString('de-DE', { weekday: 'short' })
+  const cloud = h.cloud == null ? '—' : `${Math.round(h.cloud)} %`
+  return (
+    `<b>${wd} ${hh(h.date)}:00 · ΔT ${Math.round(h.dt)}° · Wind ${Math.round(h.wind)} km/h · Böen ${Math.round(h.gust)}</b>` +
+    `<span class="sb-d2">Regen ${Math.round(h.prob)} % · Wolke ${cloud} · ` +
+    `<span class="${h.ok ? 'sb-ok' : 'sb-no'}">${sprayReason(h)}</span></span>`
+  )
+}
+
+/** Plain-Text-Variante für aria-label (ohne Markup/Glyphen). */
+function sprayHourAria(h: SprayHour): string {
+  const wd = h.date.toLocaleDateString('de-DE', { weekday: 'short' })
+  return `${wd} ${hh(h.date)} Uhr: ${sprayReason(h).replace(/[✓✗]\s*/g, '')}`
+}
+
+/**
+ * Spritzfenster-Streifen als CSS-Grid (eine Spalte je Stunde): fokussierbare Balken,
+ * Fenster-Klammer + Label exakt unter den Fenster-Spalten, Detailzeile (Legende als Ruhezustand).
+ * Anzeige ab „jetzt": mind. 24 h, bei späterem Fensterende bis dahin verlängert (Deckel 36 h).
+ */
+export function sprayStrip(a: SprayAssessment, _now: Date): string {
+  const hours = a.hours
+  let wStart = -1
+  let wEnd = -1
+  if (a.window) {
+    const s = a.window.start.getTime()
+    const e = a.window.end.getTime()
+    for (let i = 0; i < hours.length; i++) {
+      const t = hours[i].date.getTime()
+      if (t >= s && t < e) {
+        if (wStart < 0) wStart = i
+        wEnd = i
+      }
+    }
+  }
+  const count = Math.min(hours.length, Math.min(36, Math.max(24, wEnd >= 0 ? wEnd + 1 : 0)))
+  const shown = hours.slice(0, count)
+  const bars = shown
+    .map(
+      (h, i) =>
+        `<button type="button" class="sb${h.ok ? ' hot' : ''}" data-idx="${i}" ` +
+        `aria-label="${esc(sprayHourAria(h))}" style="height:${h.ok ? 100 : 42}%"></button>`,
+    )
     .join('')
-  return `<div class="bars">${bars}</div><div class="barlabel">${label}</div>`
+  let mark = ''
+  if (wStart >= 0 && a.window) {
+    const truncated = wEnd >= count
+    const lastCol = Math.min(wEnd, count - 1)
+    const label = `Fenster ${hh(a.window.start)}–${hh(a.window.end)}${truncated ? ' →' : ''}`
+    mark = `<div class="sb-mark" style="grid-column:${wStart + 1}/${lastCol + 2}">${label}</div>`
+  }
+  const legend = `Nächste ${count} h · grün = geeignet (Wind, trocken, ΔT 2–8 °C) · Balken antippen für Details`
+  return (
+    `<div class="spraystrip" style="grid-template-columns:repeat(${count},1fr)">${bars}${mark}</div>` +
+    `<div class="sb-detail" id="spray-detail">${legend}</div>`
+  )
 }
 
 /**

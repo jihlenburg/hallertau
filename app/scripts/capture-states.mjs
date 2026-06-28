@@ -90,6 +90,14 @@ async function main() {
     await sleep(2000) // Kartenkacheln + Render setteln lassen
     await page.screenshot({ path: `${OUT}/overview.png`, fullPage: true })
 
+    // 3b) Spritzfenster-Detail: einen Mittags-Balken fokussieren → Detailzeile mit Grund.
+    await page.evaluate(() => {
+      const bar = document.querySelector('.spraystrip .sb[data-idx="5"]')
+      if (bar) bar.focus()
+    })
+    await sleep(400)
+    await page.screenshot({ path: `${OUT}/overview-spray-detail.png`, fullPage: true })
+
     // 4) Mobil (Telefon 390×844) — Übersicht (Felder noch geseedet) + Onboarding.
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 })
     await page.goto(BASE, { waitUntil: 'networkidle2' })

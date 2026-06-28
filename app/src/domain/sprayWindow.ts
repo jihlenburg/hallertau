@@ -36,7 +36,11 @@ export interface SprayHour {
   date: Date
   ok: boolean
   wind: number
+  /** Böen (km/h). */
+  gust: number
   precip: number
+  /** Niederschlagswahrscheinlichkeit (%). */
+  prob: number
   dt: number
   /** Bewölkung (%) sofern verfügbar. */
   cloud?: number
@@ -83,7 +87,7 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
       prob <= SPRAY.PRECIP_PROB_MAX &&
       dt >= SPRAY.DT_MIN &&
       dt <= SPRAY.DT_MAX
-    hours.push({ date, ok, wind, precip, dt, cloud })
+    hours.push({ date, ok, wind, gust, precip, prob, dt, cloud })
   }
 
   const window = firstWindow(hours)
@@ -129,6 +133,25 @@ export function evaluateSprayWindow(h: HourlySeries, now: Date = new Date()): Sp
     hours,
     inversion,
   }
+}
+
+/**
+ * Bindender Grund je Stunde (für die Detailzeile). Prüfreihenfolge spiegelt die `ok`-Bedingung:
+ * nass → Nacht → Wind/Böen → ΔT zu hoch → ΔT zu niedrig → geeignet (+ Inversionsvorsicht).
+ * „✓ geeignet" genau dann, wenn die Stunde auch `ok` ist.
+ */
+export function sprayReason(h: SprayHour): string {
+  const hour = h.date.getHours()
+  if (h.precip > 0.1 || h.prob > SPRAY.PRECIP_PROB_MAX) return '✗ zu nass (Niederschlag)'
+  if (hour < SPRAY.HOUR_START || hour > SPRAY.HOUR_END) return '✗ außerhalb 5–21 Uhr (Nacht)'
+  if (h.wind > SPRAY.WIND_MAX || h.gust > SPRAY.GUST_MAX) return '✗ Wind/Böen zu stark'
+  if (h.dt > SPRAY.DT_MAX) return '✗ ΔT zu hoch (> 8) — zu trocken'
+  if (h.dt < SPRAY.DT_MIN) return '✗ ΔT zu niedrig (< 2) — Abdrift'
+  const inversion =
+    h.wind < SPRAY.INVERSION_WIND_MAX &&
+    isInversionHour(hour) &&
+    (h.cloud == null || h.cloud <= SPRAY.INVERSION_CLOUD_MAX)
+  return inversion ? '✓ geeignet · Inversionsvorsicht' : '✓ geeignet'
 }
 
 function firstWindow(hours: SprayHour[]): { start: Date; end: Date } | null {

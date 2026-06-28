@@ -5,6 +5,22 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Interaktiver Spritzfenster-Streifen (Fenster-Markierung + Stunden-Detail)
+**Was:** (Brainstorm → Spec → TDD → Deploy.) Der Streifen ist jetzt ein CSS-Grid (1 Spalte je Stunde):
+- **Fenster-Markierung:** Unterklammer + Label „Fenster HH–HH" exakt unter den Fenster-Balken; der
+  Anzeige-Bereich verlängert sich bis zum Fensterende (mind. 24 h, Deckel 36 h) — behebt die frühere
+  Inkonsistenz „Streifen zeigt 1 Balken, Überschrift nennt 08–11".
+- **Stunden-Detail:** fokussierbare Balken (Hover/Tap/Tastatur) → Detailzeile (`aria-live`) mit Uhrzeit,
+  ΔT, Wind, Böen, Regen %, Wolke % und dem BINDENDEN Grund (`sprayReason`): nass → Nacht → Wind/Böen →
+  ΔT zu hoch → ΔT zu niedrig → geeignet (+ Inversionsvorsicht). Ruhezustand = Legende.
+- `SprayHour` um `gust`/`prob` erweitert; `barsViz` → `sprayStrip` ersetzt.
+**Warum:** Antwortet auf die Nutzerfrage „woher kommt das Muster?" direkt in der UI (bindender Grund je
+Stunde) und macht Streifen + Überschrift konsistent.
+**Verifikation:** 70 Tests grün (sprayReason je Zweig, sprayHourDetail, sprayStrip — TDD); Build sauber;
+Desktop + Mobil verifiziert + Fokus-Screenshot (14:00 → „✗ Wind/Böen zu stark", Böen 27 > 25). Deployt.
+**Verweise:** Spec `docs/superpowers/specs/2026-06-28-spray-strip-interactivity-design.md`;
+`app/src/domain/sprayWindow.ts`, `app/src/overview/{cards,index}.ts`, `app/src/styles.css`.
+
 ## 2026-06-28 · Spritzfenster: Inversionswarnung mit Bewölkung verfeinert
 **Was:** `cloud_cover` in den Open-Meteo-Stundenabruf aufgenommen; die Strahlungsinversions-Warnung
 greift nur noch bei Schwachwind (<4 km/h) + Dämmerungsstunde UND klarem Himmel (≤50 %). Fehlt der

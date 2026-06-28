@@ -44,6 +44,9 @@ Sorte-Fidelity. Die verbleibenden `[ ]` sind bewusst NICHT autonom umgesetzt:
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
 - [x] 7-Tage-Vorhersagestreifen im Map-Panel (Wochentag · Wetterglyph · Max/Min · Regen-%),
       aus Open-Meteo-Tageswerten. — 2026-06-28
+- [x] **Interaktiver Spritzfenster-Streifen:** Fenster-Markierung (Unterklammer + Label, Anzeige bis
+      Fensterende verlängert) + Stunden-Detail bei Hover/Tap/Fokus inkl. bindendem Grund
+      (`sprayReason`). — 2026-06-28
 - [~] Pro-Gitterzelle cachen — Whole-Farm-Kopf bündelt Wetter je Rasterzelle (`gridCellKey`);
       Backend cacht zudem die Wasserbilanz je ~1-km-Zelle (TTL), sodass der doppelte
       `refresh()`/`refreshFarm()`-Abruf der gewählten Zelle billig ist. Client-Dedup noch offen (Nit).

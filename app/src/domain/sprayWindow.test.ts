@@ -1,5 +1,33 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateSprayWindow, type HourlySeries } from './sprayWindow'
+import { evaluateSprayWindow, sprayReason, type HourlySeries, type SprayHour } from './sprayWindow'
+
+const sh = (hour: number, over: Partial<SprayHour> = {}): SprayHour => ({
+  date: new Date(2026, 5, 28, hour, 0),
+  ok: false,
+  wind: 5,
+  gust: 10,
+  precip: 0,
+  prob: 0,
+  dt: 5,
+  cloud: 80,
+  ...over,
+})
+
+describe('sprayReason (bindender Grund, Priorität)', () => {
+  it('Niederschlag zuerst', () => expect(sprayReason(sh(10, { prob: 60 }))).toMatch(/nass|Niederschlag/i))
+  it('Nacht/außerhalb 5–21', () => expect(sprayReason(sh(3))).toMatch(/Nacht|5.21/i))
+  it('Wind zu stark', () => expect(sprayReason(sh(10, { wind: 20 }))).toMatch(/Wind|Böen/i))
+  it('Böen zu stark', () => expect(sprayReason(sh(10, { gust: 30 }))).toMatch(/Wind|Böen/i))
+  it('ΔT zu hoch', () => expect(sprayReason(sh(10, { dt: 13 }))).toMatch(/zu hoch|>\s*8/))
+  it('ΔT zu niedrig', () => expect(sprayReason(sh(10, { dt: 1 }))).toMatch(/zu niedrig|<\s*2/))
+  it('geeignet', () => {
+    const r = sprayReason(sh(10, { dt: 5 }))
+    expect(r).toMatch(/geeignet/)
+    expect(r).not.toMatch(/Inversion/)
+  })
+  it('geeignet + Inversionsvorsicht bei klarer Schwachwind-Dämmerung', () =>
+    expect(sprayReason(sh(6, { wind: 2, dt: 5, cloud: 10 }))).toMatch(/Inversion/))
+})
 
 function buildSeries(
   now: Date,

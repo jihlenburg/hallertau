@@ -123,10 +123,19 @@ html, body {
 .card.loading .stat { color: var(--faint); }
 
 /* einfache Balken-Visualisierung (statt SVG-Sparklines) */
-.bars { display: flex; align-items: flex-end; gap: 4px; height: 44px; }
-.bars i { flex: 1; background: #cdd6cf; border-radius: 2px; display: block; }
-.bars i.hot { background: var(--good); }
 .barlabel { color: var(--faint); font-size: 13px; margin-top: 6px; }
+
+/* Spritzfenster-Streifen: Grid (1 Spalte je Stunde) — Balken, Fenster-Klammer, Detailzeile. */
+.spraystrip { display: grid; grid-template-rows: 44px auto; align-items: end; column-gap: 3px; }
+.spraystrip .sb { align-self: end; min-width: 0; padding: 0; border: 0; background: #cdd6cf; border-radius: 2px; cursor: pointer; }
+.spraystrip .sb.hot { background: var(--good); }
+.spraystrip .sb:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.sb-mark { grid-row: 2; border-top: 2px solid var(--ink); margin-top: 4px; padding-top: 2px; font-size: 11px; font-weight: 600; color: var(--ink-soft); text-align: center; }
+.sb-detail { color: var(--faint); font-size: 13px; margin-top: 8px; line-height: 1.35; min-height: 2.6em; }
+.sb-detail b { color: var(--ink); font-weight: 600; }
+.sb-detail .sb-d2 { display: block; }
+.sb-detail .sb-ok { color: var(--good-ink); font-weight: 600; }
+.sb-detail .sb-no { color: var(--alert-ink); font-weight: 600; }
 .meter { height: 11px; border-radius: 6px; background: #eef1ec; overflow: hidden; }
 .meter > span { display: block; height: 100%; border-radius: 6px; }
 /* Wurzelraum-„Eimer": Verarmung Dr (Füllung) + Auslöser-Marke bei RAW. */
