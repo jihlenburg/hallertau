@@ -43,8 +43,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [x] Bundle-Größe senken: shpjs (+proj4) lazy via dynamischem `import()` → eigener Chunk,
       Initial-Bundle 987→846 KB (gzip 280→233). maplibre bleibt above-fold im Initial-Chunk
       (bewusst nicht lazy). — 2026-06-28
-- [~] Mehr Tests: `weather` (Frost/Quelle) ✓, `grid` ✓, `cards`/`balanceLabel` ✓,
-      Import-Bayern-Guard ✓; offen: `fields.normalizeField`, echte Shape-/GeoJSON-Parser.
+- [~] Mehr Tests: `weather` ✓, `grid` ✓, `cards` ✓, Import-Bayern-Guard ✓, `fields.normalizeField` ✓,
+      `api/waterBalance`-Client ✓, `export` ✓, API (Domäne/Quelle/Route/Version/Cache) ✓;
+      offen: echte Shape-/GeoJSON-Parser (mit echten Beispieldateien).
 - [x] Export der angelegten Schläge als GeoJSON (Backup ohne Backend) — „Export"-Button im
       Karten-Panel. — 2026-06-28
 
