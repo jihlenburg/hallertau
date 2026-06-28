@@ -90,7 +90,25 @@ async function main() {
     await sleep(2000) // Kartenkacheln + Render setteln lassen
     await page.screenshot({ path: `${OUT}/overview.png`, fullPage: true })
 
-    console.log(`✓ Screenshots → ${OUT} (onboarding-methods, onboarding-review, overview)`)
+    // 4) Mobil (Telefon 390×844) — Übersicht (Felder noch geseedet) + Onboarding.
+    await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 })
+    await page.goto(BASE, { waitUntil: 'networkidle2' })
+    await page
+      .waitForFunction(
+        () => {
+          const t = document.body.innerText
+          return t.includes('Quelle:') && !t.includes('Daten werden geladen') && !t.includes('lädt …')
+        },
+        { timeout: 30000 },
+      )
+      .catch(() => {})
+    await sleep(2000)
+    await page.screenshot({ path: `${OUT}/overview-mobile.png`, fullPage: true })
+    await page.evaluate(() => localStorage.clear())
+    await page.goto(BASE, { waitUntil: 'networkidle2' })
+    await page.screenshot({ path: `${OUT}/onboarding-methods-mobile.png`, fullPage: true })
+
+    console.log(`✓ Screenshots → ${OUT} (desktop + mobile: overview, onboarding)`)
   } finally {
     await browser.close().catch(() => {})
     server.kill()

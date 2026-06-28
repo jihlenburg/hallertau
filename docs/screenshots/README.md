@@ -13,6 +13,8 @@ Die PNGs sind **regenerierbare Artefakte** (gitignored) — versioniert wird nur
 | `overview-*.png` | Übersicht (Dashboard, Live-Daten) | Demo-Felder in `localStorage` setzen + Reload (Seed-Snippet s. u.) |
 | `overview-loading-*.png` | Übersicht — Ladezustand | Übersicht direkt nach Feldwechsel (kurzes Fenster; Netzdrossel hilft) |
 | `overview-error-*.png` | Übersicht — „Nicht abrufbar" | Open-Meteo blockieren (DevTools offline) → Karten zeigen Fehlerzustand |
+| `overview-mobile.png` | Übersicht — Telefon (390×844) | Capture-Skript erfasst den Mobil-Viewport automatisch |
+| `onboarding-methods-mobile.png` | Onboarding — Telefon (390×844) | dito |
 
 Konvention: `*-before.png` / `*-after.png` für Vorher/Nachher einer Design-Iteration.
 

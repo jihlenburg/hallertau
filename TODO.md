@@ -6,7 +6,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 ## Prototyp-App (`app/`)
 
 ### Onboarding
-- [ ] Mobile Onboarding-Variante (Touch, kleinere Viewports).
+- [x] Mobile Onboarding-Variante (Touch, kleinere Viewports) — responsives Layout (Viewport
+      device-width, Media-Queries ≤1100/≤760, Drop-Zone vertikal). — 2026-06-28
 - [ ] „Auf Gerüstfläche zuschneiden"-Screen (Vorgewende/Wege ausnehmen) für die
       spätere Satelliten-Auswertung.
 - [ ] „Auf der Karte antippen": offene **InVeKoS-Feldstücke** per WFS laden und wählen.
@@ -27,8 +28,8 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [ ] Kc nach BBCH/Phase staffeln statt fixem 1.05.
 - [ ] Inversionsvorsicht verfeinern: Bewölkung/Strahlung in die Stundenwerte einbeziehen
       (derzeit Proxy aus Schwachwind + Dämmerungsstunde).
-- [ ] Optional: Tipping-Bucket/AWC-Bodenmodell als echte Bewässerungs-Stufe (über die
-      jetzige klimatische Tendenz hinaus).
+- [x] Tipping-Bucket/AWC-Bodenmodell als echte Bewässerungs-Stufe — umgesetzt im Backend
+      (FAO-56 Wurzelraum-Bilanz + Ks, `/api/water-balance`), Client gecutovert. — 2026-06-28
 
 ### Technik / Qualität
 - [x] Bright Sky im **Prod-Build**: `server.mjs` (`npm run serve`) liefert `dist/` + Proxy;

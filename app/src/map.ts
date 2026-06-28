@@ -23,6 +23,7 @@ export class FieldMap {
   private ready = false
   private pending: (() => void)[] = []
   private onSelect?: (id: string) => void
+  private ro?: ResizeObserver
 
   constructor(opts: MapOptions) {
     this.onSelect = opts.onSelect
@@ -42,6 +43,15 @@ export class FieldMap {
       this.pending.forEach((fn) => fn())
       this.pending = []
     })
+
+    // Container-Größe beobachten → Karte bei Layout-/Viewport-Änderungen neu vermessen.
+    // Verhindert eine leere/zu schmale Karte nach Reflow (z. B. einspaltiges Mobil-Layout
+    // oder Geräte-Drehung), wo ein einmaliger resize()-Aufruf zu früh feuert.
+    const el = typeof opts.container === 'string' ? document.getElementById(opts.container) : opts.container
+    if (el && typeof ResizeObserver !== 'undefined') {
+      this.ro = new ResizeObserver(() => this.whenReady(() => this.map.resize()))
+      this.ro.observe(el)
+    }
   }
 
   private whenReady(fn: () => void) {
@@ -160,6 +170,7 @@ export class FieldMap {
   }
 
   destroy() {
+    this.ro?.disconnect()
     this.map.remove()
   }
 }

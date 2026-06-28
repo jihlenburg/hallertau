@@ -234,3 +234,37 @@ html { text-rendering: optimizeLegibility; -moz-osx-font-smoothing: grayscale; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
+
+/* ===== Responsiv ===== */
+/* ≤1100px: zweispaltige Layouts (Übersicht-Karten|Karte, Onboarding) stapeln untereinander. */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .onb-grid { grid-template-columns: 1fr; }
+}
+/* ≤760px: Telefon/Touch — einspaltige Karten, kompakte Leiste & Typo, niedrigere Karte. */
+@media (max-width: 760px) {
+  .bar { height: auto; min-height: 64px; flex-wrap: wrap; gap: 8px 12px; padding: 12px 16px; }
+  .bar .spacer { display: none; }
+  .bar .seg { margin-left: 0; }
+  .bar .avatar { margin-left: auto; }
+  .bar .loc { order: 10; width: 100%; text-align: left; font-size: 13px; }
+  .wm, .wm small { font-size: 22px; }
+  .view { padding: 16px 16px 8px; }
+  .foot { padding: 14px 16px 18px; }
+  .hello { font-size: 30px; }
+  .subhead { font-size: 17px; }
+  .cards { grid-template-columns: 1fr; gap: 16px; }
+  .layout { gap: 16px; }
+  #map { height: 340px; }
+  .card { min-height: 0; }
+  .card .rec { max-width: none; }
+  .onb { max-width: 100%; }
+  .onb-grid { gap: 16px; }
+  .review { overflow-x: auto; } /* breite Tabelle nicht über den Viewport hinaus */
+  .drop { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+  .rowbtns { flex-wrap: wrap; }
+}
+/* ≤420px: sehr schmale Telefone — Begrüßung etwas kleiner. */
+@media (max-width: 420px) {
+  .hello { font-size: 26px; }
+}

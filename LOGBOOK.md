@@ -5,6 +5,19 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Responsives Mobil-Layout (Übersicht + Onboarding)
+**Was:** Viewport `width=device-width`; Media-Queries — ≤1100px stapeln die zweispaltigen Layouts
+(Übersicht-Karten|Karte, Onboarding) untereinander, ≤760px einspaltige Karten, umbruchfähige Leiste
+(Datum eigene Zeile), niedrigere Karte (340px), Drop-Zone vertikal. **ResizeObserver** in `FieldMap`
+vermisst die Karte bei Layout-/Viewport-Änderungen neu — behebt eine leere/zu schmale Karte nach
+Reflow (Single-Column-Mobil) bzw. Geräte-Drehung.
+**Warum:** Das Abend-Briefing muss auf Telefon/Schlepper-Display lesbar sein (Viewport war desktop-fix
+`width=1280` → auf dem Handy skaliertes Desktop-Layout).
+**Verifikation:** 45/45 Tests grün, Build sauber; Screenshots Desktop unverändert + Mobil (390×844)
+geprüft — Übersicht und Onboarding stapeln sauber, Karte füllt voll (alle 6 Schläge sichtbar).
+Deployt; HTTPS-Smoke grün.
+**Verweise:** `app/index.html`, `app/src/styles.css` (Responsiv-Block), `app/src/map.ts` (ResizeObserver).
+
 ## 2026-06-28 · Client-Cutover Wasserbilanz → Backend-API (live) + adversarielle Review
 **Was:** Die Übersicht rechnet die Wasserbilanz nicht mehr selbst, sondern rendert `GET /api/water-balance`.
 - **Client:** `api/waterBalance.ts` (typisierter Client, `X-Client-API`, 426→„App veraltet"); WB-Karte
