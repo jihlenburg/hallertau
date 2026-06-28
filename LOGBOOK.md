@@ -5,6 +5,18 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Prämissenwechsel „Infrastruktur vor Nachfrage" + Satelliten-Recherche & Pixel-Purity-Backtest
+**Was:** Nutzerentscheidung (endgültig): das **Nachfrage-Gate ist aufgehoben** — ALLE Datenquellen werden
+genutzt, Infrastruktur wird **proaktiv** gebaut. (1) Deep-Research-Schwarm (Workflow `satellite-hops-research`,
+6 Facetten + Synthese + Vollständigkeits-Kritik) zur neuesten Satelliten-/Fernerkundungsforschung für Hopfen
+gestartet. (2) Datenfreier **Pixel-Purity-Backtest** (`scripts/pixel-purity-backtest.mjs`) auf den Demo-Schlägen:
+kanten-reine Sentinel-2-Pixel je Schlag, phasen-gemittelt — **10 m ~160–374**, **20 m ~36–87**.
+**Befund:** 10 m → Feld-Aggregat + grobe Teilfläche tragfähig; 20 m NDRE → nur **Feldmittel als Screening**,
+teilflächengenau nicht seriös; intra-Schlag-Mischung (Spalier) ist NICHT erfasst → **obere Schranke**, echter
+NDRE-Zeitreihen-Backtest gegen Bodenwahrheit (CDSE/GEE) ist der nächste Schritt.
+**Warum:** „Es gibt keine Nachfrage ohne erstklassige Infrastruktur." Prämisse in Memory + Doku verankert.
+**Verweise:** `docs/hops/satellite/field-scale-backtest.md`; Memory `infrastructure-before-demand`.
+
 ## 2026-06-28 · Interaktiver Spritzfenster-Streifen (Fenster-Markierung + Stunden-Detail)
 **Was:** (Brainstorm → Spec → TDD → Deploy.) Der Streifen ist jetzt ein CSS-Grid (1 Spalte je Stunde):
 - **Fenster-Markierung:** Unterklammer + Label „Fenster HH–HH" exakt unter den Fenster-Balken; der

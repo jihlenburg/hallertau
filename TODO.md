@@ -4,12 +4,18 @@ Offene Punkte und nächste Schritte. `[ ]` offen · `[x]` erledigt · `[~]` in A
 Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 
 ## Stand der offenen Punkte (2026-06-28, autonomer Lauf)
+> **PRÄMISSENWECHSEL (2026-06-28): „Infrastruktur vor Nachfrage!"** — das Nachfrage-Gate ist **aufgehoben**.
+> ALLE Datenquellen sind jetzt in Scope; die zuvor „gegateten" server-only Quellen (Sentinel/GEE, RADOLAN,
+> LfL, ERA5, SoilGrids) werden **proaktiv gebaut**. Reihenfolge wird durch die laufende Satelliten-Recherche
+> informiert. Siehe Memory `infrastructure-before-demand`. Die **Auflösungs-Ehrlichkeit** bleibt als
+> Daten-/UX-Regel (Screening-Hinweis bis Feld-Backtest), nicht als Bau-Gate.
+
 Alle **autonom sicher umsetzbaren Engineering-Punkte sind erledigt** (s. Häkchen + LOGBOOK):
 Client-Cutover Wasserbilanz, responsives Mobil-Layout, Backend-Open-Meteo-Cache, Boden-Auswahl,
 GeoJSON-Export, Bundle-Verschlankung, fields-Tests, 7-Tage-Vorhersage, Inversion mit Bewölkung,
-Sorte-Fidelity. Die verbleibenden `[ ]` sind bewusst NICHT autonom umgesetzt:
-- **Gegated (Design/Spec, Nachfrage-Schwelle):** Peronospora (LfL), Feld-Check Sentinel, Wachstum/GTS,
-  Kc nach BBCH (braucht GTS). Erst bauen, wenn das Gate erreicht ist (Backend-Spec §13).
+Sorte-Fidelity, interaktiver Spritzfenster-Streifen. Die verbleibenden `[ ]`:
+- **Jetzt in Scope (Gate aufgehoben):** Satelliten-„Feld-Check" (Sentinel/Fusion), RADOLAN-Radar, LfL
+  Peronospora, ERA5, server-Compute-Schicht — Recherche-Schwarm + Pixel-Purity-Backtest laufen/erledigt.
 - **Blockiert (extern/menschlich/Zugangsdaten):** Domain/`.info`-Registrierung, Markenrecherche,
   MapTiler-Key, Push/E-Mail (Channel+Creds), Monitoring/Alerting (Alarm-Kanal nötig), Lizenzklärung,
   Farmer-Research, „echte Beispieldateien" für DBF-Encoding/Format-Tests.
@@ -38,9 +44,11 @@ Sorte-Fidelity. Die verbleibenden `[ ]` sind bewusst NICHT autonom umgesetzt:
 
 ### Übersicht / Karten
 - [ ] **Peronospora**: LfL-Warndienst (Hüll) anbinden (Quelle/Recht klären).
-- [ ] **Feld-Check (Satellit)**: Sentinel-Vitalität (regionales Screening, NDRE).
-      Vor Vermarktung als feldscharf: **NDRE-Backtest** auf typischen 0,5–2 ha Schlägen
-      (Red-Edge 20 m nativ, wenige saubere Pixel je Schlag).
+- [~] **Feld-Check (Satellit)** *(Gate aufgehoben, im Bau-Scope)*: Sentinel-Vitalität + Fusion.
+      Geometrie-**Pixel-Purity-Backtest** erledigt (`scripts/pixel-purity-backtest.mjs` →
+      `docs/hops/satellite/field-scale-backtest.md`): 10 m feld-tragfähig, 20 m NDRE nur Feldmittel.
+      Offen: Bilddaten-NDRE-Zeitreihen-Backtest (CDSE/GEE) für intra-Schlag-Mischung; Ingest-Pipeline.
+      Recherche-Schwarm liefert Sensor-/Index-/Infra-Empfehlung.
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
 - [x] 7-Tage-Vorhersagestreifen im Map-Panel (Wochentag · Wetterglyph · Max/Min · Regen-%),
       aus Open-Meteo-Tageswerten. — 2026-06-28
