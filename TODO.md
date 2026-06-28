@@ -40,7 +40,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [x] Prod-Proxy **deployt**: nginx Reverse-Proxy `/api/brightsky` auf doldenblick-01
       (`infra/deploy.sh` + `infra/nginx-doldenblick.conf`). — 2026-06-28
 - [ ] Optional: MapTiler-Key per `.env` als höherwertige Basemap-Alternative.
-- [ ] Bundle-Größe senken (Code-Splitting; maplibre/shpjs dynamisch importieren).
+- [x] Bundle-Größe senken: shpjs (+proj4) lazy via dynamischem `import()` → eigener Chunk,
+      Initial-Bundle 987→846 KB (gzip 280→233). maplibre bleibt above-fold im Initial-Chunk
+      (bewusst nicht lazy). — 2026-06-28
 - [~] Mehr Tests: `weather` (Frost/Quelle) ✓, `grid` ✓, `cards`/`balanceLabel` ✓,
       Import-Bayern-Guard ✓; offen: `fields.normalizeField`, echte Shape-/GeoJSON-Parser.
 - [x] Export der angelegten Schläge als GeoJSON (Backup ohne Backend) — „Export"-Button im

@@ -1,4 +1,3 @@
-import shp from 'shpjs'
 import type { Feature, Polygon, MultiPolygon } from 'geojson'
 import { centroidLonLat } from '../domain/fields'
 
@@ -34,6 +33,9 @@ export function assertPlausibleBavaria(features: Feature<Polygon | MultiPolygon>
  * (betrifft nur Attribut-Texte, im Review korrigierbar) — siehe TODO.md.
  */
 export async function importShapeZip(buffer: ArrayBuffer): Promise<Feature<Polygon | MultiPolygon>[]> {
+  // shpjs (+ proj4) erst beim tatsächlichen ZIP-Import laden → kleineres Initial-Bundle
+  // (die Übersicht für wiederkehrende Nutzer braucht sie nie).
+  const { default: shp } = await import('shpjs')
   const result = await shp(buffer)
   const collections = Array.isArray(result) ? result : [result]
   const feats: Feature<Polygon | MultiPolygon>[] = []

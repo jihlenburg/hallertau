@@ -5,6 +5,14 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Initial-Bundle verkleinert (shpjs/proj4 lazy)
+**Was:** `importShapeZip` lädt shpjs (+ proj4) per dynamischem `import()` erst beim tatsächlichen
+ZIP-Import → eigener Lazy-Chunk (~142 KB / gzip 47 KB); Initial-Chunk 987→846 KB (gzip 280→233).
+**Warum:** Die Übersicht (häufigster Pfad für wiederkehrende Nutzer) braucht den Shape-Parser nie.
+**Hinweis:** maplibre bleibt bewusst im Initial-Chunk (Karte ist above-fold).
+**Verifikation:** 47 Tests grün, Build sauber (Lazy-Chunk sichtbar). Deployt.
+**Verweise:** `app/src/onboarding/importShape.ts`.
+
 ## 2026-06-28 · GeoJSON-Export der Schläge (Backup ohne Backend)
 **Was:** „Export"-Button im Karten-Panel lädt die Schläge als GeoJSON-FeatureCollection herunter
 (`export.ts`: `fieldsToGeoJson` rein/getestet + `downloadText` via Blob/Anchor).
