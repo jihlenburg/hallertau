@@ -5,6 +5,30 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Backend `api/` auf doldenblick-01 deployt + auf Fastify 5 gehärtet
+**Was:** Den Wasserbilanz-Dienst produktiv ausgerollt (reproduzierbar via `infra/deploy-api.sh`).
+- **Runtime:** Node 22 LTS via NodeSource installiert; Dienst als eigener System-User `doldenblick`
+  unter systemd (`doldenblick-api.service`, gehärtet: `ProtectSystem=strict`, `NoNewPrivileges`,
+  `RestrictAddressFamilies` …), bindet nur `127.0.0.1:8787`.
+- **nginx:** drei exakte `/api/`-Locations (`health`, `version`, `water-balance`) → Loopback-Proxy,
+  additiv zum bestehenden `/api/brightsky/`; `nginx -t` + Reload mit Snippet-Backup/Rollback.
+- **Security:** `npm audit` zeigte 5 High (transitiv `fast-uri ≤3.1.1`). Erst per `overrides` auf
+  `fast-uri ^3.1.2` (4→1), dann **Fastify 4 → 5.8.5** gehoben → **0 Schwachstellen** (prod).
+  Reale Exposition der Fastify-Advisories war ~null (kein `sendWebStream`, keine Body-Schema-
+  Validierung, `request.protocol/host` ungenutzt), Upgrade dennoch durchgezogen (33/33 Tests grün).
+
+**Warum:** „deploy … end-to-end" — die Compute-Schicht real, same-origin und sicher verfügbar machen,
+bereit für den Client-Cutover.
+
+**Verifikation:** Öffentlich über HTTPS bestätigt: `/api/version` (Header `X-API-Version: 1`),
+`/api/health`, `/api/water-balance` (Lehm → warn/Dr 76.7; Sand → alert/Ks 0.56/Empf. 68.9 mm).
+426-Guard greift öffentlich. **Keine Regression:** SPA-Root + `/api/brightsky/alerts` weiterhin 200.
+Server: `fastify 5.8.5`, Service `active (running)`.
+
+**Offen:** Client-Cutover (Overview ruft die Route statt selbst zu rechnen); Monitoring des Dienstes.
+
+**Verweise:** `infra/{deploy-api.sh,doldenblick-api.service,nginx-doldenblick.conf}`; `api/README.md`.
+
 ## 2026-06-28 · Backend `api/` — zustandsloser FAO-56-Wasserbilanz-Dienst (Strong Separation)
 **Was:** Erste Scheibe der Compute-Schicht als eigenständiger TypeScript-/Fastify-Dienst unter `api/`.
 Umsetzung der **Strong-Separation-of-Concerns**-Entscheidung: Client = Präsentation + Tiles; Backend =

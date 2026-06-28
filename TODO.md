@@ -70,8 +70,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       Wasserbilanz-Compute-Service (FAO-56-Bucket + Ks), Open-Meteo-Warm-up serverseitig (BFF),
       `GET /api/water-balance` + `GET /api/version` + Versionsvertrag (`X-API-Version`/426-Guard).
       33 Vitest grün, Live-Smoke ok. **Kein Postgres.** — 2026-06-28
-- [ ] **Deploy `api/` auf doldenblick-01:** systemd-Service (Loopback) + nginx-`/api/`-Upstream
-      (additiv zum bestehenden `/api/brightsky`-Proxy), https-Smoke `/api/water-balance`.
+- [x] **Deploy `api/` auf doldenblick-01:** Node 22 + systemd `doldenblick-api` (Loopback 8787,
+      gehärtet) + nginx-`/api/`-Locations (additiv); HTTPS-Smoke grün; Fastify 5.8.5, 0 Schwachstellen.
+      Reproduzierbar via `infra/deploy-api.sh`. — 2026-06-28
 - [ ] **Client-Cutover Wasserbilanz:** Overview ruft `GET /api/water-balance` statt selbst zu rechnen;
       altes `computeWaterBalance`/`KC_HOPS`/`WB` + clientseitige Boden-/Kc-Duplikate entfernen;
       Client deklariert `X-Client-API`/preflightet `/api/version`.
