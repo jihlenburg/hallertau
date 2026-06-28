@@ -5,6 +5,19 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · GEE-Imagery-Backtest (echtes Sentinel-2) + CDSE/GEE-Zugang validiert
+**Was:** Mit dem bereitgestellten **GEE-Service-Account** (`.env`, gitignored) den echten
+Sentinel-2-Backtest gefahren (`scripts/gee-backtest.py`, `COPERNICUS/S2_SR_HARMONIZED`, Saison 2025,
+SCL-Wolkenmaske): je Demo-Schlag **88 wolkenarme Szenen**; valide Pixel **10 m 225–463 / 20 m 64–125**
+(deckt sich mit dem Geometrie-Backtest — center-in leicht über kanten-rein); **schlaginterne
+NDRE-StdAbw 0,05–0,13** (der von der reinen Geometrie nicht messbare Misch-/Spalier-Effekt).
+GEE-Projektions-Bug behoben (berechnete Bänder aufs native S2-Gitter reprojiziert).
+**CDSE-OAuth** (Client-Credentials, `COPERNICUS_CLIENT_ID/SECRET` in `.env`) per Smoke validiert:
+HTTP 200, Bearer-Token, 1800 s. → **Beide Datenpfade (GEE + CDSE) sind live-fähig.**
+**Sicherheit:** alle Secrets in `./.env` (gitignored, untracked); Werte nie geloggt/committet;
+`.env.example` um Copernicus-Keys ergänzt + Hetzner-Key-Name angeglichen.
+**Verweise:** `scripts/gee-backtest.py`, `docs/hops/satellite/gee-backtest.md`.
+
 ## 2026-06-28 · Satelliten-Recherche-Schwarm abgeschlossen → Synthese + 7-stufige Bau-Reihenfolge
 **Was:** Der Deep-Research-Schwarm (8 Agenten, ~294k Tokens, 6 Facetten + Synthese + Vollständigkeits-Kritik)
 ist fertig; Ergebnisse unter `docs/hops/satellite/`. **Kernbefund:** kein freier Satellit ist auf 0,5–2 ha
