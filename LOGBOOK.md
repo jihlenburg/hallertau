@@ -5,6 +5,28 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Screenshot-Capture + Frutiger-Review als Hook automatisiert
+**Was:** Die visuelle Review-Schleife (Screenshots aller Client-Zustände → Frutiger-Rubrik) als
+stehenden Prozess verankert.
+- **Capture-Skript** `app/scripts/capture-states.mjs` (`npm run screenshots`): puppeteer-core treibt
+  System-Chrome (`--enable-unsafe-swiftshader` für Headless-WebGL/maplibre), startet `server.mjs`,
+  seedet Demo-Schläge, wartet auf Live-Daten → `docs/screenshots/{onboarding-methods,onboarding-review,overview}.png`.
+- **Hook** `.claude/settings.json` (`PostToolUse`→`Bash`, `async`, `timeout 240`): erkennt einen
+  vollen Testlauf (`npm test` / `npm run test`) per `jq`+`grep` und ruft dann `npm run screenshots`
+  nicht-blockierend auf. Gezielte `vitest run <pfad>` und `npm run build` lösen bewusst **nicht** aus.
+  Portabel via `$CLAUDE_PROJECT_DIR`; feuert nur in Claude-Code-Sitzungen, nicht in CI.
+
+**Warum:** „Auf jedem Testlauf / nach neuen Features" sollte der UI-Stand gegen Frutigers Maßstab
+(Legibilität, koordiniertes Typo-System, Ruhe) geprüft werden — der Capture-Teil ist nun hands-off,
+das visuelle Urteil bleibt bei Claude/Agent.
+
+**Verifikation:** `jq -e` über die Hook-Definition grün; Match-Logik pipe-getestet
+(`npm test`/`npm run test` → MATCH; `npx vitest run …`, `npm run build`, `git status` → nomatch).
+**Caveat:** Eine **neu angelegte** `.claude/settings.json` aktiviert der Watcher erst nach einmaligem
+Öffnen von `/hooks` (oder Neustart) — nur Verzeichnisse mit Settings bei Sitzungsstart werden beobachtet.
+
+**Verweise:** `.claude/settings.json`, `app/scripts/capture-states.mjs`, `docs/screenshots/README.md`.
+
 ## 2026-06-28 · App auf doldenblick-01 deployt (https://doldenblick.de live)
 **Was:** Den Vite-Build (`app/dist/`) auf den Hetzner-Server ausgerollt und die Platzhalterseite
 ersetzt. Reproduzierbar über neues `infra/deploy.sh` + `infra/nginx-doldenblick.conf`.

@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "async": true,
+            "timeout": 240,
+            "statusMessage": "Screenshots (Frutiger-Review)…",
+            "command": "cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null); printf '%s' \"$cmd\" | grep -Eq 'npm( run)? test( |$)' && (cd \"$CLAUDE_PROJECT_DIR/app\" && npm run screenshots >/tmp/doldenblick-screenshots.log 2>&1); exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

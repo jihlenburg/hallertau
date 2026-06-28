@@ -17,11 +17,24 @@ Die PNGs sind **regenerierbare Artefakte** (gitignored) — versioniert wird nur
 Konvention: `*-before.png` / `*-after.png` für Vorher/Nachher einer Design-Iteration.
 
 ## So erfassen
-1. `cd app && npm run dev` (Vite, http://localhost:5173).
-2. Browser-Automation (Playwright-MCP) → je Zustand `fullPage`-Screenshot nach `docs/screenshots/`.
-3. Übersicht braucht Felder — Seed in der Konsole/`browser_evaluate`:
-   `localStorage.setItem('doldenblick.fields.v1', JSON.stringify(<FeatureCollection mit Schlägen>))`
-   (6 Demo-Schläge: siehe `app/data/demo-fields.geojson`).
+Automatisiert über ein Skript (kein manuelles Klicken, kein Browser-Download):
+
+```
+cd app && npm run screenshots
+```
+
+`scripts/capture-states.mjs` treibt via **puppeteer-core** das **System-Chrome**
+(`--enable-unsafe-swiftshader` für Headless-WebGL/maplibre), startet `server.mjs` (gebauter Build +
+`/api/brightsky`-Proxy), seedet die Demo-Schläge in `localStorage`, wartet auf Live-Daten und legt
+`onboarding-methods.png`, `onboarding-review.png`, `overview.png` nach `docs/screenshots/` ab.
+
+**Hook (automatischer Auslöser):** Ein Projekt-Hook in `.claude/settings.json`
+(`PostToolUse` → `Bash`, `async`) ruft `npm run screenshots` selbsttätig auf, sobald ein **voller
+Testlauf** (`npm test` / `npm run test`) erkannt wird — gezielte `vitest run <pfad>` und
+`npm run build` lösen **nicht** aus. Der Hook feuert nur in Claude-Code-Sitzungen (nicht in CI).
+Danach bewertet Claude die frischen PNGs gegen die Rubrik unten.
+
+Noch offen (manuell): `overview-loading-*` und `overview-error-*` (Netz-Drossel/Offline nötig).
 
 ## Frutiger-Rubrik (Bewertungsmaßstab)
 Adrian Frutiger — Legibilität zuerst, Typografie „verschwindet" in der Bedeutung, koordiniertes

@@ -66,7 +66,12 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       `/api/brightsky` via nginx; `https://doldenblick.de` live verifiziert. — 2026-06-28
 
 ## Produkt / Konzept
-- [ ] Vom Prototyp zur kleinen API mit Caching (Open-Meteo / Bright Sky).
+- [~] **Backend (`api/`) — Strong Separation of Concerns:** Client = Präsentation + Karten-Tiles;
+      Backend = alle Datenabrufe (BFF) + alle Berechnungen. Erste Scheibe: zustandsloser
+      Wasserbilanz-Compute-Service (FAO-56-Bucket + Ks), Open-Meteo-Warm-up serverseitig,
+      Endpoint `/api/water-balance` — **noch kein Postgres**. Spec:
+      `docs/superpowers/specs/2026-06-28-agronomic-compute-layer-design.md`. *(aktueller Fokus)*
+- [ ] Caching der Datenquellen (Open-Meteo / Bright Sky) im Backend.
 - [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing) — die Übersicht flaggt
       Nachtfrost jetzt in-app und verweist auf die DWD-WarnWetterApp, ersetzt aber keinen
       Echtzeit-Alarm; einziger DoldenBlick-eigener Push-Kandidat ist das Spritzfenster.
@@ -84,3 +89,6 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [x] Devil's-Advocate-Fixes: Frost-Erkennung, Inversionsvorsicht, Wasserbilanz als Tendenz,
       Raster-Ehrlichkeitshinweis, Import-Plausibilitätscheck, Roadmap-Streifen,
       Whole-Farm-Tageskopf, Prod-Proxy, Report-Faktenkorrektur (alle test-first). — 2026-06-27
+- [x] **Visuelle Review-Schleife als Hook automatisiert:** `npm run screenshots` (puppeteer-core +
+      System-Chrome) + Projekt-Hook `.claude/settings.json` (`PostToolUse`/`Bash`, async) feuert bei
+      vollem Testlauf; Frutiger-Urteil bleibt bei Claude. — 2026-06-28
