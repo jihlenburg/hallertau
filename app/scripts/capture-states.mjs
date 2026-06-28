@@ -82,7 +82,7 @@ async function main() {
       .waitForFunction(
         () => {
           const t = document.body.innerText
-          return t.includes('Quelle:') && !t.includes('Daten werden geladen')
+          return t.includes('Quelle:') && !t.includes('Daten werden geladen') && !t.includes('lädt …')
         },
         { timeout: 30000 },
       )

@@ -16,6 +16,8 @@ import { resolve, extname } from 'node:path'
 const PORT = Number(process.env.PORT) || 4173
 const DIST = fileURLToPath(new URL('./dist/', import.meta.url))
 const BRIGHTSKY = process.env.BRIGHTSKY_URL || 'https://api.brightsky.dev'
+// Backend (BFF + Compute) für /api/water-balance + /api/version — live oder lokal überschreibbar.
+const API_ORIGIN = process.env.API_ORIGIN || 'https://doldenblick.de'
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -44,6 +46,22 @@ const server = createServer(async (req, res) => {
     } catch {
       res.writeHead(502, { 'content-type': 'application/json' })
       res.end(JSON.stringify({ error: 'brightsky proxy unreachable' }))
+    }
+    return
+  }
+
+  // 1b) Backend-Compute (Wasserbilanz/Version) — Pfad + Query unverändert weiterreichen.
+  if (url.pathname === '/api/water-balance' || url.pathname === '/api/version') {
+    try {
+      const up = await fetch(API_ORIGIN + url.pathname + url.search, {
+        headers: { accept: 'application/json', 'x-client-api': req.headers['x-client-api'] || '' },
+      })
+      const body = Buffer.from(await up.arrayBuffer())
+      res.writeHead(up.status, { 'content-type': up.headers.get('content-type') || 'application/json' })
+      res.end(body)
+    } catch {
+      res.writeHead(502, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ error: 'api proxy unreachable' }))
     }
     return
   }

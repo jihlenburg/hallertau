@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 
-// Bright Sky (DWD-Warnungen) sendet im Browser nicht zuverlässig CORS-Header.
-// Im Dev-Server routen wir die Anfrage daher über einen Proxy — so entfällt CORS
-// komplett, ohne einen eigenen Backend-Prozess. Hinweis: das gilt nur für
-// `npm run dev`; ein rein statischer Prod-Build bräuchte einen echten Proxy.
+// Same-origin /api/* im Dev-Server. Drei Ziele:
+//  - /api/brightsky → api.brightsky.dev (DWD-Warnungen; CORS-frei via Proxy, mit Rewrite)
+//  - /api/water-balance, /api/version → das live DoldenBlick-Backend (BFF + Compute)
+// In Prod übernimmt nginx dieselben Routen (kein App-Proxy nötig). Nur `npm run dev`.
+const API_ORIGIN = process.env.API_ORIGIN || 'https://doldenblick.de'
+
 export default defineConfig({
   server: {
     proxy: {
@@ -12,6 +14,8 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api\/brightsky/, ''),
       },
+      '/api/water-balance': { target: API_ORIGIN, changeOrigin: true },
+      '/api/version': { target: API_ORIGIN, changeOrigin: true },
     },
   },
 })

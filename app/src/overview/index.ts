@@ -2,12 +2,12 @@ import { FieldMap } from '../map'
 import { asCollection, getFields, getSelected, selectField, subscribe } from '../state'
 import { centroidLonLat } from '../domain/fields'
 import { gridCellKey } from '../domain/grid'
-import { fetchOpenMeteo, lastNDaysIndices, type OpenMeteoData } from '../api/openMeteo'
+import { fetchOpenMeteo, type OpenMeteoData } from '../api/openMeteo'
 import { fetchDwdAlerts, type DwdAlert } from '../api/brightSky'
+import { fetchWaterBalance, type WaterBalanceResult, type WbQuery } from '../api/waterBalance'
 import { assessWeather } from '../domain/weather'
 import { evaluateSprayWindow } from '../domain/sprayWindow'
-import { computeWaterBalance, KC_HOPS } from '../domain/waterBalance'
-import { cardHtml, barsViz, meterViz, balanceLabel, roadmapStrip, countHints, type CardSpec } from './cards'
+import { cardHtml, barsViz, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, type CardSpec } from './cards'
 import { icons } from '../ui/icons'
 import type { FieldFeature, Status } from '../types'
 
@@ -70,8 +70,14 @@ export function mountOverview(root: HTMLElement): void {
     cards.innerHTML = [
       cardHtml({ status: 'loading', eyebrow: 'Wetter & Warnungen', icon: icons.weather('#6b7d72'), stat: 'lädt …', rec: 'Vorhersage wird abgerufen.', src: 'Open-Meteo · DWD' }),
       cardHtml({ status: 'loading', eyebrow: 'Spritzfenster', icon: icons.spray('#6b7d72'), stat: 'lädt …', rec: 'Stundenwerte werden ausgewertet.', src: 'Open-Meteo' }),
-      cardHtml({ status: 'loading', eyebrow: 'Bewässerung · Wasserbilanz', icon: icons.water('#6b7d72'), stat: 'lädt …', rec: 'ET₀ wird berechnet.', src: 'Open-Meteo' }),
+      cardHtml({ status: 'loading', eyebrow: 'Bewässerung · Wasserbilanz', icon: icons.water('#6b7d72'), stat: 'lädt …', rec: 'FAO-56-Wasserbilanz wird berechnet.', src: 'DoldenBlick-API · Open-Meteo' }),
     ].join('')
+  }
+
+  /** Backend-Query für die Wasserbilanz aus den Schlag-Eigenschaften. */
+  function wbQuery(sel: FieldFeature, lat: number, lon: number): WbQuery {
+    const p = sel.properties
+    return { lat, lon, soilType: p.soilType, rootDepthM: p.rootDepthM, nfkMmPerM: p.nfkMmPerM }
   }
 
   async function refresh() {
@@ -80,66 +86,126 @@ export function mountOverview(root: HTMLElement): void {
     renderLoading()
     controller?.abort()
     controller = new AbortController()
+    const signal = controller.signal
     const [lon, lat] = centroidLonLat(sel)
+
+    // Wasserbilanz unabhängig (Backend-Compute) — Fehler hier bricht Wetter/Spritzfenster nicht ab.
+    const wbPromise = fetchWaterBalance(wbQuery(sel, lat, lon), signal)
+
+    let data: OpenMeteoData | null = null
+    let alerts: DwdAlert[] | null = null
+    let weatherErr: string | null = null
     try {
-      const data = await fetchOpenMeteo(lat, lon, controller.signal)
-      const alerts = await fetchDwdAlerts(lat, lon, controller.signal)
-      renderCards(sel, data, alerts)
+      data = await fetchOpenMeteo(lat, lon, signal)
+      alerts = await fetchDwdAlerts(lat, lon, signal)
     } catch (err) {
       if ((err as Error).name === 'AbortError') return
-      renderError((err as Error).message)
+      weatherErr = (err as Error).message
+    }
+    const wb = await wbPromise
+    if (signal.aborted) return
+    renderCards(sel, data, alerts, weatherErr, wb)
+  }
+
+  /** Baut die Wasserbilanz-Karte aus dem Backend-Ergebnis (inkl. degradierter Zustände). */
+  function waterBalanceCard(wb: WaterBalanceResult): CardSpec {
+    const eyebrow = 'Bewässerung · Wasserbilanz'
+    const icon = icons.water()
+    if (wb.kind === 'incompatible') {
+      return { status: 'alert', eyebrow, icon, stat: 'App veraltet', rec: 'Die Wasserbilanz-Schnittstelle hat sich geändert. Bitte die Seite neu laden.', src: 'DoldenBlick-API' }
+    }
+    if (wb.kind === 'error') {
+      return { status: 'alert', eyebrow, icon, stat: 'Nicht abrufbar', rec: `Wasserbilanz konnte nicht geladen werden (${wb.message}). Bitte später erneut versuchen.`, src: 'DoldenBlick-API · Open-Meteo (FAO-56)' }
+    }
+    const d = wb.data
+    const soil = d.soil.soilType ?? `nFK ${d.soil.nfkMmPerM} mm/m`
+    let rec: string
+    if (d.status === 'alert' && d.recommendMm > 0) {
+      rec = `Auf Feldkapazität auffüllen (≈ ${Math.round(d.recommendMm)} mm). <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil} · Ks ${d.ks}. Orientierung, keine verbindliche Beregnungsanweisung.</span>`
+    } else if (d.status === 'warn') {
+      rec = `Noch keine Bewässerung nötig — Auslöser bei RAW ${d.raw.toFixed(0)} mm. <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil}.</span>`
+    } else if (d.status === 'alert') {
+      rec = `Trockenstress wahrscheinlich (Ks ${d.ks}). <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil}.</span>`
+    } else {
+      rec = `Wurzelraum gut versorgt. <span class="cardnote">FAO-56-Wurzelraum-Bilanz · Boden ${soil}. Orientierung, keine verbindliche Gabe.</span>`
+    }
+    return {
+      status: d.status,
+      eyebrow,
+      icon,
+      stat: soilBalanceLabel(d.status, d.recommendMm),
+      rec,
+      viz: soilWaterViz({ dr: d.dr, raw: d.raw, taw: d.taw, ks: d.ks, days: d.window.days }),
+      src: 'DoldenBlick-API · Open-Meteo (FAO-56 ET₀)',
     }
   }
 
-  function renderCards(sel: FieldFeature, data: OpenMeteoData, alerts: DwdAlert[] | null) {
+  /** Status der Wasserbilanz für die Hinweiszählung (nicht-ok = kein Feld-Hinweis). */
+  function wbStatus(wb: WaterBalanceResult): Status {
+    return wb.kind === 'ok' ? wb.data.status : 'info'
+  }
+
+  function renderCards(
+    sel: FieldFeature,
+    data: OpenMeteoData | null,
+    alerts: DwdAlert[] | null,
+    weatherErr: string | null,
+    wb: WaterBalanceResult,
+  ) {
     const now = new Date()
-    const weather = assessWeather(data, alerts, now)
-    const spray = evaluateSprayWindow(data.hourly, now)
+    let weatherStatus: Status = 'info'
+    let sprayStatus: Status = 'info'
+    let weatherSpecs: CardSpec[]
 
-    const idx = lastNDaysIndices(data.daily.time, 7, now)
-    const et0 = idx.map((i) => data.daily.et0_fao_evapotranspiration[i])
-    const precip = idx.map((i) => data.daily.precipitation_sum[i])
-    const wb = computeWaterBalance(et0, precip, KC_HOPS)
+    if (data) {
+      const weather = assessWeather(data, alerts, now)
+      const spray = evaluateSprayWindow(data.hourly, now)
+      weatherStatus = weather.status
+      sprayStatus = spray.status
+      const weatherSrc =
+        weather.warningSource === 'dwd'
+          ? 'DWD / Bright Sky'
+          : weather.alertsReachable
+            ? 'Open-Meteo (aus Vorhersage abgeleitet)'
+            : 'Open-Meteo (abgeleitet · amtliche Warnungen nicht abrufbar)'
+      weatherSpecs = [
+        {
+          status: weather.status,
+          eyebrow: 'Wetter & Warnungen',
+          icon: icons.weather(),
+          stat: weather.headline,
+          rec: `${weather.detail} <span class="cardnote">Kein Echtzeit-Alarm — für Frost/Hagel/Sturm die DWD-WarnWetterApp nutzen.</span>`,
+          src: weatherSrc,
+        },
+        {
+          status: spray.status,
+          eyebrow: 'Spritzfenster',
+          icon: icons.spray(),
+          stat: spray.headline,
+          rec: spray.detail,
+          viz: barsViz(spray.hours, 'Nächste 24 h · grün = geeignet (Wind, trocken, ΔT 2–8 °C)'),
+          src: 'Open-Meteo',
+        },
+      ]
+    } else {
+      const msg = weatherErr ?? 'unbekannt'
+      const unavailable = (eyebrow: string, icon: string, src: string): CardSpec => ({
+        status: 'alert', eyebrow, icon, stat: 'Nicht abrufbar',
+        rec: `Daten konnten nicht geladen werden (${msg}). Bitte später erneut versuchen.`, src,
+      })
+      weatherSpecs = [
+        unavailable('Wetter & Warnungen', icons.weather(), 'Open-Meteo · DWD'),
+        unavailable('Spritzfenster', icons.spray(), 'Open-Meteo'),
+      ]
+    }
 
-    const weatherSrc =
-      weather.warningSource === 'dwd'
-        ? 'DWD / Bright Sky'
-        : weather.alertsReachable
-          ? 'Open-Meteo (aus Vorhersage abgeleitet)'
-          : 'Open-Meteo (abgeleitet · amtliche Warnungen nicht abrufbar)'
-
-    const specs: CardSpec[] = [
-      {
-        status: weather.status,
-        eyebrow: 'Wetter & Warnungen',
-        icon: icons.weather(),
-        stat: weather.headline,
-        rec: `${weather.detail} <span class="cardnote">Kein Echtzeit-Alarm — für Frost/Hagel/Sturm die DWD-WarnWetterApp nutzen.</span>`,
-        src: weatherSrc,
-      },
-      {
-        status: spray.status,
-        eyebrow: 'Spritzfenster',
-        icon: icons.spray(),
-        stat: spray.headline,
-        rec: spray.detail,
-        viz: barsViz(spray.hours, 'Nächste 24 h · grün = geeignet (Wind, trocken, ΔT 2–8 °C)'),
-        src: 'Open-Meteo',
-      },
-      {
-        status: wb.status,
-        eyebrow: 'Bewässerung · Wasserbilanz',
-        icon: icons.water(),
-        stat: balanceLabel(wb.status),
-        rec: `Klimatische Wasserbilanz (7 T): ETc = ET₀ · Kc(${wb.kc}) − Niederschlag. <span class="cardnote">Kein Bodenmodell — Tendenz, keine Beregnungsmenge.</span>`,
-        viz: meterViz(wb.deficit, wb.etc, wb.precip),
-        src: 'Open-Meteo · ET₀ (FAO-56)',
-      },
-    ]
-
+    const specs: CardSpec[] = [...weatherSpecs, waterBalanceCard(wb)]
     root.querySelector<HTMLDivElement>('#cards')!.innerHTML = specs.map(cardHtml).join('')
     updateGridHint(sel)
-    updateSubhead(sel, [weather.status, spray.status, wb.status])
+    if (data) updateSubhead(sel, [weatherStatus, sprayStatus, wbStatus(wb)])
+    else
+      root.querySelector<HTMLDivElement>('#subhead')!.textContent =
+        `${getFields().length} Schläge · Daten für den gewählten Schlag derzeit nicht vollständig abrufbar`
   }
 
   /** Ehrlichkeitshinweis: liegt der gewählte Schlag mit Nachbarn in derselben ~2-km-Zelle? */
@@ -150,32 +216,12 @@ export function mountOverview(root: HTMLElement): void {
     ).length
     const gh = root.querySelector<HTMLDivElement>('#gridhint')!
     if (shared > 0) {
-      gh.textContent = `Wetter-, Spritz- und Bewässerungswerte sind regionale Rasterwerte (~2 km) — sie gelten für ${shared + 1} benachbarte Schläge in derselben Modellzelle.`
+      gh.textContent = `Wetter- und Spritzfenster-Werte sind regionale Rasterwerte (~2 km) — sie gelten für ${shared + 1} benachbarte Schläge in derselben Modellzelle. Die Wasserbilanz nutzt zusätzlich den schlagindividuellen Boden.`
       gh.classList.add('show')
     } else {
       gh.textContent = ''
       gh.classList.remove('show')
     }
-  }
-
-  function renderError(msg: string) {
-    const unavailable = (eyebrow: string, icon: string, src: string): CardSpec => ({
-      status: 'alert',
-      eyebrow,
-      icon,
-      stat: 'Nicht abrufbar',
-      rec: `Daten konnten nicht geladen werden (${msg}). Bitte später erneut versuchen.`,
-      src,
-    })
-    root.querySelector<HTMLDivElement>('#cards')!.innerHTML = [
-      unavailable('Wetter & Warnungen', icons.weather(), 'Open-Meteo · DWD'),
-      unavailable('Spritzfenster', icons.spray(), 'Open-Meteo'),
-      unavailable('Bewässerung · Wasserbilanz', icons.water(), 'Open-Meteo · ET₀ (FAO-56)'),
-    ]
-      .map(cardHtml)
-      .join('')
-    root.querySelector<HTMLDivElement>('#subhead')!.textContent =
-      `${getFields().length} Schläge · Daten für den gewählten Schlag derzeit nicht abrufbar`
   }
 
   /** Per-Schlag-Zeile (Auswahl + offene Hinweise des gewählten Schlags). */
@@ -188,10 +234,9 @@ export function mountOverview(root: HTMLElement): void {
   }
 
   /**
-   * Ganzbetrieblicher Tageskopf „N Hinweise für morgen" (wie im Konzept). Holt
-   * Open-Meteo einmal pro DISTINKTER Rasterzelle (benachbarte Schläge teilen sich
-   * die Zelle) und zählt Schläge mit mindestens einem warn/alert. Schlägt der Abruf
-   * fehl, bleibt die neutrale Lade-Anzeige stehen (per-Schlag-Karten zeigen Details).
+   * Ganzbetrieblicher Tageskopf „N Hinweise für morgen". Holt Open-Meteo einmal pro
+   * DISTINKTER Rasterzelle (benachbarte Schläge teilen sich die Zelle) für Wetter/Spritzfenster
+   * und die Wasserbilanz je Schlag aus dem Backend; zählt Schläge mit ≥1 warn/alert.
    */
   async function refreshFarm() {
     const all = getFields()
@@ -215,20 +260,24 @@ export function mountOverview(root: HTMLElement): void {
           alertsByCell.set(k, await fetchDwdAlerts(lat, lon, signal))
         }),
       )
+      // Wasserbilanz je Schlag (Backend) — parallel; Fehler je Schlag zählt nicht als Hinweis.
+      const wbByField = new Map<string, WaterBalanceResult>()
+      await Promise.all(
+        all.map(async (f) => {
+          const [lon, lat] = centroidLonLat(f)
+          wbByField.set(f.properties.id, await fetchWaterBalance(wbQuery(f, lat, lon), signal))
+        }),
+      )
+      if (signal.aborted) return
       let hinted = 0
       for (const f of all) {
         const k = gridCellKey(centroidLonLat(f))
         const data = dataByCell.get(k)
         if (!data) continue
-        const idx = lastNDaysIndices(data.daily.time, 7, now)
         const fieldStatuses: Status[] = [
           assessWeather(data, alertsByCell.get(k) ?? null, now).status,
           evaluateSprayWindow(data.hourly, now).status,
-          computeWaterBalance(
-            idx.map((i) => data.daily.et0_fao_evapotranspiration[i]),
-            idx.map((i) => data.daily.precipitation_sum[i]),
-            KC_HOPS,
-          ).status,
+          wbStatus(wbByField.get(f.properties.id) ?? { kind: 'error', message: '' }),
         ]
         if (countHints(fieldStatuses) > 0) hinted++
       }

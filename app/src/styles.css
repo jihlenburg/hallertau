@@ -129,6 +129,9 @@ html, body {
 .barlabel { color: var(--faint); font-size: 13px; margin-top: 6px; }
 .meter { height: 11px; border-radius: 6px; background: #eef1ec; overflow: hidden; }
 .meter > span { display: block; height: 100%; border-radius: 6px; }
+/* Wurzelraum-„Eimer": Verarmung Dr (Füllung) + Auslöser-Marke bei RAW. */
+.meter-soil { position: relative; }
+.meter-soil .mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #2a3a31; opacity: .5; }
 
 /* ===== Map-Panel ===== */
 .panel { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }

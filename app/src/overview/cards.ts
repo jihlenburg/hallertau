@@ -57,26 +57,33 @@ export function barsViz(values: { ok: boolean }[], label: string): string {
 }
 
 /**
- * Tendenz-Überschrift für die Wasserbilanz. BEWUSST ohne mm-Zahl: ein „Defizit X mm"
- * als Schlagzeile liest sich wie eine Beregnungsdosis (mm ist die Dosiereinheit der
- * Beregnungskanone), obwohl es nur eine speicherfreie klimatische Bilanz ist. Die
- * Zahlen erscheinen weiterhin — kleiner und gerahmt — in der Visualisierung.
+ * Überschrift der Wasserbilanz. Anders als die alte klimatische Tendenz ist dies ein
+ * echtes FAO-56-Wurzelraum-Modell (Backend) — die mm-Gabe IST jetzt eine sinnvolle
+ * Dosis („auf Feldkapazität auffüllen"), daher darf/soll sie im Alert in die Schlagzeile.
  */
-export function balanceLabel(status: Status): string {
+export function soilBalanceLabel(status: Status, recommendMm: number): string {
   switch (status) {
-    case 'good': return 'Wasserbilanz ausgeglichen'
+    case 'good': return 'Wasserhaushalt im grünen Bereich'
     case 'warn': return 'Boden trocknet ab'
-    case 'alert': return 'Trockenstress wahrscheinlich'
+    case 'alert':
+      return recommendMm > 0 ? `≈ ${Math.round(recommendMm)} mm bewässern` : 'Trockenstress wahrscheinlich'
     default: return 'Wasserbilanz'
   }
 }
 
-/** Balken-Anzeige für die Wasserbilanz (Defizit relativ zur ETc). */
-export function meterViz(deficit: number, etc: number, precip: number): string {
-  const pct = etc > 0 ? Math.min(100, Math.max(0, (deficit / etc) * 100)) : 0
-  const color = deficit > 20 ? 'var(--alert)' : deficit > 5 ? 'var(--warn)' : 'var(--good)'
-  const balance = deficit > 0 ? `klim. Defizit ~${deficit.toFixed(0)} mm` : `Überschuss ~${(-deficit).toFixed(0)} mm`
+/**
+ * Wurzelraum-„Eimer": Verarmung Dr relativ zur nutzbaren Kapazität TAW, mit Auslöser-
+ * marke bei RAW. Voll (rechts) = Welkepunkt; leer (links) = Feldkapazität.
+ */
+export function soilWaterViz(b: { dr: number; raw: number; taw: number; ks: number; days: number }): string {
+  const pct = b.taw > 0 ? Math.min(100, Math.max(0, (b.dr / b.taw) * 100)) : 0
+  const rawPct = b.taw > 0 ? Math.min(100, Math.max(0, (b.raw / b.taw) * 100)) : 0
+  const color = b.dr >= b.raw ? 'var(--alert)' : b.dr >= 0.5 * b.raw ? 'var(--warn)' : 'var(--good)'
+  const stress = b.ks < 1 ? ` · Wasserstress (Ks ${b.ks})` : ''
   return `
-    <div class="meter"><span style="width:${pct.toFixed(0)}%;background:${color}"></span></div>
-    <div class="barlabel">${balance} · ETc 7 T: ${etc.toFixed(0)} mm · Regen 7 T: ${precip.toFixed(0)} mm</div>`
+    <div class="meter meter-soil">
+      <span style="width:${pct.toFixed(0)}%;background:${color}"></span>
+      <i class="mark" style="left:${rawPct.toFixed(0)}%" title="Auslöser RAW ${b.raw.toFixed(0)} mm"></i>
+    </div>
+    <div class="barlabel">Verarmung Dr ${b.dr.toFixed(0)} / ${b.taw.toFixed(0)} mm · Auslöser RAW ${b.raw.toFixed(0)} mm${stress} · ${b.days} T</div>`
 }
