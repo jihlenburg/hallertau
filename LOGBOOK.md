@@ -5,6 +5,17 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-28 · Backend-Cache für Open-Meteo (TTL + Anfrage-Bündelung)
+**Was:** In-Memory-TTL-Cache (`api/src/sources/cache.ts`, 30 min, Schlüssel ~1-km-Zelle) vor dem
+Open-Meteo-Abruf. Cacht die **Promise** (bündelt gleichzeitige identische Anfragen — z. B. Whole-Farm
+mit mehreren Schlägen einer Zelle), cacht **Fehler nicht** (nächster Aufruf lädt neu), Zeit injizierbar.
+Route nutzt standardmäßig `fetchOpenMeteoDailyCached`.
+**Warum:** Die Übersicht ruft `/api/water-balance` je Schlag; wiederholte/co-lokierte Anfragen sollen
+nicht jedes Mal die freie Open-Meteo-API treffen (Latenz + Höflichkeit).
+**Verifikation:** 38/38 Tests grün (5 neue Cache-Tests, TDD); Build sauber; live deployt: Erstanfrage
+~266 ms, Folgeanfragen ~70-80 ms (Cache-Hit).
+**Verweise:** `api/src/sources/{cache,openMeteo}.ts`, `api/src/app.ts`.
+
 ## 2026-06-28 · Responsives Mobil-Layout (Übersicht + Onboarding)
 **Was:** Viewport `width=device-width`; Media-Queries — ≤1100px stapeln die zweispaltigen Layouts
 (Übersicht-Karten|Karte, Onboarding) untereinander, ≤760px einspaltige Karten, umbruchfähige Leiste

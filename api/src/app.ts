@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
 import { registerWaterBalanceRoute } from './routes/waterBalance.js'
-import { fetchOpenMeteoDaily, type DailySeries } from './sources/openMeteo.js'
+import { fetchOpenMeteoDailyCached, type DailySeries } from './sources/openMeteo.js'
 import { API_VERSION, MIN_CLIENT_VERSION, isClientCompatible } from './version.js'
 
 export interface BuildAppOpts {
@@ -51,7 +51,7 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
     minClientVersion: MIN_CLIENT_VERSION,
   }))
 
-  registerWaterBalanceRoute(app, { fetchDaily: opts.fetchDaily ?? fetchOpenMeteoDaily })
+  registerWaterBalanceRoute(app, { fetchDaily: opts.fetchDaily ?? fetchOpenMeteoDailyCached })
 
   return app
 }

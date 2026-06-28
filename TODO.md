@@ -23,8 +23,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
       (Red-Edge 20 m nativ, wenige saubere Pixel je Schlag).
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
 - [ ] 7-Tage-Vorhersagestreifen im Map-Panel (wie Mockup m1).
-- [~] Pro-Gitterzelle cachen — Whole-Farm-Kopf bündelt bereits je Rasterzelle
-      (`gridCellKey`); per-Schlag-Abruf in `refresh()` noch nicht dedupliziert.
+- [~] Pro-Gitterzelle cachen — Whole-Farm-Kopf bündelt Wetter je Rasterzelle (`gridCellKey`);
+      Backend cacht zudem die Wasserbilanz je ~1-km-Zelle (TTL), sodass der doppelte
+      `refresh()`/`refreshFarm()`-Abruf der gewählten Zelle billig ist. Client-Dedup noch offen (Nit).
 - [ ] Kc nach BBCH/Phase staffeln statt fixem 1.05.
 - [ ] Inversionsvorsicht verfeinern: Bewölkung/Strahlung in die Stundenwerte einbeziehen
       (derzeit Proxy aus Schwachwind + Dämmerungsstunde).
@@ -77,7 +78,9 @@ Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 - [x] **Client-Cutover Wasserbilanz:** Overview ruft `GET /api/water-balance` statt selbst zu rechnen;
       altes `computeWaterBalance`/`kc` entfernt; Client sendet `X-Client-API`. Adversarielle Review
       (17 Befunde behoben), beide deployt, HTTPS-Smoke grün. — 2026-06-28
-- [ ] Caching der Datenquellen (Open-Meteo / Bright Sky) im Backend.
+- [x] Caching **Open-Meteo** im Backend: In-Memory-TTL-Cache (30 min, ~1-km-Zelle) + Bündelung
+      gleichzeitiger Anfragen; live ~266 ms → ~70 ms (Cache-Hit). — 2026-06-28
+- [ ] Caching **Bright Sky** (DWD-Warnungen) im Backend (derzeit nur nginx-Proxy, kein Cache).
 - [ ] Push-/E-Mail-Benachrichtigungen (abendliches Briefing) — die Übersicht flaggt
       Nachtfrost jetzt in-app und verweist auf die DWD-WarnWetterApp, ersetzt aber keinen
       Echtzeit-Alarm; einziger DoldenBlick-eigener Push-Kandidat ist das Spritzfenster.

@@ -2,9 +2,14 @@
 // Niederschlag) über das `past_days`-Fenster + Vorhersage, für den Wasserbilanz-Warm-up.
 // Läuft im Backend (kein Browser/CORS); nutzt das globale `fetch` (Node ≥18).
 
+import { createTtlCache } from './cache.js'
+
 const BASE = 'https://api.open-meteo.com/v1/forecast'
 const PAST_DAYS = 60
 const FORECAST_DAYS = 7
+// Open-Meteo aktualisiert die Tageswerte nur einige Male pro Tag → 30-min-TTL ist großzügig
+// und entlastet die freie (nicht-kommerzielle) API; Schlüssel auf ~1 km gerundet (regional ohnehin).
+const DAILY_TTL_MS = 30 * 60_000
 
 export interface OpenMeteoDailyRaw {
   daily: {
@@ -53,4 +58,16 @@ export async function fetchOpenMeteoDaily(lat: number, lon: number, signal?: Abo
   if (!res.ok) throw new Error(`Open-Meteo: HTTP ${res.status}`)
   const raw = (await res.json()) as OpenMeteoDailyRaw
   return shapeDaily(raw)
+}
+
+const dailyCache = createTtlCache<DailySeries>({ ttlMs: DAILY_TTL_MS })
+const cacheKey = (lat: number, lon: number) => `${lat.toFixed(2)},${lon.toFixed(2)}`
+
+/**
+ * Gecachter Tagesreihen-Abruf: TTL je ~1-km-Zelle + Bündelung gleichzeitiger identischer
+ * Anfragen (z. B. Whole-Farm: viele Schläge derselben Zelle teilen einen Abruf). Kein Signal —
+ * der geteilte Abruf darf nicht von einer einzelnen Anfrage abgebrochen werden.
+ */
+export function fetchOpenMeteoDailyCached(lat: number, lon: number): Promise<DailySeries> {
+  return dailyCache.get(cacheKey(lat, lon), () => fetchOpenMeteoDaily(lat, lon))
 }
