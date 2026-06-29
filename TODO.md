@@ -44,11 +44,12 @@ Sorte-Fidelity, interaktiver Spritzfenster-Streifen. Die verbleibenden `[ ]`:
 
 ### Übersicht / Karten
 - [ ] **Peronospora**: LfL-Warndienst (Hüll) anbinden (Quelle/Recht klären).
-- [~] **Feld-Check (Satellit)** *(Gate aufgehoben, im Bau-Scope)*: Sentinel-Vitalität + Fusion.
-      Geometrie-**Pixel-Purity-Backtest** erledigt (`scripts/pixel-purity-backtest.mjs` →
-      `docs/hops/satellite/field-scale-backtest.md`): 10 m feld-tragfähig, 20 m NDRE nur Feldmittel.
-      Offen: Bilddaten-NDRE-Zeitreihen-Backtest (CDSE/GEE) für intra-Schlag-Mischung; Ingest-Pipeline.
-      Recherche-Schwarm liefert Sensor-/Index-/Infra-Empfehlung.
+- [~] **Feld-Check (Satellit)** *(Backend LIVE)*: zustandsloser `rs/`-Dienst (CDSE Sentinel-2,
+      `POST /api/field-vigor` → NDVI/SAVI 10 m + NDRE/CIre/NDMI 20 m, Pixel-Purity-Konfidenz,
+      Screening-Label) deployt auf doldenblick-01 (systemd `doldenblick-rs`, nginx). Backtests:
+      Geometrie (`scripts/pixel-purity-backtest.mjs`) + echtes S2 via GEE (`scripts/gee-backtest.py`).
+      **Offen:** Client-„Feld-Check"-Karte (ruft `/api/field-vigor`, ersetzt den „Bald verfügbar"-Chip);
+      später LfL-Krankheits-Konnektor, RADOLAN, Thermal/SAR in FAO-56, optional PlanetScope/UAV-Tier.
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
 - [x] 7-Tage-Vorhersagestreifen im Map-Panel (Wochentag · Wetterglyph · Max/Min · Regen-%),
       aus Open-Meteo-Tageswerten. — 2026-06-28

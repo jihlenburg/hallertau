@@ -5,6 +5,25 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-29 · Satelliten-RS-Dienst LIVE: POST /api/field-vigor (CDSE) deployt
+**Was:** Den RS-Dienst (`rs/`) fertiggebaut (R4–R6) und auf doldenblick-01 deployt.
+- **R4:** Indizes-Evalscripts (10 m NDVI/SAVI, 20 m NDRE/CIre/NDMI) + Pixel-Purity-Konfidenz
+  (Screening-Label; <9 Pixel → unbrauchbar; 20-m-Index auf <1 ha unterdrückt).
+- **R5:** `assembleVigor` (NDRE-primär; latest/seasonMean/trend/anomaly/Konfidenz je Index;
+  Status good/warn/info — **nie 'alert'**, Satellit = Screening, Vigor-Delle = „Geh-Kontrollieren")
+  + `POST /api/field-vigor` (zwei CDSE-Statistical-Calls 10/20 m), app + 426-Guard.
+- **R6:** systemd `doldenblick-rs` (Loopback 8788, gehärtet), **CDSE-Creds als root:root-600-
+  EnvironmentFile** (`/etc/doldenblick/doldenblick-rs.env`, nicht im Repo), nginx-`/api/field-vigor`
+  + `/api/rs/*`-Locations (additiv, Rollback-geschützt), Fastify 5 / 0 Schwachstellen.
+  Reproduzierbar via `infra/deploy-rs.sh`.
+**Verifikation:** 28 rs-Tests grün; live über HTTPS: `/api/rs/version` 200; `POST /api/field-vigor`
+→ status warn, NDRE 0.194 (81 px / 20 m, fallend, z=-1.18), NDVI (324 px / 10 m) — ~1,4 s.
+**Keine Regression** (SPA + `/api/water-balance` + `/api/brightsky` weiter 200).
+**Ehrlichkeit:** „regionales Screening (Feldmittel)", nie teilflächengenau; keine Qualitäts-/Alpha-/
+Krankheitsdiagnose-Aussagen.
+**Offen:** Client-„Feld-Check"-Karte (ruft `/api/field-vigor`), ersetzt den „Bald verfügbar"-Chip.
+**Verweise:** `rs/`, `infra/{deploy-rs.sh,doldenblick-rs.service,nginx-doldenblick.conf}`.
+
 ## 2026-06-28 · RS-Dienst (Satelliten-Feld-Check) gestartet: Scaffold + CDSE-Auth (live)
 **Was:** Neuer **zustandsloser Fastify-5-Dienst `rs/`** (CDSE-primär, Muster wie `api/`; Nutzerentscheid
 „stateless-first, CDSE primär"). Diese Scheibe: Scaffold + Versionsvertrag (`/api/rs/health`,

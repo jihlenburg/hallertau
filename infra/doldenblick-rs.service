@@ -1,0 +1,33 @@
+[Unit]
+Description=DoldenBlick RS (Satelliten-Feld-Check, CDSE Sentinel-2)
+Documentation=https://github.com/jihlenburg/hallertau
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=doldenblick
+Group=doldenblick
+WorkingDirectory=/opt/doldenblick-rs
+Environment=NODE_ENV=production
+Environment=PORT=8788
+Environment=HOST=127.0.0.1
+# CDSE-Client-Credentials (root:root 600, NICHT im Repo) — systemd liest sie vor dem Sandboxing.
+EnvironmentFile=/etc/doldenblick/doldenblick-rs.env
+ExecStart=/usr/bin/node /opt/doldenblick-rs/dist/server.js
+Restart=always
+RestartSec=2
+
+# Härtung (zustandsloser Dienst, schreibt nichts, loggt nach journald)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
