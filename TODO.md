@@ -26,6 +26,21 @@ Sorte-Fidelity, interaktiver Spritzfenster-Streifen. Die verbleibenden `[ ]`:
   bleiben auf dem resilienten nginx-Direktpfad statt an die Node-Service-Uptime gekoppelt zu werden.
 - **Marginal:** Client-seitige Dedup (Backend-Cache mildert sie bereits); freie Sorten-Eingabe.
 
+## Secrets-Management — Infisical (Self-Hosting, dedizierte Box)
+> Entscheidung 2026-06-29: weg von `.env`/EnvironmentFile hin zu **selbstgehostetem Infisical** auf einer
+> **dedizierten** Hetzner-Box (Isolation = der eigentliche Sinn von Self-Hosting). Topologie-Vergleich
+> (dediziert vs. Docker auf Prod) im Chat; dediziert gewählt. Forschungs-/Adversarial-Workflow informiert
+> das Stand-up-Runbook. **Prod (`doldenblick-01`) wird erst in der vetted Rewire-Phase angefasst.**
+- [x] Dedizierte Box `doldenblick-vault` (cx23/x86, nbg1), priv 10.0.0.2, FW nur SSH; privates Netz + Cloud-FW.
+- [x] cloud-init verifiziert (Docker 29.6, 2G Swap, SSH-Härtung); Kernel 6.8.0-124 gepatcht; unattended-upgrades gehärtet.
+- [x] Infisical-Stack (Backend v0.161.9 + Postgres 16 + Redis 7) live + healthy; SMTP (Postmark) aktiv.
+- [x] Super-Admin gebootstrappt (Org „DoldenBlick"); Kronjuwelen + Admin-PW off-box, PW rotiert + TOTP (Nutzer bestätigt 2026-06-29).
+- [x] Projekt `doldenblick` + Envs (dev/staging/prod); **8 Secrets** (inkl. GEE-JSON) in `prod` geladen.
+- [x] Maschinen-Identität `doldenblick-01` (Universal Auth, read-only **viewer**) — verifiziert: liest prod, Schreiben 403.
+- [x] Postgres-Backup (`pg_dump -Fc`, Cron 03:17 UTC, 14 Stände) — erster Dump ok.
+- [x] **PROD-CUTOVER LIVE (no-downtime, 2026-06-29):** Prod privat angehängt (10.0.0.3); fail-safe Secrets-Sync-Timer rendert `/etc/doldenblick/doldenblick-rs.env` aus Infisical (systemd `EnvironmentFile=` unverändert); **Resilienz bewiesen** (Vault aus → sync no-op → rs-Restart aus lokalem File, rs/health 200).
+- [ ] Tightening (kein Blocker): custom read-only-Rolle nur `prod`-Env (statt built-in viewer); Postgres-Restore-Drill; voller Cold-Boot-Test (opt., kurze Downtime); `cloud-setup.sh` auf Infisical umstellen; Prod-Swap nachrüsten.
+
 ## Prototyp-App (`app/`)
 
 ### Onboarding

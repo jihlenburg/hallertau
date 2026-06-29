@@ -5,6 +5,77 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-29 · Prod-Cutover Infisical LIVE (no-downtime) + Resilienz bewiesen
+**Was:** Vault-Seite fertig (Projekt `doldenblick`, **8 Secrets** inkl. GEE-JSON in `prod`, read-only-Maschinen-
+Identität [verifiziert: liest prod, Schreiben 403], `pg_dump`-Backup-Cron 03:17 UTC). **Prod-Cutover** (vom Nutzer
+freigegeben, „no-downtime"): `doldenblick-01` ans private Netz `doldenblick-net` gehängt (priv **10.0.0.3**; public
+unberührt, doldenblick.de durchgehend 200). Fail-safe **Secrets-Sync** (`/usr/local/bin/doldenblick-secrets-sync.py`
++ `doldenblick-secrets-sync.timer`, alle 10 min) rendert `/etc/doldenblick/doldenblick-rs.env` aus Infisical;
+systemd `EnvironmentFile=` unverändert → Infisical = **Sync-Quelle, keine Boot-Abhängigkeit**. `--check` = MATCH
+(Infisical == Prod-Werte, kein Clobber). **Resilienz-Test bestanden:** Vault gestoppt → sync no-op (exit 2, Datei
+unverändert) → `rs`-Restart bei Vault-down kommt aus lokalem File hoch (rs/health lokal+public 200) → Vault wieder healthy.
+**Hinweis:** Identität nutzt built-in `viewer` (read-only, alle Envs; dev/staging leer) — custom `prod`-only-Rolle
+als Tightening offen. Auto-Mode hatte den Netz-Attach zunächst geblockt (korrekt); nach Freigabe ausgeführt.
+**Verweise:** `infra/infisical/doldenblick-secrets-sync.*`; `docs/INFRASTRUCTURE.md` (Status/Gates).
+
+## 2026-06-29 · E-Mail produktiv (SMTP+Domain-Verify) + Vault-Kernel-Update + Infra-Doku/Quirks
+**Was:** (1) **SMTP** für Infisical via Postmark (smtp.postmarkapp.com:587 STARTTLS, Server-Token=User+Passwort,
+From noreply@doldenblick.de) → `emailConfigured:true`, „SMTP - Verified connection". (2) **Domain doldenblick.de
+bei Postmark verifiziert**: DKIM-TXT + Return-Path-CNAME via **Hetzner-DNS** (= Cloud-API, `HETZNER_API_TOKEN`
+deckt DNS ab; Zone 1421900; RRSets; **TXT muss gequotet**, CNAME trailing dot). Exakten DKIM-Key über Postmark-
+**Account**-API gezogen (kein Screenshot-Tippfehler; Wert ist `k=rsa; p=…` mit Leerzeichen); `PUT verifyDkim`/
+`verifyReturnPath` → beide **True**. (3) Vault-Backlog (48 Pkt/40 security) angewandt + unattended-upgrades
+gehärtet (Security+ESM+Updates, Auto-Reboot 04:30); Box auf Kernel 6.8.0-124 rebootet, Infisical danach healthy.
+(4) **`docs/INFRASTRUCTURE.md` erweitert** (Vault, Netz, E-Mail, großer **Quirks**-Abschnitt) + Memories gepflegt.
+Postmark-Tokens umbenannt: `POSTMARK_SERVER_API_TOKEN` + `POSTMARK_ACCOUNT_API_TOKEN` (in .env.example,
+docs/claude-code-web.md, cloud-setup.sh, REFERENCE §5.5 nachgezogen).
+**Prozess-Lektion:** Infra-SSOT (`docs/INFRASTRUCTURE.md`) zuerst lesen — DNS-in-Cloud-API stand längst drin.
+**Verweise:** `docs/INFRASTRUCTURE.md`; Memories `infrastructure-doc-ssot`, `hetzner-dns-cloud-api`, `email-postmark-available`.
+
+## 2026-06-29 · Infisical-Stack LIVE + Super-Admin gebootstrappt (Vault-Seite steht, Prod unberührt)
+**Was:** Forschungs-/Adversarial-Workflow (8 Agenten) lief — Synthese-Agent scheiterte am zu verschachtelten
+Schema (StructuredOutput-Retry-Cap), die 7 Research-/Adversarial-Ergebnisse aus den Transkripten geborgen und
+selbst synthetisiert. **Adversarial-Konsens (3× PROCEED-WITH-NAMED-FIX):** Infisical = **Sync-Quelle, NICHT**
+Boot-Abhängigkeit; Prod behält die autoritative `EnvironmentFile`, `infisical run` hat **keinen** Offline-Cache
+→ Infisical-**Agent** rendert die Datei; Postgres-Backup + Off-Box-Sicherung der Kronjuwelen; Cold-Boot-Test
+(Vault aus) vor Cutover. Gehärtete Compose (gepinnt: infisical v0.161.9 / postgres:16 / redis:7, db+redis ohne
+Host-Ports, Backend nur an 127.0.0.1 + 10.0.0.2, mem_limits, Redis noeviction) auf doldenblick-vault gestartet;
+`.env` on-box erzeugt (0600). Backend healthy (`/api/status` 200, Migrationen gelaufen, inviteOnlySignup). Erster
+Super-Admin via Headless-`/api/v1/admin/bootstrap` (Org „DoldenBlick"); Passwort + Automations-Token nur
+root-lesbar in `/opt/infisical/admin-credentials.txt` (0600).
+**Warum:** „continue when the workflow returns" + Autonomie; Vault-Seite ist reversibel/ohne Prod-Impact.
+**Verifikation:** 3 Container up (db+redis healthy), `/api/status` 200; Bootstrap-Antwort enthält user.superAdmin
++ organization + identity.credentials.token. Keine Geheimwerte gedruckt/committet. compose nach `infra/infisical/` gespiegelt.
+**Verweise:** `infra/infisical/{docker-compose.yml,setup-env.sh,bringup.sh}`; scratchpad/{bootstrap,recovered}.
+**NÄCHSTER MENSCH-SCHRITT:** Kronjuwelen (ENCRYPTION_KEY/AUTH_SECRET) + Admin-Creds off-box sichern (Passwortmanager).
+
+## 2026-06-29 · Infisical-Self-Hosting: dedizierte Vault-Box provisioniert (Prod unberührt)
+**Was:** Entscheidung, Secrets von `.env`/EnvironmentFile auf **selbstgehostetes Infisical** umzustellen — auf
+einer **dedizierten** Hetzner-Box (Topologie-Vergleich dediziert vs. Docker-auf-Prod; dediziert gewählt, weil
+Isolation der eigentliche Sinn ist). Recon: `doldenblick-01` = cx23/x86, nbg1-dc3, kein priv. Netz, 1 SSH-Key,
+kein hcloud-CLI lokal → REST-API genutzt. Neu angelegt (REST-API, Token nie gedruckt): privates Netz
+`doldenblick-net` (10.0.0.0/16, eu-central), Cloud-Firewall `doldenblick-vault-fw` (in: tcp/22+icmp nur von
+Admin-IP 178.193.212.25/32; out: alle), Server `doldenblick-vault` (id 146139826, cx23/x86, nbg1, ~6,53 €/Mon),
+public 178.105.188.207, **privat 10.0.0.2**. cloud-init: Docker CE + compose, 2G Swap (Prod hat keinen), SSH-
+Härtung (PasswordAuth no). **Prod nicht angefasst** — Netz-Attach + Rewire kommen erst in der vetted Phase.
+**Warum:** Nutzer-Direktive „dedizierte Box … provision it". Parallel läuft Forschungs-/Adversarial-Workflow
+(wppxnonee) für das gehärtete Stand-up-Runbook (Postgres-Backup, Offline-Fallback, Bootstrap-Secrets).
+**Verifikation:** Boot/cloud-init-Verifikation als Hintergrund-Poll (b5kgo3ax0) läuft. Keine Secrets gedruckt.
+**Verweise:** scratchpad/provision.py, vault-resources.json, vault-cloud-init.yaml; todo.md (Infisical-Block).
+
+## 2026-06-29 · Claude-Code-Web-Migration: Setup-Script + Anleitung (turnkey, keine Secrets im Git)
+**Was:** Dev-Umzug nach claude.ai/code vorbereitet. `scripts/cloud-setup.sh` (im Cloud-„Setup script"
+als `bash scripts/cloud-setup.sh` aufrufen): `npm ci` in app/api/rs, materialisiert die
+GEE-Service-Account-JSON aus `GEE_SA_KEY_B64` → `GOOGLE_APPLICATION_CREDENTIALS` (chmod 600), optional
+SSH-Deploy-Key aus `SSH_DEPLOY_KEY_B64`. `docs/claude-code-web.md`: was über Git mitkommt, die 6 Env-Vars
+(`.env`-Format, ohne Quotes) + `GEE_SA_KEY_B64`-Erzeugung (`base64 < … | tr -d '\n'`), Setup-Script,
+Cloud-Deploy optional, Sicherheitshinweis (Env-Vars unverschlüsselt → nur rotierbare/dedizierte Creds).
+**Warum:** Frage „wie migrieren wir die Session nach Claude Code Web, v. a. .env + GEE-.json?". Kerneinsicht:
+api/ und rs/ lesen `process.env.*` direkt → keine `.env`-Datei in der Cloud nötig; nur die GEE-JSON muss als
+Datei materialisiert werden. Prod (doldenblick-01) ist unabhängig (eigene EnvironmentFile).
+**Verifikation:** `bash -n` ok; base64-Round-Trip ok. Keine Secrets gedruckt/committet.
+**Verweise:** `scripts/cloud-setup.sh`, `docs/claude-code-web.md`.
+
 ## 2026-06-29 · Client „Feld-Check"-Karte (Satellit) live
 **Was:** Die Übersicht zeigt jetzt eine 4. Karte **„Feld-Check · Satellit"**, die je gewähltem Schlag
 `POST /api/field-vigor` (rs/-Dienst) ruft und das NDRE-Vigor-Screening rendert: Status good/warn/info

@@ -1,6 +1,6 @@
 # Infrastruktur — DoldenBlick
 
-**Stand:** 2026-06-27. Hosting bei **Hetzner Cloud**. Namenskonvention: Infrastruktur =
+**Stand:** 2026-06-29 (Basis 2026-06-27). Hosting bei **Hetzner Cloud**. Namenskonvention: Infrastruktur =
 **„Hallertau"** (Repo, Hetzner-Projekt), Produkt/Marke = **„DoldenBlick"** (s. `docs/naming.md`).
 
 > Zugangsdaten (Hetzner Cloud API-Token) stehen ausschließlich in `.env`
@@ -42,7 +42,7 @@ Passwort-Login aus. Die Platzhalterseite wurde durch die App ersetzt (s. Deploym
 |---|---|
 | Zone-ID | `1421900` (Hetzner Cloud DNS, `mode=primary`) |
 | Registrar | Hetzner; Delegation `.de` → `hydrogen`/`oxygen`.ns.hetzner.com, `helium`.ns.hetzner.de |
-| Records | `A`/`AAAA` für `@` und `www` → Server; `CAA 0 issue "letsencrypt.org"` |
+| Records | `A`/`AAAA` für `@` und `www` → Server; `CAA 0 issue "letsencrypt.org"`; **Postmark**: DKIM `…pm._domainkey` (TXT), Return-Path `pm-bounces` (CNAME → `pm.mtasv.net`) |
 
 Verwaltet über die in den Hetzner-**Cloud-API** integrierte DNS:
 `GET/POST https://api.hetzner.cloud/v1/zones/1421900/rrsets` (RRSet-Modell, Bearer-Token).
@@ -81,3 +81,100 @@ Die alte `dns.hetzner.com`-API ist abgelöst (301 → console.hetzner.com).
 3. Härtung + HTTPS: `ssh root@<ip> 'bash -s' < infra/harden.sh`
    (LE-E-Mail/Domains ggf. im Skript anpassen).
 4. App ausrollen: `./infra/deploy.sh root@<ip>` (baut + deployt + Proxy + Reload).
+
+---
+
+# Erweiterung 2026-06-29 — Secrets-Box, privates Netz, E-Mail, Quirks
+
+## Server `doldenblick-vault` (Secrets-Manager)
+| | |
+|---|---|
+| Zweck | Selbstgehostetes **Infisical** — **dediziert** (Isolation = Sinn des Self-Hostings), getrennt von Prod |
+| Server-ID | `146139826` |
+| Typ | `cx23` (x86, 2 vCPU / 4 GB) — nbg1 |
+| IPv4 (public) | `178.105.188.207` — **nur SSH** (Cloud-Firewall von Admin-IP) |
+| IPv6 | `2a01:4f8:c2c:e759::1` |
+| Privat | `10.0.0.2` (`enp7s0`, Netz `doldenblick-net`) |
+| OS / Kernel | Ubuntu 24.04 / 6.8.0-124 |
+| Extras | **2 GB Swap**; Docker 29.6 + compose v5.2; unattended-upgrades gehärtet (Security+ESM+Updates) + **Auto-Reboot 04:30** |
+
+### Infisical-Stack (`/opt/infisical`; Compose-Spiegel in `infra/infisical/`)
+- **backend** `infisical/infisical:v0.161.9` — Port 8080, gebunden an `127.0.0.1:8080` (SSH-Tunnel-Admin) **und** `10.0.0.2:8080` (privat, für Prod).
+- **db** `postgres:16-alpine`, **redis** `redis:7-alpine` — beide **ohne** Host-Port; Redis `--maxmemory-policy noeviction`.
+- Secrets in `/opt/infisical/.env` (0600, on-box erzeugt). Admin-Passwort + Automations-Token: `/opt/infisical/admin-credentials.txt` (0600).
+- Erster Super-Admin **headless** (`POST /api/v1/admin/bootstrap`), Org **„DoldenBlick"**. **Admin-Zugang (kein Public-Port):** `ssh -L 8080:127.0.0.1:8080 root@178.105.188.207` → `http://localhost:8080` (Passwort rotieren + TOTP-MFA).
+- **Kernarchitektur:** Infisical = **Sync-Quelle, NICHT** Laufzeit-Abhängigkeit. Prod behält die autoritative `EnvironmentFile`; der **Agent** rendert sie. Vault-Ausfall darf Prod-Boot/-Redeploy nie blockieren (**Cold-Boot-Test** vor Cutover). Self-Hosting kauft Rotation/Revocation/Scoping/Audit, **nicht** Laufzeit-Vertraulichkeit gegen Root.
+- **Kronjuwelen** `ENCRYPTION_KEY`/`AUTH_SECRET`: irreversibel → **off-box sichern** (Passwortmanager).
+
+## Privates Netz & Vault-Firewall
+- **`doldenblick-net`** — ID `12385081`, `10.0.0.0/16`, Subnetz `10.0.0.0/24`, Zone `eu-central`. Vault = `10.0.0.2`.
+  **Prod noch nicht angehängt** (Gate; Attach = NIC-Reconfig der Prod-Box → mit Health-Check + Rollback).
+- **Cloud-Firewall `doldenblick-vault-fw`** — ID `11213357` (nur Vault): inbound `tcp/22`+`icmp` von Admin-IP `178.193.212.25/32`; outbound alles. (Prod hat separat `doldenblick-web` id `11207357`.)
+  ⚠️ Admin-IP dynamisch — bei ISP-Wechsel Regel via API nachziehen.
+
+## E-Mail (Postmark)
+- Server für `doldenblick.de` (Postmark-Domain-ID 7836036). **Domain verifiziert** 2026-06-29 (DKIM + custom Return-Path).
+- SMTP `smtp.postmarkapp.com:587` (STARTTLS, `SMTP_SECURE=false`); **Server-Token = SMTP-User UND -Passwort**; Absender `noreply@doldenblick.de`.
+- Tokens in `.env`: `POSTMARK_SERVER_API_TOKEN` (Versand) + `POSTMARK_ACCOUNT_API_TOKEN` (Domain-/Signatur-Verwaltung + Verify) — **nicht** austauschbar.
+- Nutzung **nur serverseitig** (Backend/BFF), Token nie im Client. Erst-Nutzer: Infisical (Passwort-Reset/MFA). Details: `REFERENCE.md` §5.5.
+
+## QUIRKS & GOTCHAS (Session 2026-06-29 — damit wir das nicht erneut durchleben)
+
+**Prozess (wichtigster Punkt):** **Dieses Dokument zuerst lesen.** Die „DNS-ist-in-der-Cloud-API"-Tatsache stand hier längst — ein nicht gelesener SSOT kostet Zeit.
+
+**Shell / zsh (lokale Maschine):**
+- Unquoted `$VAR` wird in zsh **nicht** wort-gesplittet: `SSH="ssh -o …"; $SSH host` ⇒ „command not found". → `ssh -o …` direkt oder `${=SSH}`.
+- **`status` ist read-only** (zsh-Spezialvariable) ⇒ `status=$(…)` bricht ab. Anderen Namen nehmen.
+- Vordergrund-`sleep` ist blockiert ⇒ Warte-/Poll-Schleifen als Hintergrund-Kommando.
+
+**Hetzner Cloud (Server/Netz/Firewall):**
+- Netz-Zonen: `eu-central`={nbg1,fsn1,hel1}, `us-east`=ash, `us-west`=hil, `ap-southeast`=sin. Privates Netz + alle Server müssen **dieselbe Zone** haben. **CAX (ARM) nur eu-central.**
+- **Cloud-Firewalls filtern nur das Public-Interface** — Privatnetz ist ungefiltert (trusted). ⇒ Infisical-Port **nicht** public öffnen. SSH-only-FW **nicht** an Prod (80/443!).
+- Public IPv4 beim Erstellen behalten (cloud-init-Egress); `--without-ipv4` killt apt/Docker-Pull (kein NAT).
+- Default-Image hat **keinen Swap** ⇒ Swapfile in cloud-init.
+- `user_data` muss mit `#cloud-config` beginnen, ≤ 32 KiB.
+
+**Hetzner DNS (in Cloud-API integriert):**
+- **`HETZNER_API_TOKEN` (Cloud-Token) verwaltet DNS.** Alt-API `dns.hetzner.com/api/v1` → 301.
+- Zonen-Liste-Falle: ID nicht abschneiden (`doldenblick.de` = `1421900`, nicht „1421").
+- Records = **RRSets** (`/zones/{id}/rrsets`, `name` relativ, `@`=Apex). **CNAME** braucht **trailing dot**; **TXT muss in doppelte Anführungszeichen** (sonst `422 "TXT records must be fully escaped with double quotes"`).
+
+**Ubuntu / apt / Updates:**
+- **unattended-upgrades ist auf 24.04 default installiert + Timer aktiv** — frische Box hat ihn nur noch nicht ausgelöst (sieht aus wie „keine Updates", Konfig ist ok).
+- **needrestart (24.04)** startet Dienste nach apt neu ⇒ `DEBIAN_FRONTEND=noninteractive` + `NEEDRESTART_MODE=a` (Docker-Restart wurde deferred → Container unberührt).
+- Kernel-Update braucht **Reboot** (`/var/run/reboot-required`); Auto-Reboot 04:30 erledigt das. SSH-Unit heißt **`ssh`** (nicht `sshd`).
+
+**Bash-Scripting:**
+- **`set -o pipefail` + `grep` ohne Treffer ⇒ Exit 1** ⇒ falscher Abbruch (z. B. `apt list --upgradable | grep -v Listing | wc -l` bei 0 offenen = Erfolg!). grep-Exit abfangen.
+
+**Docker / Infisical (Self-Host):**
+- Image `infisical/infisical:v0.161.9` (multi-arch). **Versions-Falle:** Web-Suche meldete „latest=0.43" (falsch) — GitHub-Releases/Docker-Hub sind autoritativ. **Tag pinnen.**
+- 3 Dienste backend + `postgres:16-alpine` + `redis:7-alpine`. **Stock-Compose ist POC** (latest, pg14, ALLOW_EMPTY_PASSWORD, Port 80) — nicht so deployen.
+- Pflicht-Env: `ENCRYPTION_KEY` (`openssl rand -hex 16`), `AUTH_SECRET` (`openssl rand -base64 32`), `DB_CONNECTION_URI`, `REDIS_URL`, `SITE_URL` (absolute URL).
+- **`HOST=0.0.0.0` im Container** (Default localhost ⇒ Port antwortet nicht). Host-seitig nur an `127.0.0.1` + private IP binden.
+- Migrationen laufen beim App-Start (Advisory-Lock). **`env_file` interpoliert kein `${VAR}`** ⇒ literale Passwörter in den URIs. **Redis `noeviction`** (BullMQ). **Postgres-Major-Pin** zählt.
+- Admin headless: `POST /api/v1/admin/bootstrap {email,password,organization}` (erster = Super-Admin; liefert `identity.credentials.token`). `GET /api/v1/admin/config` → `initialized`/`allowSignUp`.
+- SMTP: Boot verifiziert die Verbindung („SMTP - Verified connection"); `emailConfigured` in `/api/status`. **`SITE_URL` muss exakt der Browser-Origin entsprechen** (Cookies/CSRF). Ohne SMTP nur Emergency-Kit-Recovery.
+- Maschinen-Identität: **Universal Auth** (nicht Token-Auth); read-only-prod = **custom Rolle** (Viewer spannt alle Envs); `--projectId` zwingend; `INFISICAL_DOMAIN` pinnen; Trusted-IP-Allowlist ist **kostenpflichtig**; **kein `--mount`**. **`infisical run` hat keinen Offline-Cache** ⇒ **Agent** nutzen.
+
+**Postmark:**
+- **Server-Token** (Versand; = SMTP-User UND -Passwort) ≠ **Account-Token** (Domain-Verwaltung+Verify) — nicht austauschbar.
+- `/domains` braucht `count` **UND** `offset` (sonst 422). `GET /server` gibt den Server-Token in `ApiTokens` zurück (nicht blind `head -c` → Leak).
+- DKIM-Wert ist `k=rsa; p=…` (Leerzeichen nach `;`) — exakt aus der Account-API, nicht vom Screenshot abtippen. Verify: `PUT /domains/{id}/verifyDkim` + `verifyReturnPath`.
+
+**Secrets-Handling (Prozess):**
+- Werte **nie** drucken/committen. **On-box** erzeugen (openssl). Tokens via **SSH-stdin-Heredoc** (nicht Kommandozeile → nicht in `ps`/Transkript). `.env` mit `set -a; . ./.env; set +a` laden.
+
+## Status & offene Punkte (Stand 2026-06-29)
+**ERLEDIGT — Prod-Cutover LIVE (no-downtime):** `doldenblick-01` privat angehängt (**10.0.0.3**); Projekt
+`doldenblick` + Envs; **8 Secrets** (inkl. GEE-JSON) in `prod`; read-only-Maschinen-Identität (verifiziert: liest,
+Schreiben 403); `pg_dump`-Backup-Cron. Fail-safe **Secrets-Sync** (`doldenblick-secrets-sync.timer`, alle 10 min)
+rendert `/etc/doldenblick/doldenblick-rs.env` aus Infisical — systemd `EnvironmentFile=` unverändert. Bei
+Vault-/Netz-Fehler: no-op (Datei unangetastet). **Resilienz bewiesen:** Vault aus → `rs`-Restart kommt aus lokalem
+File hoch (rs/health 200) → **keine Laufzeit-Abhängigkeit**. Kronjuwelen/Admin-PW off-box, PW rotiert + TOTP.
+
+**Offen (Tightening, kein Blocker):**
+- Custom read-only-Projektrolle nur `prod`-Env (statt built-in `viewer`, der alle Envs liest; dev/staging leer).
+- Postgres-Restore-Drill (Dump testweise zurückspielen). Voller Cold-Boot-Test (echter Prod-Reboot) — optional, kurze Downtime.
+- `cloud-setup.sh` (Claude Code Web) auf Infisical umstellen; lokale `.env` perspektivisch ablösen.
+- `doldenblick-01` hat **keinen Swap** (Vault: 2 GB) — bei Bedarf nachrüsten.

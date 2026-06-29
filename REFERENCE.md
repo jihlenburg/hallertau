@@ -213,6 +213,16 @@ einen Chip-Hintergrund in der Tint-Farbe und einen Statuspunkt (`.sdot`) in der 
 - **iBALIS** (`stmelf.bayern.de/ibalis`) / **InVeKoS-Feldstückkarte** (`gdi.bmleh.de`)
   für den Feld-Import. Bayer. Geobasisdaten: `geodaten.bayern.de/opengeodata`.
 
+### 5.5 E-Mail-Versand (Postmark) — Infrastruktur-Dienst
+- **Verfügbar seit 2026-06-29:** das Projekt kann transaktionale E-Mails versenden.
+- Anbieter **Postmark**, Server für Domain **doldenblick.de**. Zugang: `POSTMARK_API_TOKEN` (`.env`).
+- SMTP: Host `smtp.postmarkapp.com`, Port **587** (STARTTLS). Der **Server-API-Token ist
+  zugleich SMTP-Username *und* -Passwort**. Absender `noreply@doldenblick.de` (verifizierte Domain).
+- Erst-Nutzer: das selbstgehostete **Infisical** (Passwort-Reset, Einladungen, E-Mail-MFA).
+- Künftig nutzbar für DoldenBlick-Features (Push-/E-Mail-Benachrichtigungen, Berichte).
+  **Versand nur serverseitig** (Backend/BFF) — Token nie im Client. Zustellung setzt eine
+  verifizierte Postmark-Sender-Signatur/Domain voraus.
+
 ---
 
 ## 6. Domänen-Logik & Formeln
