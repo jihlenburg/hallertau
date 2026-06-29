@@ -50,11 +50,28 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // 1b) Backend-Compute (Wasserbilanz/Version) — Pfad + Query unverändert weiterreichen.
-  if (url.pathname === '/api/water-balance' || url.pathname === '/api/version') {
+  // 1b) Backend (Wasserbilanz/Version/Feld-Check/RS) — Methode, Body, Pfad + Query weiterreichen.
+  const isBackend =
+    url.pathname === '/api/water-balance' ||
+    url.pathname === '/api/version' ||
+    url.pathname === '/api/field-vigor' ||
+    url.pathname.startsWith('/api/rs')
+  if (isBackend) {
     try {
+      let reqBody
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        const chunks = []
+        for await (const c of req) chunks.push(c)
+        reqBody = Buffer.concat(chunks)
+      }
       const up = await fetch(API_ORIGIN + url.pathname + url.search, {
-        headers: { accept: 'application/json', 'x-client-api': req.headers['x-client-api'] || '' },
+        method: req.method,
+        headers: {
+          accept: 'application/json',
+          'content-type': req.headers['content-type'] || 'application/json',
+          'x-client-api': req.headers['x-client-api'] || '',
+        },
+        body: reqBody,
       })
       const body = Buffer.from(await up.arrayBuffer())
       res.writeHead(up.status, { 'content-type': up.headers.get('content-type') || 'application/json' })

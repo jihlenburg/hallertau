@@ -77,11 +77,11 @@ describe('forecastStrip', () => {
 })
 
 describe('roadmapStrip', () => {
-  it('nennt alle drei künftigen Quellen', () => {
+  it('nennt die künftigen Quellen (Feld-Check ist jetzt live → nicht mehr im Streifen)', () => {
     const html = roadmapStrip()
     expect(html).toMatch(/Peronospora|Krankheitsdruck/i)
-    expect(html).toMatch(/Sentinel|Feld-Check/i)
     expect(html).toMatch(/Wachstum|Phänologie/i)
+    expect(html).not.toMatch(/Feld-Check/i)
   })
 })
 

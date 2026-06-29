@@ -48,8 +48,9 @@ Sorte-Fidelity, interaktiver Spritzfenster-Streifen. Die verbleibenden `[ ]`:
       `POST /api/field-vigor` → NDVI/SAVI 10 m + NDRE/CIre/NDMI 20 m, Pixel-Purity-Konfidenz,
       Screening-Label) deployt auf doldenblick-01 (systemd `doldenblick-rs`, nginx). Backtests:
       Geometrie (`scripts/pixel-purity-backtest.mjs`) + echtes S2 via GEE (`scripts/gee-backtest.py`).
-      **Offen:** Client-„Feld-Check"-Karte (ruft `/api/field-vigor`, ersetzt den „Bald verfügbar"-Chip);
-      später LfL-Krankheits-Konnektor, RADOLAN, Thermal/SAR in FAO-56, optional PlanetScope/UAV-Tier.
+      Client-„Feld-Check"-Karte **live** (4. Übersicht-Karte, NDRE-Screening, ehrliches Label). — 2026-06-29
+      **Offen:** LfL-Krankheits-Konnektor, RADOLAN, Thermal/SAR in FAO-56, optional PlanetScope/UAV-Tier;
+      NDRE-Zeitreihen-Backtest gegen Ertrag/Scouting; Feld-Check in den Whole-Farm-Tageskopf aufnehmen.
 - [ ] **Wachstum & Erntefenster**: Phänologie-/GTS-Modell je Sorte.
 - [x] 7-Tage-Vorhersagestreifen im Map-Panel (Wochentag · Wetterglyph · Max/Min · Regen-%),
       aus Open-Meteo-Tageswerten. — 2026-06-28

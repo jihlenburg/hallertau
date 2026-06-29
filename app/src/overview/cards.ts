@@ -44,7 +44,6 @@ export function roadmapStrip(): string {
   return `<div class="roadmap-in">
       <span class="roadmap-h">Bald verfügbar</span>
       ${item('Krankheitsdruck · Peronospora', 'LfL Hüll')}
-      ${item('Feld-Check', 'Sentinel')}
       ${item('Wachstum & Erntefenster', 'Phänologie')}
     </div>`
 }

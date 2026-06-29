@@ -16,6 +16,8 @@ export default defineConfig({
       },
       '/api/water-balance': { target: API_ORIGIN, changeOrigin: true },
       '/api/version': { target: API_ORIGIN, changeOrigin: true },
+      '/api/field-vigor': { target: API_ORIGIN, changeOrigin: true },
+      '/api/rs': { target: API_ORIGIN, changeOrigin: true },
     },
   },
 })

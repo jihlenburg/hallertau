@@ -5,6 +5,18 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-06-29 · Client „Feld-Check"-Karte (Satellit) live
+**Was:** Die Übersicht zeigt jetzt eine 4. Karte **„Feld-Check · Satellit"**, die je gewähltem Schlag
+`POST /api/field-vigor` (rs/-Dienst) ruft und das NDRE-Vigor-Screening rendert: Status good/warn/info
+(**nie 'alert'**), Trend (↑/↓/→), ehrliches Label „regionales Screening (Feldmittel, N Px à 20 m) —
+nicht teilflächengenau; keine Krankheits-/Qualitätsaussage". Unabhängiger Abruf (Fehler bleibt ruhig =
+info). Client-Modul `api/fieldVigor.ts` (X-Client-API, 426-Handling). „Feld-Check"-Chip aus dem
+Roadmap-Streifen entfernt (jetzt live); Subhead zählt den Feld-Check mit. Dev/Screenshot-Proxys für
+`POST /api/field-vigor` + `/api/rs` (server.mjs leitet jetzt Methode + Body weiter).
+**Verifikation:** 74 Tests grün, Build sauber; Desktop + Mobil geprüft (echtes CDSE-NDRE z. B.
+Vigor-Delle ↓0.229/z-1.5/81 Px; „4 Hinweise"). Deployt; HTTPS-Smoke grün, keine Regression.
+**Verweise:** `app/src/api/fieldVigor.ts`, `app/src/overview/{index,cards}.ts`.
+
 ## 2026-06-29 · Satelliten-RS-Dienst LIVE: POST /api/field-vigor (CDSE) deployt
 **Was:** Den RS-Dienst (`rs/`) fertiggebaut (R4–R6) und auf doldenblick-01 deployt.
 - **R4:** Indizes-Evalscripts (10 m NDVI/SAVI, 20 m NDRE/CIre/NDMI) + Pixel-Purity-Konfidenz

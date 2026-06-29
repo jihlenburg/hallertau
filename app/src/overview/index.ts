@@ -5,6 +5,7 @@ import { gridCellKey } from '../domain/grid'
 import { fetchOpenMeteo, type OpenMeteoData } from '../api/openMeteo'
 import { fetchDwdAlerts, type DwdAlert } from '../api/brightSky'
 import { fetchWaterBalance, type WaterBalanceResult, type WbQuery } from '../api/waterBalance'
+import { fetchFieldVigor, type FieldVigorResult } from '../api/fieldVigor'
 import { assessWeather } from '../domain/weather'
 import { evaluateSprayWindow, type SprayHour } from '../domain/sprayWindow'
 import { cardHtml, sprayStrip, sprayHourDetail, soilBalanceLabel, soilWaterViz, roadmapStrip, countHints, forecastStrip, type CardSpec } from './cards'
@@ -85,6 +86,7 @@ export function mountOverview(root: HTMLElement): void {
       cardHtml({ status: 'loading', eyebrow: 'Wetter & Warnungen', icon: icons.weather('#6b7d72'), stat: 'lädt …', rec: 'Vorhersage wird abgerufen.', src: 'Open-Meteo · DWD' }),
       cardHtml({ status: 'loading', eyebrow: 'Spritzfenster', icon: icons.spray('#6b7d72'), stat: 'lädt …', rec: 'Stundenwerte werden ausgewertet.', src: 'Open-Meteo' }),
       cardHtml({ status: 'loading', eyebrow: 'Bewässerung · Wasserbilanz', icon: icons.water('#6b7d72'), stat: 'lädt …', rec: 'FAO-56-Wasserbilanz wird berechnet.', src: 'DoldenBlick-API · Open-Meteo' }),
+      cardHtml({ status: 'loading', eyebrow: 'Feld-Check · Satellit', icon: icons.sat('#6b7d72'), stat: 'lädt …', rec: 'Satellitenauswertung wird abgerufen.', src: 'Copernicus/Sentinel-2 · CDSE' }),
     ].join('')
   }
 
@@ -103,8 +105,9 @@ export function mountOverview(root: HTMLElement): void {
     const signal = controller.signal
     const [lon, lat] = centroidLonLat(sel)
 
-    // Wasserbilanz unabhängig (Backend-Compute) — Fehler hier bricht Wetter/Spritzfenster nicht ab.
+    // Wasserbilanz + Feld-Check unabhängig (Backend) — Fehler hier bricht Wetter/Spritzfenster nicht ab.
     const wbPromise = fetchWaterBalance(wbQuery(sel, lat, lon), signal)
+    const fvPromise = fetchFieldVigor(sel.geometry, { areaHa: sel.properties.flaeche_ha }, signal)
 
     let data: OpenMeteoData | null = null
     let alerts: DwdAlert[] | null = null
@@ -117,8 +120,9 @@ export function mountOverview(root: HTMLElement): void {
       weatherErr = (err as Error).message
     }
     const wb = await wbPromise
+    const fv = await fvPromise
     if (signal.aborted) return
-    renderCards(sel, data, alerts, weatherErr, wb)
+    renderCards(sel, data, alerts, weatherErr, wb, fv)
   }
 
   /** Baut die Wasserbilanz-Karte aus dem Backend-Ergebnis (inkl. degradierter Zustände). */
@@ -164,6 +168,36 @@ export function mountOverview(root: HTMLElement): void {
   function wbStatus(wb: WaterBalanceResult): Status {
     return wb.kind === 'ok' ? wb.data.status : 'info'
   }
+  /** Status des Feld-Checks für die Hinweiszählung (nicht-ok = info = kein Hinweis). */
+  function fvStatus(fv: FieldVigorResult): Status {
+    return fv.kind === 'ok' ? fv.data.status : 'info'
+  }
+
+  /** Baut die Feld-Check-Karte (Satellit, NDRE). Bleibt RUHIG (info), NIE 'alert' — Screening. */
+  function fieldCheckCard(fv: FieldVigorResult): CardSpec {
+    const eyebrow = 'Feld-Check · Satellit'
+    const icon = icons.sat()
+    if (fv.kind === 'incompatible') {
+      return { status: 'info', eyebrow, icon, stat: 'App veraltet', rec: 'Die Feld-Check-Schnittstelle hat sich geändert. Bitte die Seite neu laden.', src: 'DoldenBlick-RS' }
+    }
+    if (fv.kind === 'error') {
+      return { status: 'info', eyebrow, icon, stat: 'Nicht abrufbar', rec: `Satellitenauswertung derzeit nicht abrufbar (${fv.message}).`, src: 'Copernicus/Sentinel-2 · CDSE' }
+    }
+    const d = fv.data
+    const ndre = d.indices?.ndre
+    const screening = (px: number) =>
+      `<span class="cardnote">Regionales Screening (Feldmittel, ${px} Px à 20 m) — nicht teilflächengenau; keine Krankheits- oder Qualitätsaussage. Stand ${(d.asOf || '').slice(0, 10) || '—'}.</span>`
+    if (!ndre || !ndre.confidence.usable) {
+      return { status: 'info', eyebrow, icon, stat: 'Kein klares Signal', rec: `Zu wenige wolkenfreie Aufnahmen für ein belastbares Feldmittel. ${screening(ndre?.confidence.validPixels ?? 0)}`, src: 'Copernicus/Sentinel-2 · CDSE (NDRE)' }
+    }
+    const arrow = ndre.trend === 'fallend' ? '↓' : ndre.trend === 'steigend' ? '↑' : '→'
+    const stat = d.status === 'warn' ? 'Vigor-Delle — kontrollieren' : d.status === 'good' ? 'Bestand vital' : 'Kein klares Signal'
+    const rec =
+      d.status === 'warn'
+        ? `NDRE rückläufig (${arrow} ${ndre.latest}, z ${ndre.anomaly}) — Schlag kontrollieren (Stress/Nährstoff?). ${screening(ndre.confidence.validPixels)}`
+        : `NDRE ${ndre.latest} ${arrow} (${ndre.trend}) — Bestand im Rahmen. ${screening(ndre.confidence.validPixels)}`
+    return { status: d.status, eyebrow, icon, stat, rec, src: 'Copernicus/Sentinel-2 · CDSE (NDRE)' }
+  }
 
   function renderCards(
     sel: FieldFeature,
@@ -171,6 +205,7 @@ export function mountOverview(root: HTMLElement): void {
     alerts: DwdAlert[] | null,
     weatherErr: string | null,
     wb: WaterBalanceResult,
+    fv: FieldVigorResult,
   ) {
     const now = new Date()
     let weatherStatus: Status = 'info'
@@ -221,13 +256,13 @@ export function mountOverview(root: HTMLElement): void {
       ]
     }
 
-    const specs: CardSpec[] = [...weatherSpecs, waterBalanceCard(wb)]
+    const specs: CardSpec[] = [...weatherSpecs, waterBalanceCard(wb), fieldCheckCard(fv)]
     root.querySelector<HTMLDivElement>('#cards')!.innerHTML = specs.map(cardHtml).join('')
     if (sprayHours) wireSprayStrip(sprayHours)
     const fc = root.querySelector<HTMLDivElement>('#fc7')
     if (fc) fc.innerHTML = data ? forecastStrip(data.daily, now) : ''
     updateGridHint(sel)
-    if (data) updateSubhead(sel, [weatherStatus, sprayStatus, wbStatus(wb)])
+    if (data) updateSubhead(sel, [weatherStatus, sprayStatus, wbStatus(wb), fvStatus(fv)])
     else
       root.querySelector<HTMLDivElement>('#subhead')!.textContent =
         `${getFields().length} Schläge · Daten für den gewählten Schlag derzeit nicht vollständig abrufbar`
