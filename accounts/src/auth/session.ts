@@ -3,8 +3,9 @@
  *
  * Security invariants:
  *  - Raw token is never logged; only its SHA-256 hash is compared.
- *  - Tokens are single-use: markUsed is called before any user operations so a
- *    concurrent replay attempt always loses the race.
+ *  - Tokens are single-use: consumeByHash atomically marks the token used at the
+ *    SQL layer (WHERE used_at IS NULL AND expires_at > now()), so concurrent
+ *    replays with the same hash cannot both succeed.
  *  - Cookie signatures use HMAC-SHA256 with timingSafeEqual comparison.
  *  - SESSION_SIGNING_KEY is never logged.
  */
@@ -28,8 +29,6 @@ export class AuthError extends Error {
 
 export interface VerifyMagicLinkDeps {
   repos: Pick<Repos, 'magicTokens' | 'users'>
-  /** Returns "now" — injectable so tests can freeze time. */
-  now?: () => Date
 }
 
 export interface CreateSessionDeps {
@@ -42,29 +41,28 @@ export interface CreateSessionDeps {
 
 /**
  * Verifies a magic-link token (supplied as hex):
- *  1. Hashes the token and looks it up via findValidByHash (which checks expiry + used_at).
- *  2. Marks the token as used immediately — single-use enforcement before any user ops.
- *  3. Finds or creates the user; sets email_verified_at when absent.
- *  4. Returns { userId }.
+ *  1. Hashes the token and atomically consumes it via consumeByHash (one SQL UPDATE
+ *     that checks expiry + used_at in the WHERE clause — concurrent replays get null).
+ *  2. Finds or creates the user; sets email_verified_at when absent.
+ *  3. Returns { userId }.
  *
  * Throws AuthError(401) when the token is invalid, expired, or already used.
  */
 export async function verifyMagicLink(
   { token }: { token: string },
-  { repos, now: _now = () => new Date() }: VerifyMagicLinkDeps,
+  { repos }: VerifyMagicLinkDeps,
 ): Promise<{ userId: string }> {
   // Hash the raw token hex → stored hash
   const tokenHash = createHash('sha256')
     .update(Buffer.from(token, 'hex'))
     .digest('hex')
 
-  const magicToken = await repos.magicTokens.findValidByHash(tokenHash)
+  // Atomically consume the token: returns the row if valid, null otherwise.
+  // A concurrent replay sees used_at already set and gets null — no double-session.
+  const magicToken = await repos.magicTokens.consumeByHash(tokenHash)
   if (!magicToken) {
     throw new AuthError('Token ungültig oder abgelaufen', 401)
   }
-
-  // Mark used first — prevents replay even if subsequent steps fail
-  await repos.magicTokens.markUsed(magicToken.id)
 
   // Find or create user; ensure email is verified
   const existingUser = await repos.users.findByEmail(magicToken.email)

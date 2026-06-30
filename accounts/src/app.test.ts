@@ -64,13 +64,12 @@ const fakeSession = {
 }
 
 function makeAuthRepos(override: {
-  findValidByHash?: ReturnType<typeof vi.fn>
+  consumeByHash?: ReturnType<typeof vi.fn>
 } = {}): Repos {
   return {
     magicTokens: {
-      findValidByHash: override.findValidByHash ?? vi.fn().mockResolvedValue(fakeMagicToken),
-      markUsed:        vi.fn().mockResolvedValue(undefined),
-      create:          vi.fn().mockResolvedValue(fakeMagicToken),
+      consumeByHash: override.consumeByHash ?? vi.fn().mockResolvedValue(fakeMagicToken),
+      create:        vi.fn().mockResolvedValue(fakeMagicToken),
     },
     users: {
       findByEmail:       vi.fn().mockResolvedValue(null),
@@ -169,7 +168,7 @@ describe('POST /api/auth/verify', () => {
 
   it('returns 401 when the token is already used or expired', async () => {
     const repos = makeAuthRepos({
-      findValidByHash: vi.fn().mockResolvedValue(null),
+      consumeByHash: vi.fn().mockResolvedValue(null),
     })
     const app = buildApp({ deps: { repos }, sendMagicLinkEmail: async () => undefined })
     const r = await app.inject({

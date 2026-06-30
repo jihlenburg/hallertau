@@ -279,6 +279,26 @@ function makeMagicTokensRepo(pool: Pool) {
       return rows[0] ?? null
     },
 
+    /**
+     * Atomically finds and consumes a valid token in a single UPDATE statement.
+     * The WHERE clause checks `used_at IS NULL AND expires_at > now()`, so
+     * concurrent replays with the same hash cannot both succeed — only one
+     * UPDATE wins; the other matches zero rows and gets null back.
+     * Returns the consumed row, or null if missing / expired / already used.
+     */
+    async consumeByHash(tokenHash: string): Promise<MagicLinkToken | null> {
+      const { rows } = await pool.query<MagicLinkToken>(
+        `UPDATE magic_link_tokens
+         SET used_at = now()
+         WHERE token_hash = $1
+           AND used_at IS NULL
+           AND expires_at > now()
+         RETURNING *`,
+        [tokenHash],
+      )
+      return rows[0] ?? null
+    },
+
     /** Marks a token as consumed (single-use enforcement). */
     async markUsed(id: string): Promise<void> {
       await pool.query(

@@ -77,8 +77,14 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
   if (!effectiveRepos) {
     try {
       effectiveRepos = makeRepos(createPool())
-    } catch {
-      // DATABASE_URL nicht gesetzt (Unit-Test ohne DB) — Auth-Routen überspringen
+    } catch (err) {
+      // Swallow only in test env (DATABASE_URL absent is expected) — in production,
+      // a missing/bad DATABASE_URL must be a hard boot failure, not a silent 404.
+      if (process.env.VITEST || process.env.NODE_ENV === 'test') {
+        // DATABASE_URL nicht gesetzt (Unit-Test ohne DB) — Auth-Routen überspringen
+      } else {
+        throw err
+      }
     }
   }
 

@@ -65,16 +65,14 @@ const fakeSession = {
 
 describe('verifyMagicLink', () => {
   function makeRepos(override: Partial<{
-    findValidByHash: ReturnType<typeof vi.fn>
-    markUsed:        ReturnType<typeof vi.fn>
-    findByEmail:     ReturnType<typeof vi.fn>
-    create:          ReturnType<typeof vi.fn>
+    consumeByHash:     ReturnType<typeof vi.fn>
+    findByEmail:       ReturnType<typeof vi.fn>
+    create:            ReturnType<typeof vi.fn>
     markEmailVerified: ReturnType<typeof vi.fn>
   }> = {}): Pick<Repos, 'magicTokens' | 'users'> {
     return {
       magicTokens: {
-        findValidByHash: override.findValidByHash ?? vi.fn().mockResolvedValue(fakeMagicToken),
-        markUsed:        override.markUsed        ?? vi.fn().mockResolvedValue(undefined),
+        consumeByHash: override.consumeByHash ?? vi.fn().mockResolvedValue(fakeMagicToken),
       } as unknown as Repos['magicTokens'],
       users: {
         findByEmail:       override.findByEmail       ?? vi.fn().mockResolvedValue(null),
@@ -84,21 +82,23 @@ describe('verifyMagicLink', () => {
     }
   }
 
-  it('hashes the token hex and passes the hash to findValidByHash', async () => {
+  it('hashes the token hex and passes the hash to consumeByHash', async () => {
     const r = makeRepos()
-    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
-    expect(r.magicTokens.findValidByHash).toHaveBeenCalledWith(FIXED_TOKEN_HASH)
+    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
+    expect(r.magicTokens.consumeByHash).toHaveBeenCalledWith(FIXED_TOKEN_HASH)
   })
 
-  it('marks the token as used immediately after finding it', async () => {
+  it('atomically consumes the token (consumeByHash called, no separate markUsed)', async () => {
     const r = makeRepos()
-    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
-    expect(r.magicTokens.markUsed).toHaveBeenCalledWith(fakeMagicToken.id)
+    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
+    // consumeByHash is the single atomic operation — no separate find + markUsed pair
+    expect(r.magicTokens.consumeByHash).toHaveBeenCalledTimes(1)
+    expect(r.magicTokens.consumeByHash).toHaveBeenCalledWith(FIXED_TOKEN_HASH)
   })
 
   it('creates a new user when no existing user is found', async () => {
     const r = makeRepos({ findByEmail: vi.fn().mockResolvedValue(null) })
-    const result = await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
+    const result = await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
     expect(r.users.create).toHaveBeenCalledWith({ email: fakeUser.email })
     expect(result.userId).toBe(fakeUser.id)
   })
@@ -106,47 +106,46 @@ describe('verifyMagicLink', () => {
   it('reuses existing user and does NOT call create', async () => {
     const existingUser = { ...fakeUser, email_verified_at: new Date('2026-01-01') }
     const r = makeRepos({ findByEmail: vi.fn().mockResolvedValue(existingUser) })
-    const result = await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
+    const result = await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
     expect(r.users.create).not.toHaveBeenCalled()
     expect(result.userId).toBe(existingUser.id)
   })
 
   it('calls markEmailVerified for a newly-created user', async () => {
     const r = makeRepos({ findByEmail: vi.fn().mockResolvedValue(null) })
-    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
+    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
     expect(r.users.markEmailVerified).toHaveBeenCalledWith(fakeUser.id)
   })
 
   it('calls markEmailVerified for an existing unverified user', async () => {
     const unverifiedUser = { ...fakeUser, email_verified_at: null }
     const r = makeRepos({ findByEmail: vi.fn().mockResolvedValue(unverifiedUser) })
-    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
+    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
     expect(r.users.markEmailVerified).toHaveBeenCalledWith(unverifiedUser.id)
   })
 
   it('does NOT call markEmailVerified for an already-verified user', async () => {
     const verifiedUser = { ...fakeUser, email_verified_at: new Date('2026-01-01') }
     const r = makeRepos({ findByEmail: vi.fn().mockResolvedValue(verifiedUser) })
-    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW })
+    await verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r })
     expect(r.users.markEmailVerified).not.toHaveBeenCalled()
   })
 
-  it('throws AuthError(401) when token is not found (expired or already used)', async () => {
-    const r = makeRepos({ findValidByHash: vi.fn().mockResolvedValue(null) })
+  it('throws AuthError(401) when consumeByHash returns null (expired or already used)', async () => {
+    const r = makeRepos({ consumeByHash: vi.fn().mockResolvedValue(null) })
     await expect(
-      verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW }),
+      verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r }),
     ).rejects.toThrow(AuthError)
     await expect(
-      verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r, now: () => FIXED_NOW }),
+      verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r }),
     ).rejects.toMatchObject({ statusCode: 401 })
   })
 
-  it('does NOT call markUsed or create user when token is invalid', async () => {
-    const r = makeRepos({ findValidByHash: vi.fn().mockResolvedValue(null) })
+  it('does NOT create user when consumeByHash returns null (token invalid)', async () => {
+    const r = makeRepos({ consumeByHash: vi.fn().mockResolvedValue(null) })
     await expect(
       verifyMagicLink({ token: FIXED_TOKEN_HEX }, { repos: r }),
     ).rejects.toThrow()
-    expect(r.magicTokens.markUsed).not.toHaveBeenCalled()
     expect(r.users.create).not.toHaveBeenCalled()
   })
 })

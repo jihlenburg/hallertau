@@ -48,8 +48,10 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthRouteDeps): v
           now:      deps.now,
         },
       )
-    } catch {
-      // Swallow all errors — never reveal to the caller whether issuance failed
+    } catch (err: unknown) {
+      // Log server-side so real issuance failures are visible (token/link never included)
+      req.log.error({ err }, 'magic-link issuance failed')
+      // Swallow — never reveal to the caller whether issuance failed (enumeration guard)
     }
 
     return reply.code(200).send({ ok: true })
@@ -72,7 +74,7 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthRouteDeps): v
     try {
       const { userId } = await verifyMagicLink(
         { token },
-        { repos: deps.repos, now: deps.now },
+        { repos: deps.repos },
       )
 
       const sessionId = await createSession(userId, { repos: deps.repos, now: deps.now })
@@ -83,6 +85,7 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthRouteDeps): v
         secure:   true,
         sameSite: 'lax',
         path:     '/',
+        maxAge:   30 * 24 * 60 * 60, // 30 days — matches server session TTL
       })
 
       return reply.code(200).send({ ok: true })

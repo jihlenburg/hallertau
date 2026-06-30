@@ -118,5 +118,27 @@ describe('repos (pg-mem)', () => {
       const found = await r.magicTokens.findValidByHash(hash)
       expect(found).toBeNull()
     })
+
+    it('consumeByHash: first call returns the token; second call returns null (atomic replay rejection)', async () => {
+      const hash = 'sha256-jkl012-atomic'
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
+
+      await r.magicTokens.create({
+        email: 'atomic@hallertau.de',
+        token_hash: hash,
+        purpose: 'login',
+        expires_at: expiresAt,
+      })
+
+      // First consume: succeeds, returns the row with used_at set
+      const first = await r.magicTokens.consumeByHash(hash)
+      expect(first).not.toBeNull()
+      expect(first!.token_hash).toBe(hash)
+      expect(first!.used_at).not.toBeNull()
+
+      // Second consume (replay): token already has used_at set → WHERE clause fails → null
+      const second = await r.magicTokens.consumeByHash(hash)
+      expect(second).toBeNull()
+    })
   })
 })
