@@ -4,12 +4,13 @@
  * importShapefile: integrationstest mit echtem fixture-ZIP (WGS84-Polygon in Bayern)
  * Draw-Zustand: reine Einheitentests, kein MapLibre/DOM nötig
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { Feature, MultiPolygon } from 'geojson'
 
-import { importShapefile } from './fieldMap'
+import { importShapefile, createFieldMap } from './fieldMap'
 import {
   emptyDrawState,
   addVertex,
@@ -17,6 +18,52 @@ import {
   cancelDraft,
   removePolygon,
 } from './fieldMap'
+import { importShapeZip } from './importShape'
+
+// ---------------------------------------------------------------------------
+// Modul-Mocks (hoisted)
+// ---------------------------------------------------------------------------
+
+// importShapeZip als Spy einwickeln → ermöglicht mockResolvedValueOnce([]) im Empty-Test
+vi.mock('./importShape', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./importShape')>()
+  return {
+    ...actual,
+    importShapeZip: vi.fn().mockImplementation(actual.importShapeZip),
+  }
+})
+
+// MapLibre-Mock für createFieldMap-Tests (kein echtes Browser/WebGL nötig)
+vi.mock('maplibre-gl', () => {
+  const mockSource = { setData: vi.fn() }
+  class MockMap {
+    on(event: string, handler: (...args: unknown[]) => void) {
+      // load-Event sofort auslösen → await new Promise(...) kann auflösen
+      if (event === 'load') handler()
+    }
+    off() {}
+    getCanvas() { return { style: {} as CSSStyleDeclaration } }
+    addSource() {}
+    addLayer() {}
+    getSource() { return mockSource }
+    resize() {}
+    remove() {}
+  }
+  return {
+    default: { Map: MockMap },
+    Map: MockMap,
+  }
+})
+
+// ResizeObserver-Polyfill für Node-Testumgebung
+beforeAll(() => {
+  if (!globalThis.ResizeObserver) {
+    ;(globalThis as unknown as Record<string, unknown>).ResizeObserver = class {
+      observe() {}
+      disconnect() {}
+    }
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Helpers für Fixture-ZIP
@@ -71,6 +118,50 @@ describe('importShapefile', () => {
 
   it('wirft bei fehlerhafter ZIP-Datei', async () => {
     await expect(importShapefile(malformedFile())).rejects.toThrow()
+  })
+
+  it('wirft wenn keine Feldgeometrien gefunden (leere FeatureCollection)', async () => {
+    // importShapeZip wird gemocked, damit er ein leeres Array liefert (kein Polygon/MultiPolygon)
+    vi.mocked(importShapeZip).mockResolvedValueOnce([])
+    const file = new File(['dummy'], 'empty.zip', { type: 'application/zip' })
+    await expect(importShapefile(file)).rejects.toThrow('Keine Feldgeometrien im Import gefunden')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// createFieldMap — setFeatures mit MultiPolygon
+// ---------------------------------------------------------------------------
+
+describe('createFieldMap › setFeatures', () => {
+  it('MultiPolygon-Feature wird nicht verworfen (kein Polygon-Filter-Bug)', async () => {
+    const emitted: Feature[] = []
+    const container = {} as HTMLElement // MapLibre-Mock braucht kein echtes DOM-Element
+
+    const handle = await createFieldMap(container, {
+      onChange: (fs) => {
+        emitted.length = 0
+        emitted.push(...fs)
+      },
+    })
+
+    const multiPoly: Feature<MultiPolygon> = {
+      type: 'Feature',
+      properties: { id: 'mp-test' },
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [[[11.77, 48.42], [11.78, 48.42], [11.78, 48.43], [11.77, 48.42]]],
+        ],
+      },
+    }
+
+    handle.setFeatures([multiPoly])
+
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0].geometry.type).toBe('MultiPolygon')
+    expect((emitted[0] as Feature<MultiPolygon>).properties?.id).toBe('mp-test')
+
+    handle.destroy()
   })
 })
 

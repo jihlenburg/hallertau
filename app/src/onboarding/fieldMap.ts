@@ -25,6 +25,9 @@ import { importShapeZip } from './importShape'
 export async function importShapefile(file: File): Promise<FeatureCollection<Polygon | MultiPolygon>> {
   const buffer = await file.arrayBuffer()
   const features = await importShapeZip(buffer)
+  if (features.length === 0) {
+    throw new Error('Keine Feldgeometrien im Import gefunden')
+  }
   return { type: 'FeatureCollection', features }
 }
 
@@ -35,8 +38,8 @@ export async function importShapefile(file: File): Promise<FeatureCollection<Pol
 export interface DrawState {
   /** Stützpunkte des aktuell gezeichneten Rings (noch nicht geschlossen). */
   draft: [number, number][]
-  /** Fertige Polygon-Features. */
-  features: Feature<Polygon>[]
+  /** Fertige Polygon- und MultiPolygon-Features. */
+  features: Feature<Polygon | MultiPolygon>[]
 }
 
 /** Leerer Anfangszustand. */
@@ -239,7 +242,8 @@ export async function createFieldMap(
   return {
     setFeatures(features: Feature[]) {
       const polys = features.filter(
-        (f): f is Feature<Polygon> => f.geometry?.type === 'Polygon',
+        (f): f is Feature<Polygon | MultiPolygon> =>
+          f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon',
       )
       state = { draft: [], features: polys }
       render()
