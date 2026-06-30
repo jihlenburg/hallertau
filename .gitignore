@@ -24,3 +24,4 @@ docs/screenshots/*.png
 .env.local
 secrets/
 !.env.example
+.superpowers/
