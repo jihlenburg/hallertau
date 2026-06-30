@@ -50,12 +50,14 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // 1b) Backend (Wasserbilanz/Version/Feld-Check/RS) — Methode, Body, Pfad + Query weiterreichen.
+  // 1b) Backend (Wasserbilanz/Version/Feld-Check/RS/Auth/Onboarding) — Methode, Body, Pfad + Query weiterreichen.
   const isBackend =
     url.pathname === '/api/water-balance' ||
     url.pathname === '/api/version' ||
     url.pathname === '/api/field-vigor' ||
-    url.pathname.startsWith('/api/rs')
+    url.pathname.startsWith('/api/rs') ||
+    url.pathname.startsWith('/api/auth') ||
+    url.pathname.startsWith('/api/onboarding')
   if (isBackend) {
     try {
       let reqBody
@@ -70,11 +72,24 @@ const server = createServer(async (req, res) => {
           accept: 'application/json',
           'content-type': req.headers['content-type'] || 'application/json',
           'x-client-api': req.headers['x-client-api'] || '',
+          // Forward session cookies so the auth flow works under npm run serve.
+          ...(req.headers.cookie ? { cookie: req.headers.cookie } : {}),
         },
         body: reqBody,
       })
       const body = Buffer.from(await up.arrayBuffer())
-      res.writeHead(up.status, { 'content-type': up.headers.get('content-type') || 'application/json' })
+      // Relay Set-Cookie headers from the upstream so the browser stores the session cookie.
+      // Node 18.14+ provides getSetCookie() which correctly handles multiple Set-Cookie values
+      // (a single get('set-cookie') merges them with commas, which breaks cookie parsing).
+      const setCookies =
+        typeof up.headers.getSetCookie === 'function'
+          ? up.headers.getSetCookie()
+          : up.headers.get('set-cookie')
+            ? [up.headers.get('set-cookie')]
+            : []
+      const outHeaders = { 'content-type': up.headers.get('content-type') || 'application/json' }
+      if (setCookies.length > 0) outHeaders['set-cookie'] = setCookies
+      res.writeHead(up.status, outHeaders)
       res.end(body)
     } catch {
       res.writeHead(502, { 'content-type': 'application/json' })
