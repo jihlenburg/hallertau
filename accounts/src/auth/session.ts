@@ -11,7 +11,7 @@
  */
 
 import { createHash, createHmac, timingSafeEqual } from 'crypto'
-import type { Repos } from '../db/repos.js'
+import type { Repos, User, Farm } from '../db/repos.js'
 
 // ── Error type ────────────────────────────────────────────────────────────────
 
@@ -35,6 +35,10 @@ export interface CreateSessionDeps {
   repos: Pick<Repos, 'sessions'>
   /** Returns "now" — injectable so tests can freeze time. */
   now?: () => Date
+}
+
+export interface LoadSessionDeps {
+  repos: Pick<Repos, 'sessions' | 'users' | 'farmMembers' | 'farms'>
 }
 
 // ── verifyMagicLink ───────────────────────────────────────────────────────────
@@ -95,6 +99,39 @@ export async function createSession(
   const expiresAt = new Date(now().getTime() + 30 * 24 * 60 * 60 * 1000)
   const session = await repos.sessions.create({ user_id: userId, expires_at: expiresAt })
   return session.id
+}
+
+// ── loadSession ───────────────────────────────────────────────────────────────
+
+/**
+ * Looks up a session by id and resolves the associated user and active farm.
+ *
+ * Returns null when the session is expired or unknown (sessions.findById already
+ * filters `expires_at > now()`).
+ *
+ * A user with no farm membership returns `{ user, farm: null }` — that is not an
+ * error; the onboarding flow handles it.
+ *
+ * Farm resolution uses the *owner* membership row (role = 'owner') to find the
+ * farm id, then loads the farm row. If no owner row exists, farm is null.
+ */
+export async function loadSession(
+  sessionId: string,
+  { repos }: LoadSessionDeps,
+): Promise<{ user: User; farm: Farm | null } | null> {
+  // Expired sessions are filtered out by the SQL WHERE clause in findById.
+  const session = await repos.sessions.findById(sessionId)
+  if (!session) return null
+
+  const user = await repos.users.findById(session.user_id)
+  if (!user) return null
+
+  const memberships = await repos.farmMembers.findByUserId(user.id)
+  const ownerRow = memberships.find(m => m.role === 'owner')
+
+  const farm = ownerRow ? await repos.farms.findById(ownerRow.farm_id) : null
+
+  return { user, farm }
 }
 
 // ── Cookie signing ────────────────────────────────────────────────────────────
