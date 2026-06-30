@@ -75,10 +75,20 @@ async function apiGet(url: string, signal?: AbortSignal): Promise<Response> {
   })
 }
 
-/** Klassifiziert einen Error als Browser-Abbruch (NotAllowedError / user cancel). */
+/**
+ * Klassifiziert einen Error als Browser-Abbruch durch den Nutzer.
+ *
+ * Primär: DOMException mit name 'NotAllowedError' — das ist der Standard-Fehler
+ * wenn der Nutzer den Authenticator-Dialog schließt oder verweigert.
+ * Sekundär: Substring-Fallback für ältere Browser / Mock-Environments.
+ *
+ * Bewusst NICHT auf 'abort' oder 'cancel' als primären Kriterien: diese Strings
+ * kommen auch von AbortController-Abbrüchen, was eine andere Fehlerkategorie ist.
+ */
 function isUserAbort(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === 'NotAllowedError') return true
   const msg = (err as Error)?.message ?? ''
-  return msg.includes('NotAllowedError') || msg.includes('abort') || msg.includes('cancel')
+  return msg.includes('NotAllowedError')
 }
 
 // ── Auth: Magic-Link ──────────────────────────────────────────────────────────
@@ -166,7 +176,7 @@ export async function saveSchlaege(features: unknown[], signal?: AbortSignal): P
 
 /**
  * Registriert einen neuen Passkey für den eingeloggten Nutzer.
- * Ablauf: GET register-options → Browser-Zeremonie → POST register-verify
+ * Ablauf: POST register-options → Browser-Zeremonie → POST register-verify
  */
 export async function registerPasskey(signal?: AbortSignal): Promise<PasskeyResult> {
   try {

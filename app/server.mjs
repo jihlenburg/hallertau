@@ -50,12 +50,14 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // 1b) Backend (Wasserbilanz/Version/Feld-Check/RS) — Methode, Body, Pfad + Query weiterreichen.
+  // 1b) Backend (Wasserbilanz/Version/Feld-Check/RS/Auth/Onboarding) — Methode, Body, Pfad + Query weiterreichen.
   const isBackend =
     url.pathname === '/api/water-balance' ||
     url.pathname === '/api/version' ||
     url.pathname === '/api/field-vigor' ||
-    url.pathname.startsWith('/api/rs')
+    url.pathname.startsWith('/api/rs') ||
+    url.pathname.startsWith('/api/auth') ||
+    url.pathname.startsWith('/api/onboarding')
   if (isBackend) {
     try {
       let reqBody
