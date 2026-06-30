@@ -1,9 +1,13 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
 import { VERSION, CONTRACT, MIN_CLIENT_CONTRACT, isClientCompatible } from './version.js'
+import { registerAuthRoutes } from './routes/auth.js'
+import type { Repos } from './db/repos.js'
 
 /** Injizierbare Abhängigkeiten (DB, externe Dienste). In Tests stubbar. */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface Deps {}
+export interface Deps {
+  /** Datenbankzugriff. Wenn gesetzt, werden Auth-Routen registriert. */
+  repos?: Repos
+}
 
 export interface BuildAppOpts {
   logger?: boolean
@@ -52,6 +56,12 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
     version: VERSION,
     contract: CONTRACT,
   }))
+
+  // Auth-Routen nur wenn repos injiziert (Produktion); Tests können ohne DB testen.
+  const { repos } = opts.deps ?? {}
+  if (repos) {
+    registerAuthRoutes(app, { repos })
+  }
 
   return app
 }
