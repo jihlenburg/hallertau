@@ -224,6 +224,26 @@ function makeFarmMembersRepo(pool: Pool) {
       )
       return rows
     },
+
+    /**
+     * Moves the `owner` membership of a farm from whoever currently holds it
+     * to `newUserId`. Runs as two statements (delete old owner row, insert new
+     * owner row) which is safe because the farm_members composite PK is
+     * (farm_id, user_id) — no two rows can share both columns.
+     *
+     * Used by the operator recovery CLI after out-of-band verification.
+     */
+    async reassignOwner(farmId: string, newUserId: string): Promise<void> {
+      await pool.query(
+        'DELETE FROM farm_members WHERE farm_id = $1 AND role = $2',
+        [farmId, 'owner'],
+      )
+      await pool.query(
+        `INSERT INTO farm_members (farm_id, user_id, role)
+         VALUES ($1, $2, $3)`,
+        [farmId, newUserId, 'owner'],
+      )
+    },
   }
 }
 
@@ -276,6 +296,15 @@ function makePasskeysRepo(pool: Pool) {
         'UPDATE passkey_credentials SET counter = $1, last_used_at = now() WHERE id = $2',
         [counter, id],
       )
+    },
+
+    /** Deletes ALL passkey credentials for a user (operator recovery). Returns the deleted row count. */
+    async deleteByUserId(userId: string): Promise<number> {
+      const { rowCount } = await pool.query(
+        'DELETE FROM passkey_credentials WHERE user_id = $1',
+        [userId],
+      )
+      return rowCount ?? 0
     },
   }
 }
