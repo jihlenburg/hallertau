@@ -125,6 +125,40 @@ function makeUsersRepo(pool: Pool) {
         [id],
       )
     },
+
+    /**
+     * Persist a WebAuthn challenge for this user (overwrites any existing one).
+     * Call before returning registration/authentication options to the client.
+     */
+    async setChallenge(userId: string, challenge: string): Promise<void> {
+      await pool.query(
+        'UPDATE users SET current_webauthn_challenge = $1 WHERE id = $2',
+        [challenge, userId],
+      )
+    },
+
+    /**
+     * Clear the pending WebAuthn challenge after a successful verify (or on failure).
+     * Prevents challenge reuse.
+     */
+    async clearChallenge(userId: string): Promise<void> {
+      await pool.query(
+        'UPDATE users SET current_webauthn_challenge = NULL WHERE id = $1',
+        [userId],
+      )
+    },
+
+    /**
+     * Return the stored challenge string, or null if none is pending.
+     * Used by the verify route to confirm the authenticator signed the correct challenge.
+     */
+    async getChallenge(userId: string): Promise<string | null> {
+      const { rows } = await pool.query<{ current_webauthn_challenge: string | null }>(
+        'SELECT current_webauthn_challenge FROM users WHERE id = $1',
+        [userId],
+      )
+      return rows[0]?.current_webauthn_challenge ?? null
+    },
   }
 }
 

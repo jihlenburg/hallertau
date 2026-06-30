@@ -1,11 +1,14 @@
 /**
- * Auth routes — magic-link issuance (Task 3) + verify/session (Task 4).
+ * Auth routes — magic-link issuance (Task 3) + verify/session (Task 4)
+ *             + passkey registration (Task 6).
  */
 
 import type { FastifyInstance } from 'fastify'
 import type { Repos } from '../db/repos.js'
 import { requestMagicLink } from '../auth/magicLink.js'
 import { verifyMagicLink, createSession, signCookie, AuthError } from '../auth/session.js'
+import { registerPasskeyRoutes } from '../auth/passkey.js'
+import type { PasskeyRouteDeps } from '../auth/passkey.js'
 
 export interface AuthRouteDeps {
   repos: Repos
@@ -13,6 +16,11 @@ export interface AuthRouteDeps {
   sendMagicLinkEmail: (to: string, link: string) => Promise<void>
   /** Returns "now" — injectable for tests. */
   now?: () => Date
+  /**
+   * Passkey-specific overrides (all optional — defaults to real implementations + env vars).
+   * Used in tests to inject stubs and override rpID/origin without real WebAuthn ceremony.
+   */
+  passkey?: Omit<PasskeyRouteDeps, 'repos'>
 }
 
 interface MagicLinkBody {
@@ -95,5 +103,12 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthRouteDeps): v
       }
       throw err
     }
+  })
+
+  // ── Passkey registration (Task 6) ──────────────────────────────────────────
+
+  registerPasskeyRoutes(app, {
+    repos:  deps.repos,
+    ...(deps.passkey ?? {}),
   })
 }
