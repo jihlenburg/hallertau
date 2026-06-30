@@ -1,6 +1,10 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
+import fastifyCookie from '@fastify/cookie'
 import { VERSION, CONTRACT, MIN_CLIENT_CONTRACT, isClientCompatible } from './version.js'
 import { registerAuthRoutes } from './routes/auth.js'
+import { sendMagicLinkEmail as defaultMailSender } from './mail/postmark.js'
+import { createPool } from './db/pool.js'
+import { repos as makeRepos } from './db/repos.js'
 import type { Repos } from './db/repos.js'
 
 /** Injizierbare Abhängigkeiten (DB, externe Dienste). In Tests stubbar. */
@@ -13,6 +17,11 @@ export interface BuildAppOpts {
   logger?: boolean
   /** Datenzugriff injizierbar (Tests stubben; Default = Produktionsimplementierung). */
   deps?: Partial<Deps>
+  /**
+   * Maildienst injizierbar (Tests übergeben eine Stub-Funktion).
+   * Default: Postmark-Implementierung aus mail/postmark.ts.
+   */
+  sendMagicLinkEmail?: (to: string, link: string) => Promise<void>
 }
 
 /** Vom Client deklarierte Contract-Major aus Header `x-client-api` oder Query `clientApi`. */
@@ -30,9 +39,15 @@ const ALWAYS_OPEN = new Set(['/api/accounts/health', '/api/accounts/version'])
 /**
  * Baut die Fastify-Instanz (ohne zu lauschen) — testbar via `app.inject(...)`.
  * Der Server (`server.ts`) ruft `buildApp()` und danach `listen`.
+ *
+ * Production: `buildApp({ logger: true })` — liest DATABASE_URL aus der Umgebung.
+ * Tests:      `buildApp({ deps: { repos: mockRepos }, sendMagicLinkEmail: stub })`.
  */
 export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
   const app = Fastify({ logger: opts.logger ?? false })
+
+  // Cookie-Plugin für Auth-Routen (HttpOnly, signierte Session-Cookies)
+  void app.register(fastifyCookie)
 
   // Jede Antwort trägt die Contract-Version; inkompatible Clients werden abgewiesen.
   app.addHook('onRequest', async (req, reply) => {
@@ -57,10 +72,21 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
     contract: CONTRACT,
   }))
 
-  // Auth-Routen nur wenn repos injiziert (Produktion); Tests können ohne DB testen.
-  const { repos } = opts.deps ?? {}
-  if (repos) {
-    registerAuthRoutes(app, { repos })
+  // Resolve repos: injected mock (tests) → live pool (production) → skip routes
+  let effectiveRepos: Repos | undefined = opts.deps?.repos
+  if (!effectiveRepos) {
+    try {
+      effectiveRepos = makeRepos(createPool())
+    } catch {
+      // DATABASE_URL nicht gesetzt (Unit-Test ohne DB) — Auth-Routen überspringen
+    }
+  }
+
+  if (effectiveRepos) {
+    registerAuthRoutes(app, {
+      repos:              effectiveRepos,
+      sendMagicLinkEmail: opts.sendMagicLinkEmail ?? defaultMailSender,
+    })
   }
 
   return app
