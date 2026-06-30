@@ -25,3 +25,5 @@ docs/screenshots/*.png
 secrets/
 !.env.example
 .superpowers/
+node_modules/
+**/node_modules/

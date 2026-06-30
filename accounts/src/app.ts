@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import { VERSION, CONTRACT, MIN_CLIENT_CONTRACT, isClientCompatible } from './version.js'
 import { registerAuthRoutes } from './routes/auth.js'
+import { registerOnboardingRoutes } from './routes/onboarding.js'
 import { sendMagicLinkEmail as defaultMailSender } from './mail/postmark.js'
 import { createPool } from './db/pool.js'
 import { repos as makeRepos } from './db/repos.js'
@@ -93,6 +94,8 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
       repos:              effectiveRepos,
       sendMagicLinkEmail: opts.sendMagicLinkEmail ?? defaultMailSender,
     })
+
+    registerOnboardingRoutes(app, { repos: effectiveRepos })
   }
 
   return app

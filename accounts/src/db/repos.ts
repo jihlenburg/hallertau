@@ -79,6 +79,10 @@ export interface Schlag {
   kultur: string | null
   sorte: string | null
   source: 'draw' | 'ibalis'
+  /** True when the field centroid was inside a German hop Anbaugebiet at import time. Soft flag — never used to reject. */
+  in_region: boolean
+  /** Name of the matched Anbaugebiet, or null when in_region is false. */
+  region: string | null
   created_at: Date
 }
 
@@ -394,10 +398,14 @@ function makeSchlaegeRepo(pool: Pool) {
       geometry?: unknown
       kultur?: string
       sorte?: string
+      /** Soft region flag from isInHopRegion — never rejects, only stored. */
+      in_region?: boolean
+      /** Name of the matched Anbaugebiet, or omit when in_region is false. */
+      region?: string | null
     }): Promise<Schlag> {
       const { rows } = await pool.query<Schlag>(
-        `INSERT INTO schlaege (id, farm_id, name, source, flik, geometry, kultur, sorte)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO schlaege (id, farm_id, name, source, flik, geometry, kultur, sorte, in_region, region)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           randomUUID(),
@@ -408,6 +416,8 @@ function makeSchlaegeRepo(pool: Pool) {
           input.geometry != null ? JSON.stringify(input.geometry) : null,
           input.kultur ?? null,
           input.sorte ?? null,
+          input.in_region ?? false,
+          input.region ?? null,
         ],
       )
       return rows[0]
