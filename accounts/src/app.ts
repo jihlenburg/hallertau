@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
 import fastifyCookie from '@fastify/cookie'
+import rateLimit from '@fastify/rate-limit'
 import { VERSION, CONTRACT, MIN_CLIENT_CONTRACT, isClientCompatible } from './version.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerOnboardingRoutes } from './routes/onboarding.js'
@@ -43,12 +44,26 @@ const ALWAYS_OPEN = new Set(['/api/accounts/health', '/api/accounts/version'])
  *
  * Production: `buildApp({ logger: true })` — liest DATABASE_URL aus der Umgebung.
  * Tests:      `buildApp({ deps: { repos: mockRepos }, sendMagicLinkEmail: stub })`.
+ *
+ * Implementierungshinweis — Plugin-Reihenfolge:
+ *   Alle Routen werden innerhalb eines `app.register()`-Callbacks registriert, damit sie
+ *   NACH dem Rate-Limit-Plugin (`@fastify/rate-limit`) in der avvio-Queue laufen.
+ *   Das Rate-Limit-Plugin nutzt einen `onRoute`-Hook, der nur für Routen greift, die nach
+ *   der Plugin-Initialisierung registriert werden — deshalb darf `app.post()` nicht direkt
+ *   (synchron) aus `buildApp()` heraus aufgerufen werden.
  */
 export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
   const app = Fastify({ logger: opts.logger ?? false })
 
-  // Cookie-Plugin für Auth-Routen (HttpOnly, signierte Session-Cookies)
+  // Cookie-Plugin für Auth-Routen (HttpOnly, signierte Session-Cookies).
+  // fastify-plugin: kein Scope-Isolation → Decorator in allen Kind-Scopes verfügbar.
   void app.register(fastifyCookie)
+
+  // Rate-Limit-Plugin (in-memory, kein DB-Bedarf) — global: false → Opt-in per Route.
+  // fastify-plugin: onRoute-Hook gilt für alle Kind-Scopes.
+  // Routes werden unterhalb in einem register()-Callback registriert, damit der onRoute-Hook
+  // des Rate-Limit-Plugins bereits installiert ist, wenn die Routen registriert werden.
+  void app.register(rateLimit, { global: false })
 
   // Jede Antwort trägt die Contract-Version; inkompatible Clients werden abgewiesen.
   app.addHook('onRequest', async (req, reply) => {
@@ -64,14 +79,6 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
       })
     }
   })
-
-  app.get('/api/accounts/health', async () => ({ status: 'ok' }))
-
-  app.get('/api/accounts/version', async () => ({
-    name: 'doldenblick-accounts',
-    version: VERSION,
-    contract: CONTRACT,
-  }))
 
   // Resolve repos: injected mock (tests) → live pool (production) → skip routes
   let effectiveRepos: Repos | undefined = opts.deps?.repos
@@ -89,14 +96,31 @@ export function buildApp(opts: BuildAppOpts = {}): FastifyInstance {
     }
   }
 
-  if (effectiveRepos) {
-    registerAuthRoutes(app, {
-      repos:              effectiveRepos,
-      sendMagicLinkEmail: opts.sendMagicLinkEmail ?? defaultMailSender,
-    })
+  // Capture für Closure
+  const resolvedRepos = effectiveRepos
+  const sendMail = opts.sendMagicLinkEmail ?? defaultMailSender
 
-    registerOnboardingRoutes(app, { repos: effectiveRepos })
-  }
+  // Alle Routen werden in einem register()-Callback registriert, damit der onRoute-Hook
+  // des Rate-Limit-Plugins bereits aktiv ist, wenn die Routen zum Routing-Baum hinzugefügt
+  // werden (avvio verarbeitet Plugins in Deklarationsreihenfolge).
+  void app.register(async (scope) => {
+    scope.get('/api/accounts/health', async () => ({ status: 'ok' }))
+
+    scope.get('/api/accounts/version', async () => ({
+      name: 'doldenblick-accounts',
+      version: VERSION,
+      contract: CONTRACT,
+    }))
+
+    if (resolvedRepos) {
+      registerAuthRoutes(scope, {
+        repos:              resolvedRepos,
+        sendMagicLinkEmail: sendMail,
+      })
+
+      registerOnboardingRoutes(scope, { repos: resolvedRepos })
+    }
+  })
 
   return app
 }

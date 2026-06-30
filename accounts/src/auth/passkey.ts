@@ -246,7 +246,10 @@ export function registerPasskeyRoutes(app: FastifyInstance, deps: PasskeyRouteDe
    *
    * Returns: PublicKeyCredentialRequestOptionsJSON (pass directly to startAuthentication).
    */
-  app.post<{ Body: AuthOptionsBody }>('/api/auth/passkey/auth-options', async (req, reply) => {
+  app.post<{ Body: AuthOptionsBody }>(
+    '/api/auth/passkey/auth-options',
+    { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } },
+    async (req, reply) => {
     const { email } = req.body ?? {}
 
     let allowCredentials: { id: string; transports?: string[] }[] = []
@@ -300,7 +303,10 @@ export function registerPasskeyRoutes(app: FastifyInstance, deps: PasskeyRouteDe
    *
    * Body: { assertion: AuthenticationResponseJSON }
    */
-  app.post<{ Body: AuthVerifyBody }>('/api/auth/passkey/auth-verify', async (req, reply) => {
+  app.post<{ Body: AuthVerifyBody }>(
+    '/api/auth/passkey/auth-verify',
+    { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } },
+    async (req, reply) => {
     const { assertion } = req.body ?? {}
 
     if (!assertion || typeof assertion !== 'object') {

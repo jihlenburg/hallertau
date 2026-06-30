@@ -129,6 +129,37 @@ describe('POST /api/auth/magic-link', () => {
   })
 })
 
+// ── Rate-limit: POST /api/auth/magic-link ─────────────────────────────────────
+
+describe('Rate-limit auf /api/auth/magic-link', () => {
+  it('gibt 429 zurück wenn dasselbe IP das Limit (5/15min) überschreitet', async () => {
+    const repos = makeAuthRepos()
+    const app = buildApp({ deps: { repos }, sendMagicLinkEmail: async () => undefined })
+
+    // Erste 5 Anfragen müssen durchkommen (oder 400 bei leerem body — egal, kein 429)
+    for (let i = 0; i < 5; i++) {
+      const r = await app.inject({
+        method: 'POST',
+        url: '/api/auth/magic-link',
+        payload: { email: 'bauer@hallertau.de' },
+        remoteAddress: '10.0.0.1',
+      })
+      expect(r.statusCode).not.toBe(429)
+    }
+
+    // 6. Anfrage derselben IP → 429 Too Many Requests
+    const r6 = await app.inject({
+      method: 'POST',
+      url: '/api/auth/magic-link',
+      payload: { email: 'bauer@hallertau.de' },
+      remoteAddress: '10.0.0.1',
+    })
+    expect(r6.statusCode).toBe(429)
+
+    await app.close()
+  })
+})
+
 // ── POST /api/auth/verify ─────────────────────────────────────────────────────
 
 describe('POST /api/auth/verify', () => {
