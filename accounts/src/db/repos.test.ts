@@ -141,4 +141,31 @@ describe('repos (pg-mem)', () => {
       expect(second).toBeNull()
     })
   })
+
+  describe('farmMembers.reassignOwner', () => {
+    it('promotes an existing member to owner atomically — no PK violation, exactly one owner', async () => {
+      // Arrange: two users, one farm; oldOwner holds owner, newOwner is a member
+      const oldOwner = await r.users.create({ email: 'altbesitzer@hallertau.de' })
+      const newOwner  = await r.users.create({ email: 'neubesitzer@hallertau.de' })
+      const farm      = await r.farms.create({ name: 'Huber Testbetrieb', anbaugebiet: 'Hallertau' })
+
+      await r.farmMembers.create({ farm_id: farm.id, user_id: oldOwner.id, role: 'owner' })
+      await r.farmMembers.create({ farm_id: farm.id, user_id: newOwner.id, role: 'member' })
+
+      // Act: reassign to a user who already has a `member` row — must not throw
+      await expect(
+        r.farmMembers.reassignOwner(farm.id, newOwner.id),
+      ).resolves.toBeUndefined()
+
+      // Assert: exactly one owner row, it belongs to newOwner
+      const members = await r.farmMembers.findByFarmId(farm.id)
+      const owners  = members.filter(m => m.role === 'owner')
+      expect(owners).toHaveLength(1)
+      expect(owners[0].user_id).toBe(newOwner.id)
+
+      // Assert: old owner has no membership at all on this farm
+      const oldMemberships = members.filter(m => m.user_id === oldOwner.id)
+      expect(oldMemberships).toHaveLength(0)
+    })
+  })
 })

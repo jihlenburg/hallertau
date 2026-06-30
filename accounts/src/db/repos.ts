@@ -226,23 +226,37 @@ function makeFarmMembersRepo(pool: Pool) {
     },
 
     /**
-     * Moves the `owner` membership of a farm from whoever currently holds it
-     * to `newUserId`. Runs as two statements (delete old owner row, insert new
-     * owner row) which is safe because the farm_members composite PK is
-     * (farm_id, user_id) — no two rows can share both columns.
+     * Atomically moves the `owner` membership of a farm from whoever currently
+     * holds it to `newUserId`. Runs inside a transaction so the farm is never
+     * left without an owner on partial failure.
+     *
+     * The INSERT uses ON CONFLICT (farm_id, user_id) DO UPDATE so that an
+     * existing `member` row for `newUserId` is promoted to `owner` rather than
+     * causing a PK violation (primary scenario: family member takes over).
      *
      * Used by the operator recovery CLI after out-of-band verification.
      */
     async reassignOwner(farmId: string, newUserId: string): Promise<void> {
-      await pool.query(
-        'DELETE FROM farm_members WHERE farm_id = $1 AND role = $2',
-        [farmId, 'owner'],
-      )
-      await pool.query(
-        `INSERT INTO farm_members (farm_id, user_id, role)
-         VALUES ($1, $2, $3)`,
-        [farmId, newUserId, 'owner'],
-      )
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        await client.query(
+          'DELETE FROM farm_members WHERE farm_id = $1 AND role = $2',
+          [farmId, 'owner'],
+        )
+        await client.query(
+          `INSERT INTO farm_members (farm_id, user_id, role)
+           VALUES ($1, $2, 'owner')
+           ON CONFLICT (farm_id, user_id) DO UPDATE SET role = 'owner'`,
+          [farmId, newUserId],
+        )
+        await client.query('COMMIT')
+      } catch (err) {
+        await client.query('ROLLBACK')
+        throw err
+      } finally {
+        client.release()
+      }
     },
   }
 }
