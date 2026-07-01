@@ -10,7 +10,7 @@
  *   isInHopRegion(geometry)    → { inRegion, region? }
  */
 
-import anbaugebiete from './anbaugebiete.json'
+import { anbaugebiete } from './anbaugebiete.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -107,7 +107,7 @@ type RegionFeature = {
   }
 }
 
-const regions = (anbaugebiete as { features: RegionFeature[] }).features
+const regions = (anbaugebiete as unknown as { features: RegionFeature[] }).features
 
 // ── isInHopRegion ─────────────────────────────────────────────────────────────
 
