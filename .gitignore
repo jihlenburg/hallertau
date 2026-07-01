@@ -27,3 +27,7 @@ secrets/
 .superpowers/
 node_modules/
 **/node_modules/
+
+# Build-Output der Dienste (regenerierbar via npm run build / Deploy-Skripte)
+dist/
+**/dist/
