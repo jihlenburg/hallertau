@@ -55,5 +55,9 @@ npm test           # vitest (33 Tests)
 npm run build      # tsc → dist/
 npm start          # node dist/server.js
 ```
-Bindet nur an `127.0.0.1` — nginx terminiert TLS und proxyt `/api/*` same-origin hierher.
-Konfiguration über Env: `PORT` (8787), `HOST` (127.0.0.1).
+Bindet nur an `127.0.0.1` — nginx terminiert TLS und proxyt `/api/health`, `/api/version` und
+`/api/water-balance` same-origin hierher. Konfiguration über Env: `PORT` (8787), `HOST` (127.0.0.1).
+
+**Geschwister-Dienste** teilen sich dieselbe `/api/*`-Oberfläche hinter nginx: `rs/` (Satelliten-
+Feld-Check, `:8788`, `/api/field-vigor`) und `accounts/` (passwortlose Identität + Onboarding, `:8789`,
+`/api/auth/*` + `/api/onboarding/*`). Überblick + Betrieb: `REFERENCE.md` §5.6 und `docs/infrastructure.md`.

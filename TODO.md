@@ -3,7 +3,7 @@
 Offene Punkte und nächste Schritte. `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit.
 Erledigtes wandert mit Datum/Commit ins `LOGBOOK.md`.
 
-## Stand der offenen Punkte (2026-06-28, autonomer Lauf)
+## Stand der offenen Punkte (Stand 2026-07-01)
 > **PRÄMISSENWECHSEL (2026-06-28): „Infrastruktur vor Nachfrage!"** — das Nachfrage-Gate ist **aufgehoben**.
 > ALLE Datenquellen sind jetzt in Scope; die zuvor „gegateten" server-only Quellen (Sentinel/GEE, RADOLAN,
 > LfL, ERA5, SoilGrids) werden **proaktiv gebaut**. Reihenfolge wird durch die laufende Satelliten-Recherche
@@ -40,6 +40,25 @@ Sorte-Fidelity, interaktiver Spritzfenster-Streifen. Die verbleibenden `[ ]`:
 - [x] Postgres-Backup (`pg_dump -Fc`, Cron 03:17 UTC, 14 Stände) — erster Dump ok.
 - [x] **PROD-CUTOVER LIVE (no-downtime, 2026-06-29):** Prod privat angehängt (10.0.0.3); fail-safe Secrets-Sync-Timer rendert `/etc/doldenblick/doldenblick-rs.env` aus Infisical (systemd `EnvironmentFile=` unverändert); **Resilienz bewiesen** (Vault aus → sync no-op → rs-Restart aus lokalem File, rs/health 200).
 - [ ] Tightening (kein Blocker): custom read-only-Rolle nur `prod`-Env (statt built-in viewer); Postgres-Restore-Drill; voller Cold-Boot-Test (opt., kurze Downtime); `cloud-setup.sh` auf Infisical umstellen; Prod-Swap nachrüsten.
+
+## Passwortlose Identität + Onboarding-Pilot (`accounts/`)
+> Pilot-Grade Fundament, gebaut mit subagent-driven-development (14 Tasks, Implementer+Reviewer je Task,
+> adversarielle Fix-Runden), gemergt nach `main` (`f9fe8a1`), **deployt & live** auf doldenblick-01 (2026-07-01).
+- [x] **Passwortlose Anmeldung:** Magic-Link (Postmark, einmalig/atomar) + **Passkey/WebAuthn**
+      (`@simplewebauthn`), serverseitige Sessions (HMAC-httpOnly-Cookie), Rate-Limit auf Auth-Routen. — 2026-06-30
+- [x] **Onboarding-API:** `POST /api/onboarding/farm` (Betrieb) + `/api/onboarding/schlaege` (GeoJSON)
+      + `GET /api/onboarding/me`; Betrieb/Nutzer/Schläge in **Postgres** (Migrationen 001–003). — 2026-06-30
+- [x] **Assistierter 4-Schritt-Wizard** (`app/`, Routen `/onboarding` + `/onboarding/verify`) + Feld-Karte
+      zeichnen/antippen; Accounts-Client (`api/accounts.ts`). — 2026-06-30
+- [x] **Betreiber-Recovery-CLI** (Link/Passkey-Reset/Betriebsübertragung), nur on-box. — 2026-06-30
+- [x] **Deploy Prod:** Postgres 16 + Rolle/DB, systemd `doldenblick-accounts` (:8789), Secrets-Sync
+      (accounts-Target), nginx-Locations + SPA-Fallback, `infra/deploy-accounts.sh`. HTTPS-Smoke grün. — 2026-07-01
+- [ ] **Team vorgesehen, nicht ausgereizt:** Mitglieder/Einladungen sind provisioniert (Rolle owner/member),
+      aber ohne UI — Familienbetriebe sind klein; bei Bedarf ausbauen.
+- [ ] Passkey-/Magic-Link-**UX** fürs echte Betriebs-Onboarding polieren (Fehlerfälle, Wiedereinstieg).
+- [ ] Restore-Drill der `doldenblick`-DB; Postgres in den `pg_dump`-Backup-Cron aufnehmen.
+- [ ] Legitimitätsprüfung „echte Betriebe" (Abgleich gegen öffentliche Register) — bewusst zurückgestellt
+      (kein praktikabler automatischer Weg für ~2000 Betriebe; s. Chat 2026-06-30).
 
 ## Prototyp-App (`app/`)
 

@@ -1,6 +1,6 @@
 # Infrastruktur — DoldenBlick
 
-**Stand:** 2026-06-29 (Basis 2026-06-27). Hosting bei **Hetzner Cloud**. Namenskonvention: Infrastruktur =
+**Stand:** 2026-07-01 (Basis 2026-06-27). Hosting bei **Hetzner Cloud**. Namenskonvention: Infrastruktur =
 **„Hallertau"** (Repo, Hetzner-Projekt), Produkt/Marke = **„DoldenBlick"** (s. `docs/naming.md`).
 
 > Zugangsdaten (Hetzner Cloud API-Token) stehen ausschließlich in `.env`
@@ -20,7 +20,8 @@
 | IPv6 | `2a01:4f8:1c18:6e05::1` (/64-Block: `2a01:4f8:1c18:6e05::/64`) |
 | SSH | `ssh root@91.98.203.240` mit `~/.ssh/id_ed25519` — **nur Key**, kein Passwort |
 | SSH-Key in Projekt | id `114361592` (`jihlenburg@macbook-pro-m1`) |
-| Webserver | nginx 1.24; serviert die **DoldenBlick-App** (Vite-Build aus `app/dist/`) + Bright-Sky-Reverse-Proxy |
+| Webserver | nginx 1.24; serviert die **DoldenBlick-App** (Vite-Build aus `app/dist/`) + Bright-Sky-Proxy + drei loopback-`/api/*`-Dienste (8787/8788/8789) |
+| Datenbank | **Postgres 16** (nativ, nicht Docker); DB `doldenblick` für den Accounts-Dienst (s. Erweiterung 2026-07-01) |
 
 Erstinstallation via **cloud-init** (`infra/cloud-init.yml`): nginx + Platzhalter, ufw,
 Passwort-Login aus. Die Platzhalterseite wurde durch die App ersetzt (s. Deployment).
@@ -178,3 +179,73 @@ File hoch (rs/health 200) → **keine Laufzeit-Abhängigkeit**. Kronjuwelen/Admi
 - Postgres-Restore-Drill (Dump testweise zurückspielen). Voller Cold-Boot-Test (echter Prod-Reboot) — optional, kurze Downtime.
 - `cloud-setup.sh` (Claude Code Web) auf Infisical umstellen; lokale `.env` perspektivisch ablösen.
 - `doldenblick-01` hat **keinen Swap** (Vault: 2 GB) — bei Bedarf nachrüsten.
+
+---
+
+# Erweiterung 2026-07-01 — Accounts-Dienst + passwortloses Onboarding (Prod)
+
+Der `accounts/`-Dienst (passwortlose Identität + Betriebs-Onboarding) ist auf `doldenblick-01`
+deployt und live. Erster **zustandsbehafteter** Dienst → erstes Postgres auf der Prod-Box.
+
+## Postgres (auf `doldenblick-01`)
+- **Postgres 16, nativ** (apt, nicht Docker) — lokal, hört nur auf den Unix-Socket / `127.0.0.1`.
+- DB `doldenblick` + eigene Rolle für den Dienst. **Passwort lebt ausschließlich in Infisical**
+  (`ACCOUNTS_DATABASE_URL` → im Sync als `DATABASE_URL` gerendert) und in der on-box EnvironmentFile —
+  **nie** gedruckt/committet. Anlage von Rolle/DB war **gated** (erst nach ausdrücklicher Prod-Freigabe).
+- **Migrationen:** `node-pg-migrate up` aus `accounts/migrations/` (001 init · 002 webauthn-challenge ·
+  003 schlaege-region), idempotent im Deploy.
+- Backup-Drill/Restore für diese DB steht noch aus (Tightening).
+
+## systemd — `doldenblick-accounts`
+- Unit `infra/doldenblick-accounts.service`: `node dist/server.js`, Loopback **:8789**, User `doldenblick`,
+  `EnvironmentFile=/etc/doldenblick/doldenblick-accounts.env` (root:root 600).
+- Gehärtet wie die anderen Dienste, aber `RestrictAddressFamilies` schließt **`AF_UNIX`** ein
+  (Postgres-Socket) zusätzlich zu `AF_INET/AF_INET6` (Postmark-HTTPS).
+
+## Secrets-Sync — jetzt Multi-Target
+`infra/infisical/doldenblick-secrets-sync.py` rendert nun **zwei** EnvironmentFiles, fail-safe **pro Ziel**
+(Fehler bei einem Ziel lässt das andere unberührt; Restart nur bei echter Änderung):
+- `doldenblick-rs.env` ← `COPERNICUS_CLIENT_ID/SECRET` → restart `doldenblick-rs`
+- `doldenblick-accounts.env` ← `DATABASE_URL, SESSION_SIGNING_KEY, RP_ID, RP_ORIGIN, SITE_URL,
+  POSTMARK_SERVER_API_TOKEN` → restart `doldenblick-accounts`
+
+Prinzip unverändert: Infisical ist **Sync-Quelle, keine Boot-Abhängigkeit** — der Dienst startet aus
+der lokalen EnvironmentFile, auch wenn der Vault down ist.
+
+## nginx (`infra/nginx-doldenblick.conf`)
+Additiv zum bestehenden Snippet:
+- **Prefix** `location /api/auth/` und `location /api/onboarding/` → `127.0.0.1:8789`
+  (`/api/onboarding/` mit `client_max_body_size 8m` für GeoJSON-Schläge).
+- **Exakt** `location = /api/accounts/health` und `= /api/accounts/version` (Ops, analog zu `/api/rs/*`).
+- **SPA-History-Fallback** (exakt) `= /onboarding` und `= /onboarding/verify` → `try_files $uri /index.html`.
+  Bewusst **kein** pauschaler `/index.html`-Fallback: nur die zwei real existierenden pfadbasierten
+  Routen (die `main.ts` über `window.location.pathname` kennt) liefern die SPA aus; alles andere 404t
+  ehrlich weiter.
+
+## Deploy — `infra/deploy-accounts.sh`
+Baut `dist/`, rsync von `dist/` + `migrations/` nach `/opt/doldenblick-accounts`, `npm ci --omit=dev`,
+Env-Check, `node-pg-migrate up`, systemd (neu-)start, nginx-Snippet mit Backup + `nginx -t` + Rollback,
+Loopback-Health `curl 127.0.0.1:8789/api/accounts/health`.
+
+## QUIRKS (Session 2026-07-01 — Deploy des Accounts-Dienstes)
+
+**Grüne Tests ≠ „läuft" — zweimal am selben Dienst gelernt:**
+- **`tsc` typecheckt, Vitest/esbuild nicht.** Der Build lief lokal grün (Vitest), aber `tsc` auf dem
+  Deploy brach mit echten Typfehlern ab (Index auf `undefined`, `Buffer` vs. `Uint8Array`). → Deploy-Gate
+  baut jetzt zwingend mit `tsc`.
+- **Node-ESM verlangt `with { type: 'json' }` — tsc/esbuild nicht.** Ein `import … from './x.json'` ging
+  durch beide Builder, aber Node warf zur Laufzeit `ERR_IMPORT_ATTRIBUTE_MISSING` → Crash-Loop. Fix:
+  Domänendaten (Anbaugebiete) als **TS-Const** statt importiertem JSON. Gate prüft nun zusätzlich einen
+  echten `node --input-type=module -e "import('./dist/...')"`-Laufzeit-Import des Builds.
+
+**nginx-Reload ist graceful, nicht atomar:** Direkt nach `systemctl reload nginx` beantworten
+auslaufende alte Worker kurz noch mit der alten Config — eine neu hinzugefügte `location` kann für
+~1 s einen veralteten 404 liefern. Kein Cache, kein Bug: einmal nachfassen, dann stabil. Beim Verifizieren
+von frisch reloadeten Routen kurz warten / erneut prüfen.
+
+## Status (2026-07-01)
+**LIVE & verifiziert:** `/onboarding` + `/onboarding/verify` (200), `/api/accounts/health` + `/version`
+(200), `/api/onboarding/me` (401 = Guard aktiv), `/api/auth/passkey/auth-options` (200); übrige Dienste
+(`/api/version`, `/api/rs/version`) unberührt; unbekannte Pfade weiterhin 404 (kein pauschaler Fallback).
+**Offen (Tightening):** Restore-Drill für die `doldenblick`-DB; Postgres-Backup in den bestehenden
+`pg_dump`-Cron aufnehmen; Passkey-/Magic-Link-UX fürs echte Betriebs-Onboarding polieren.

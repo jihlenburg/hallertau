@@ -5,6 +5,42 @@ Format je Eintrag: Datum · Was · Warum · Ergebnis/Verweis.
 
 ---
 
+## 2026-07-01 · Accounts-Dienst deployt (Prod, live) + Doku aktualisiert & humanisiert
+**Was:** Den `accounts/`-Dienst auf `doldenblick-01` ausgerollt — erster **zustandsbehafteter**
+Dienst, also erstes Prod-Postgres (16, nativ; DB `doldenblick` + Rolle; PW nur in Infisical/EnvironmentFile).
+`infra/deploy-accounts.sh`: Build → rsync `dist/`+`migrations/` → `npm ci` → `node-pg-migrate up` (001–003)
+→ systemd `doldenblick-accounts` (:8789) → nginx-Snippet mit Rollback. nginx um `/api/auth/`,
+`/api/onboarding/`, `/api/accounts/{health,version}` **und** einen **SPA-History-Fallback** für
+`/onboarding` + `/onboarding/verify` ergänzt (exakte `try_files`, kein pauschaler Fallback). App-Frontend
+neu deployt. Danach die **gesamte Projektdoku aktualisiert** (CLAUDE.md, README.md, REFERENCE.md §1/2/4/5/7/8/11/12,
+TODO.md, docs/infrastructure.md, neues `accounts/README.md`, app/README.md) und die Prosa poliert/humanisiert.
+**Warum:** „deploy to prod if you can" + „get the full project documentation up to date, polish & humanize".
+**Quirks (hart gelernt, jetzt dokumentiert):** (1) **`tsc` typecheckt, Vitest/esbuild nicht** — lokal grün,
+Deploy-`tsc` brach mit echten Typfehlern ab. (2) **Node-ESM verlangt `with { type: 'json' }`** — ein JSON-Import
+ging durch beide Builder, crash-loopte aber zur Laufzeit (`ERR_IMPORT_ATTRIBUTE_MISSING`); Fix: Anbaugebiete als
+**TS-Const**. Deploy-Gate prüft nun `tsc` **und** einen echten `node`-Laufzeit-Import. (3) **nginx-Reload ist
+graceful** — auslaufende alte Worker liefern ~1 s lang noch den alten 404; kein Bug, einmal nachfassen.
+**Verifikation:** `/onboarding`+`/onboarding/verify` 200 (stabil), `/api/accounts/{health,version}` 200,
+`/api/onboarding/me` 401 (Guard), `/api/auth/passkey/auth-options` 200; `/api/version`+`/api/rs/version` unberührt;
+`/does-not-exist` 404 (kein pauschaler Fallback). **Verweise:** `f059dc7`, `16b3269`, `f9fe8a1`;
+`infra/deploy-accounts.sh`, `docs/infrastructure.md` (Erweiterung 2026-07-01).
+
+## 2026-06-30 · Passwortloses Farmer-Onboarding — Pilot-Grade Fundament (`accounts/`)
+**Was:** Neues Feature „echtes Betriebs-Onboarding + passwortlose Identität". Weg: `/brainstorming` →
+`/devils-advocate` (Herausforderung → Re-Scoping auf ein **pilot-grade** Fundament statt Vollausbau) →
+`writing-plans` → **subagent-driven-development** (14 Tasks, frischer Implementer + Reviewer je Task,
+Modell-skaliert; opus für Auth-Kern + Schluss-Review; 4 Fix-Runden). Ergebnis: `accounts/` (Fastify 5 +
+TypeScript strict + Postgres): Magic-Link (Postmark, einmalig via bedingtem `UPDATE … RETURNING`) + Passkey/
+WebAuthn (`@simplewebauthn`), serverseitige Sessions (HMAC-httpOnly-Cookie), Onboarding-API (Betrieb + Schläge
+als GeoJSON, `reassignOwner` transaktional), Betreiber-Recovery-CLI, Rate-Limit auf Auth-Routen. Client:
+Accounts-Client + assistierter 4-Schritt-Wizard + Feld-Karte zeichnen/antippen.
+**Warum:** Familienbetriebe sind klein → passwortlos senkt die Hürde **und** erhöht die Sicherheit; Team ist
+provisioniert (owner/member), aber bewusst schlank gehalten (YAGNI).
+**Fixes in Review:** nicht-atomarer Single-Use-Link → atomar; PK-Verletzung bei Betriebsübertragung → Transaktion
++ `ON CONFLICT`; Import wirft bei leer + behält MultiPolygon; fehlendes Auth-Rate-Limit + Cookie-Passthrough im
+`server.mjs`-Proxy. **Verifikation:** 105 Accounts-Tests grün (DB-nah via `pg-mem`). Gemergt nach `main`.
+**Verweise:** `f9fe8a1` (Merge); Specs/Plan `docs/superpowers/{specs,plans}/2026-06-30-farmer-onboarding-*`.
+
 ## 2026-06-29 · Prod-Cutover Infisical LIVE (no-downtime) + Resilienz bewiesen
 **Was:** Vault-Seite fertig (Projekt `doldenblick`, **8 Secrets** inkl. GEE-JSON in `prod`, read-only-Maschinen-
 Identität [verifiziert: liest prod, Schreiben 403], `pg_dump`-Backup-Cron 03:17 UTC). **Prod-Cutover** (vom Nutzer

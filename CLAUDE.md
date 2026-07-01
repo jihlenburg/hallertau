@@ -1,10 +1,20 @@
 # DoldenBlick — Projektleitfaden für Claude Code
 
 ## Was ist das
-Konzeptstudie und gestaltete Mockups für ein webbasiertes Feld-Dashboard für
-Hopfenbetriebe in der Hallertau (Bayern). **Aktueller Stand:** vier pixelgenaue
-HTML-Mockups + ein deutscher Konzeptbericht (PDF). Es ist **noch kein lauffähiges
-Produkt** — die Mockups sind statische Entwürfe, die zu Bildern gerendert werden.
+Ein webbasiertes Feld-Dashboard für Hopfenbetriebe in der Hallertau (Bayern).
+Angefangen als Konzeptstudie, inzwischen ein **laufendes Produkt**: Die App ist
+unter **https://doldenblick.de** live, samt Backend und passwortlosem Onboarding.
+
+Drei Schichten leben nebeneinander im Repo:
+- **Produkt (live).** Ein Frontend (`app/`, Vite + TypeScript + MapLibre) mit drei
+  schlanken Fastify-Diensten dahinter: Wasserbilanz (`api/`), Satelliten-Feld-Check
+  (`rs/`) und passwortlose Identität + Onboarding (`accounts/`). Läuft auf einem
+  gehärteten Hetzner-Server, Secrets aus selbstgehostetem Infisical, E-Mail über Postmark.
+- **Konzept (Referenz).** Vier pixelgenaue HTML-Mockups (`mockups/`) und der deutsche
+  Konzeptbericht (`report/` → PDF). Das ist die Gestaltungs- und Inhaltsgrundlage;
+  **unverändert lassen** — es dient als visueller und inhaltlicher Nordstern.
+- **Domänenwissen (`docs/hops/`).** Recherche zu Anbau, Phänologie, Krankheiten, Sorten,
+  Qualität und Fernerkundung — die fachliche Basis hinter den Empfehlungen.
 
 Leitidee des Produkts: ein **abendliches Briefing** statt eines Karten-Ebenen-Programms.
 Oben wenige Statuskarten nach dem Ampelprinzip mit je einer konkreten Empfehlung,
@@ -17,12 +27,23 @@ darunter eine Karte zur Verortung.
 - `LOGBOOK.md` / `TODO.md` — Arbeitslog und offene Punkte (s. u.).
 
 ## Repo-Struktur
+**Produkt (Code):**
+- `app/` — Frontend-Prototyp (Vite + TS + MapLibre): Übersicht, Onboarding-Wizard. `app/README.md`.
+- `api/` — Wasserbilanz-Dienst (Fastify, zustandslos, FAO-56), Loopback `:8787`. `api/README.md`.
+- `rs/` — Satelliten-Feld-Check (Fastify, CDSE/Sentinel-2), Loopback `:8788`.
+- `accounts/` — passwortlose Identität + Onboarding (Fastify + Postgres), Loopback `:8789`. `accounts/README.md`.
+- `infra/` — Deploy-Skripte, systemd-Units, nginx-Snippet, cloud-init/Härtung, Infisical-Compose + Secrets-Sync.
+
+**Konzept (Referenz, unverändert lassen):**
 - `mockups/*.html` — die vier Ansichten: Übersicht (Desktop), Mobil, Karte, Onboarding.
 - `report/report.html` — Quelle des Berichts; Bilder unter `report/img/` (relative Pfade).
 - `scripts/stamp_pages.py` — stempelt Seitenzahlen ins PDF (PyMuPDF).
 - `build.sh` — lädt Fonts, rendert Mockups → PNG und den Bericht → PDF, setzt Seitenzahlen.
 - `deliverables/` — gerenderte Ausgaben (PNG/PDF), per `build.sh` reproduzierbar.
 - `assets/fonts/` — Barlow (wird von `build.sh` geladen, nicht eingecheckt).
+
+**Doku:** `REFERENCE.md` (SSOT), `docs/infrastructure.md` (Server/Netz/Secrets/Quirks),
+`docs/hops/` (Domänenwissen), `docs/superpowers/` (Specs + Pläne der Feature-Arbeit).
 
 ## Build
 Voraussetzungen: `wkhtmltopdf` (enthält `wkhtmltoimage`), `python3` mit `pymupdf`
@@ -78,7 +99,10 @@ CLI-Header/-Footer und Footer-HTML — deshalb werden Seitenzahlen **nachträgli
   abhaken und mit Datum/Commit ins `LOGBOOK.md` übernehmen.
 
 ## Sinnvolle nächste Schritte (Ideen)
-- Mobile Onboarding-Variante; „auf Gerüstfläche zuschneiden"-Screen.
-- Vom Mockup zum Prototyp: echtes **MapLibre**-Frontend + kleine API, die
-  Open-Meteo / Bright Sky cached.
-- Sorten-Schritt der Ersteinrichtung; Push-/E-Mail-Benachrichtigungen.
+Der Frontend-Prototyp, die Backend-Dienste und das passwortlose Onboarding sind deployt und
+laufen live. Naheliegend als Nächstes (die laufende Liste steht in `TODO.md`):
+- **Peronospora** (LfL-Warndienst Hüll) und ein **Wachstums-/Erntefenster-Modell** (Phänologie
+  je Sorte) als eigene Live-Karten — heute noch Roadmap-Streifen.
+- Onboarding vertiefen: „auf Gerüstfläche zuschneiden", InVeKoS-Feldstücke per WFS antippen,
+  Polygone manuell zeichnen; die passwortlose Anmeldung fürs echte Betriebs-Onboarding polieren.
+- **Push-/E-Mail-Briefing** (abendlicher Versand) — die E-Mail-Infrastruktur (Postmark) steht bereits.

@@ -28,14 +28,19 @@ npm test         # Vitest (Feuchtkugel, Spritzfenster, Wasserbilanz, Wetter, Ras
 
 ## Was funktioniert
 
-- **Onboarding (real):** „Felder" → Schläge anlegen
+- **Passwortloses Betriebs-Onboarding** (`/onboarding`, `/onboarding/verify`): ein
+  vierschrittiger Wizard, der einen Betrieb beim `accounts/`-Dienst anlegt. Anmeldung
+  **ohne Passwort** — Magic-Link per E-Mail oder Passkey (Fingerabdruck/Gesichts-Scan).
+  Der Wizard nutzt den Accounts-Client (`src/api/accounts.ts`) und dieselbe Feld-Import-
+  Logik wie unten; Schläge landen serverseitig (Postgres) statt nur im Browser.
+- **Schnell-Onboarding im Browser (offline):** „Felder" → Schläge anlegen, ohne Konto
   - **iBALIS-Export hochladen** (empfohlen): Shape-ZIP (`.shp/.dbf/.prj`) wird im
     Browser gelesen (`shpjs` + `proj4`), **UTM32 / EPSG:25832 → WGS84** wird
     anhand der `.prj` automatisch erkannt.
   - **GeoJSON-Upload** (WGS84) und **„Demo-Betrieb laden"**.
   - Anschließend **Review**: Name, Sorte und Fläche prüfen/anpassen; die Fläche
     wird zur Kontrolle aus der Geometrie berechnet (`@turf/area`).
-  - Gespeichert wird im `localStorage` des Browsers (kein Backend).
+  - Gespeichert wird im `localStorage` des Browsers (kein Backend nötig).
 - **Übersicht:** Karte mit allen Schlägen, ein Schlag ist wählbar (Klick auf die
   Fläche oder die Liste). Standort der Abfragen = **Zentroid** des Schlags.
 - **Live-Ampelkarten** für den gewählten Schlag:
@@ -43,7 +48,7 @@ npm test         # Vitest (Feuchtkugel, Spritzfenster, Wasserbilanz, Wetter, Ras
     Bright Sky (mit Rückfall auf eine aus den Wettercodes abgeleitete Einschätzung,
     klar als solche gekennzeichnet). Der abgeleitete Pfad erkennt **Nachtfrost** aus dem
     Tagestiefstwert; „nicht abrufbar" wird von „keine Warnung" unterschieden. Die Karte
-    weist aus: **kein Echtzeit-Alarm** — für Frost/Hagel/Sturm die DWD-WarnWetterApp.
+    stellt klar: **kein Echtzeit-Alarm** — für Frost/Hagel/Sturm die DWD-WarnWetterApp.
   - **Spritzfenster** – aus den Stundenwerten abgeleitet (Wind, Niederschlag,
     **ΔT** = Feuchtkugeldepression nach Stull 2011), nächste 48 h. Überschrift framt
     „Wetter geeignet"; bei Schwachwind-Frühfenster Hinweis auf mögliche **Inversionslage**
@@ -109,13 +114,14 @@ app/
   server.mjs            Prod-Server: dist/ ausliefern + /api/brightsky proxen (npm run serve)
   data/demo-fields.geojson
   src/
-    main.ts             App-Hülle + Routing (Übersicht / Felder)
+    main.ts             App-Hülle + Routing (Übersicht / Felder / Onboarding-Wizard)
     state.ts            Feld-Store (localStorage) + Auswahl
     map.ts              MapLibre: OpenFreeMap + DOP40 + Felder-Layer
-    onboarding/         Import (Shape-ZIP, GeoJSON), Review, Bayern-Plausibilitätscheck
+    onboarding/         Import (Shape-ZIP, GeoJSON), Review, Bayern-Plausibilitätscheck,
+                        wizard.ts (passwortloser 4-Schritt-Flow) + fieldMap.ts (Karte zeichnen)
     overview/           Übersicht: Greeting, Ampelkarten, Map-Panel, Roadmap-Streifen
     domain/             wetbulb · sprayWindow · waterBalance · weather · grid · fields (+ Tests)
-    api/                openMeteo · brightSky
+    api/                openMeteo · brightSky · accounts (Magic-Link/Passkey/Onboarding)
     ui/                 icons
 ```
 

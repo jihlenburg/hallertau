@@ -23,15 +23,18 @@ Inhalt:
 
 ## 1. Überblick & Status
 
-**DoldenBlick** = Konzept + Prototyp für ein webbasiertes Feld-Dashboard für
-Hopfenbetriebe in der Hallertau (Bayern). Leitidee: ein **abendliches Briefing**
-(wenige Ampel-Statuskarten mit je einer Empfehlung), keine Karten-Ebenen-Software.
+**DoldenBlick** = webbasiertes Feld-Dashboard für Hopfenbetriebe in der Hallertau (Bayern),
+**live unter https://doldenblick.de**. Leitidee: ein **abendliches Briefing** (wenige
+Ampel-Statuskarten mit je einer Empfehlung), keine Karten-Ebenen-Software.
 
-Zwei Teile im Repo:
+Drei Teile im Repo:
 - **Konzept** (`mockups/`, `report/`, `deliverables/`, `build.sh`): vier pixelgenaue
   HTML-Mockups + deutscher Konzeptbericht (PDF). **Unverändert lassen** (Referenz).
-- **App** (`app/`): erster lauffähiger Prototyp der Übersicht-Ansicht inkl. realem
-  Onboarding (Feld-Import). Vite + TypeScript + maplibre-gl.
+- **App** (`app/`): das Frontend (Übersicht + Onboarding-Wizard). Vite + TypeScript + maplibre-gl,
+  reine Präsentation + Kartenkacheln.
+- **Backend-Dienste** (`api/`, `rs/`, `accounts/`): drei schlanke Fastify-Dienste hinter nginx
+  (same-origin `/api/*`) — Wasserbilanz, Satelliten-Feld-Check, passwortlose Identität + Onboarding.
+  Details in §5.6. Betrieb/Server/Secrets: `docs/infrastructure.md`.
 
 Sprache durchgängig **Deutsch**, sachlich, nicht alarmierend (Wahrscheinlichkeiten
 statt Zuspitzung).
@@ -46,7 +49,7 @@ statt Zuspitzung).
 ├─ REFERENCE.md             diese Datei
 ├─ LOGBOOK.md               chronologisches Arbeitslog (neueste oben)
 ├─ TODO.md                  offene Punkte / nächste Schritte
-├─ README.md                Projekt-README (Konzeptstand)
+├─ README.md                Projekt-README (Aufbau + Live-Stand)
 ├─ LICENSE                  GPL-3.0
 ├─ build.sh                 rendert Mockups→PNG, Report→PDF (wkhtmltopdf/-image)
 ├─ scripts/stamp_pages.py   Seitenzahlen ins PDF (PyMuPDF)
@@ -54,35 +57,34 @@ statt Zuspitzung).
 ├─ report/report.html       Berichtsquelle; Bilder in report/img/
 ├─ deliverables/            gerenderte PNG/PDF
 ├─ assets/fonts/            Barlow (von build.sh geladen, nicht eingecheckt)
-└─ app/                     ← der Prototyp (siehe §4)
-   ├─ index.html  package.json  tsconfig.json  vite.config.ts  README.md
-   ├─ server.mjs            Prod-Server: liefert dist/ + Bright-Sky-Proxy (npm run serve)
-   ├─ data/demo-fields.geojson
-   └─ src/
-      ├─ main.ts            App-Hülle, Top-Bar, Routing (Übersicht/Felder)
-      ├─ state.ts           Feld-Store (localStorage) + Auswahl + pub/sub
-      ├─ types.ts           FieldProps/Feature/Collection, Status
-      ├─ map.ts             MapLibre: OpenFreeMap + DOP40 + Felder-Layer
-      ├─ styles.css         Design-Tokens (CSS-Variablen) + Layout
-      ├─ ui/icons.ts        Inline-SVGs (Logo, Spalier, Karten-Chips)
-      ├─ api/
-      │  ├─ openMeteo.ts    Vorhersage + ET0 (+ lastNDaysIndices)
-      │  └─ brightSky.ts    DWD-Warnungen (über Vite-Proxy)
-      ├─ domain/
-      │  ├─ wetbulb.ts      Feuchtkugel (Stull) + ΔT        (+ .test.ts)
-      │  ├─ sprayWindow.ts  Spritzfenster-Ableitung          (+ .test.ts)
-      │  ├─ waterBalance.ts ETc = ET0·Kc − Niederschlag      (+ .test.ts)
-      │  ├─ weather.ts      Wetterbewertung (DWD/abgeleitet, Frost, alertsReachable)
-      │  ├─ wmo.ts          WMO-Wettercode → Text/Schwere
-      │  ├─ grid.ts         gridCellKey: Snap auf ~2-km-Rasterzelle (Ehrlichkeits-Hinweis)
-      │  └─ fields.ts       Zentroid, Fläche (turf), normalizeField
-      ├─ onboarding/
-      │  ├─ index.ts        Methoden-UI (m4), Dropzone, Review
-      │  ├─ importShape.ts  Shape-ZIP → GeoJSON (shpjs+proj4)
-      │  └─ importGeojson.ts GeoJSON-Parser
-      └─ overview/
-         ├─ index.ts        Greeting, Map-Panel, Live-Datenfluss
-         └─ cards.ts        Ampelkarten-HTML + Mini-Visualisierungen
+├─ app/                     ← Frontend (siehe §4)
+│  ├─ index.html  package.json  tsconfig.json  vite.config.ts  README.md
+│  ├─ server.mjs            Prod-Server: liefert dist/ + Bright-Sky-Proxy (npm run serve)
+│  ├─ data/demo-fields.geojson
+│  └─ src/
+│     ├─ main.ts            App-Hülle, Top-Bar, Routing (Übersicht/Felder/Onboarding-Wizard)
+│     ├─ state.ts           Feld-Store (localStorage) + Auswahl + pub/sub
+│     ├─ types.ts           FieldProps/Feature/Collection, Status
+│     ├─ map.ts             MapLibre: OpenFreeMap + DOP40 + Felder-Layer
+│     ├─ styles.css         Design-Tokens (CSS-Variablen) + Layout
+│     ├─ ui/icons.ts        Inline-SVGs (Logo, Spalier, Karten-Chips)
+│     ├─ api/
+│     │  ├─ openMeteo.ts    Vorhersage + ET0 (+ lastNDaysIndices)
+│     │  ├─ brightSky.ts    DWD-Warnungen (über nginx-/Vite-Proxy)
+│     │  └─ accounts.ts     Accounts-Client: Magic-Link, Passkey, Onboarding
+│     ├─ domain/            wetbulb · sprayWindow · weather · wmo · grid · fields (+ .test.ts)
+│     ├─ onboarding/
+│     │  ├─ index.ts        Methoden-UI (m4), Dropzone, Review
+│     │  ├─ wizard.ts       passwortloser 4-Schritt-Onboarding-Flow
+│     │  ├─ fieldMap.ts     Schlag auf der Karte zeichnen/antippen
+│     │  ├─ importShape.ts  Shape-ZIP → GeoJSON (shpjs+proj4)
+│     │  └─ importGeojson.ts GeoJSON-Parser
+│     └─ overview/          index.ts (Greeting, Map-Panel, Live-Datenfluss) + cards.ts (Ampelkarten)
+├─ api/                     ← Wasserbilanz-Dienst (Fastify, :8787, zustandslos) — api/README.md
+├─ rs/                      ← Satelliten-Feld-Check (Fastify, :8788, CDSE/Sentinel-2)
+├─ accounts/                ← passwortlose Identität + Onboarding (Fastify + Postgres, :8789) — accounts/README.md
+├─ infra/                   ← deploy*.sh, systemd-Units, nginx-Snippet, cloud-init/harden, infisical/
+└─ docs/                    ← infrastructure.md · hops/ (Domänenwissen) · superpowers/ (Specs+Pläne)
 ```
 
 ---
@@ -160,10 +162,12 @@ einen Chip-Hintergrund in der Tint-Farbe und einen Statuspunkt (`.sdot`) in der 
   - `doldenblick.selected.v1` → ID des gewählten Schlags
 - **Datenfluss Übersicht:**
   1. `getSelected()` → Schlag → `centroidLonLat()` (turf) = Abfrage-Standort.
-  2. `fetchOpenMeteo(lat,lon)` + `fetchDwdAlerts(lat,lon)`.
-  3. Ableitungen: `assessWeather`, `evaluateSprayWindow`, `computeWaterBalance`.
-  4. `overview/cards.ts` rendert Ampelkarten; jede nennt ihre Quelle.
-  5. Feldwechsel (Klick auf Karte/Liste) → `selectField()` → re-fetch (AbortController
+  2. `fetchOpenMeteo(lat,lon)` + `fetchDwdAlerts(lat,lon)` (Wetter/Warnungen bleiben clientnah).
+  3. Client-Ableitungen: `assessWeather`, `evaluateSprayWindow` (aus Open-Meteo-Stundenwerten).
+  4. **Backend-Karten:** Wasserbilanz via `GET /api/water-balance` und Feld-Check via
+     `POST /api/field-vigor` — der Client rechnet diese **nicht** mehr selbst, er rendert nur.
+  5. `overview/cards.ts` rendert die Ampelkarten; jede nennt ihre Quelle.
+  6. Feldwechsel (Klick auf Karte/Liste) → `selectField()` → re-fetch (AbortController
      bricht laufende Abfrage ab).
 - **Fehler-/Ladezustände:** je Live-Karte „lädt …" bzw. „Nicht abrufbar".
 - **Typen (`types.ts`):** `FieldProps { id, name, sorte, flaeche_ha, flaeche_calc_ha? }`,
@@ -215,13 +219,34 @@ einen Chip-Hintergrund in der Tint-Farbe und einen Statuspunkt (`.sdot`) in der 
 
 ### 5.5 E-Mail-Versand (Postmark) — Infrastruktur-Dienst
 - **Verfügbar seit 2026-06-29:** das Projekt kann transaktionale E-Mails versenden.
-- Anbieter **Postmark**, Server für Domain **doldenblick.de**. Zugang: `POSTMARK_API_TOKEN` (`.env`).
+- Anbieter **Postmark**, Server für Domain **doldenblick.de** (DKIM + Return-Path verifiziert).
 - SMTP: Host `smtp.postmarkapp.com`, Port **587** (STARTTLS). Der **Server-API-Token ist
-  zugleich SMTP-Username *und* -Passwort**. Absender `noreply@doldenblick.de` (verifizierte Domain).
-- Erst-Nutzer: das selbstgehostete **Infisical** (Passwort-Reset, Einladungen, E-Mail-MFA).
-- Künftig nutzbar für DoldenBlick-Features (Push-/E-Mail-Benachrichtigungen, Berichte).
-  **Versand nur serverseitig** (Backend/BFF) — Token nie im Client. Zustellung setzt eine
-  verifizierte Postmark-Sender-Signatur/Domain voraus.
+  zugleich SMTP-Username *und* -Passwort**. Absender `noreply@doldenblick.de`.
+- **Token-Herkunft:** `POSTMARK_SERVER_API_TOKEN` (Versand) und `POSTMARK_ACCOUNT_API_TOKEN`
+  (Domain-/Signatur-Verwaltung) liegen in **Infisical**; der Secrets-Sync rendert sie in die
+  EnvironmentFiles auf dem Server (nicht mehr im lokalen `.env` als Laufzeitquelle). Nie im Client.
+- **Live-Nutzer:** der `accounts/`-Dienst (Magic-Link-Anmeldung) und das selbstgehostete **Infisical**
+  (Passwort-Reset/MFA). Künftig: das abendliche Push-/E-Mail-Briefing.
+
+### 5.6 Backend-Dienste (`/api/*`, same-origin hinter nginx)
+Drei schlanke Fastify-Dienste; der Client ruft ausschließlich same-origin `/api/*`, nginx
+terminiert TLS und proxyt loopback-intern. Jeder Dienst trägt einen **Versionsvertrag**
+(Antwort-Feld + Header, Preflight über die `…/version`-Route).
+
+| Dienst | systemd | Port | Zustand | Endpunkte |
+|---|---|---|---|---|
+| `api/` (Wasserbilanz) | `doldenblick-api` | 8787 | zustandslos | `/api/health`, `/api/version`, `/api/water-balance` |
+| `rs/` (Feld-Check) | `doldenblick-rs` | 8788 | zustandslos | `/api/field-vigor`, `/api/rs/health`, `/api/rs/version` |
+| `accounts/` (Identität + Onboarding) | `doldenblick-accounts` | 8789 | **Postgres** | `/api/auth/*`, `/api/onboarding/*`, `/api/accounts/health`, `/api/accounts/version` |
+
+- **`api/` Wasserbilanz** — FAO-56-Wurzelraum-Bilanz (Allen et al. 1998), BFF holt Open-Meteo
+  serverseitig. Der Client rechnet **nicht** mehr selbst (Cutover 2026-06-28). Details: `api/README.md`.
+- **`rs/` Feld-Check** — `POST /api/field-vigor` → Sentinel-2-Indizes (NDVI/SAVI 10 m, NDRE/CIre/NDMI
+  20 m) über CDSE, mit Pixel-Purity-Konfidenz und ehrlichem Screening-Label (kein teilflächengenaues
+  Signal). Speist die 4. Übersicht-Karte.
+- **`accounts/` Identität + Onboarding** — passwortlose Anmeldung (Magic-Link + Passkey/WebAuthn),
+  serverseitige Sessions (HMAC-httpOnly-Cookie), Betrieb + Schläge in Postgres. Rate-Limit auf den
+  öffentlichen Auth-Routen. Vollständige Route-/Sicherheits-/Datenmodell-Referenz: `accounts/README.md`.
 
 ---
 
@@ -298,6 +323,13 @@ Defizit = ETc − Σ Niederschlag(7 Tage)        (positiv = Wasserbedarf)
 
 ## 7. Onboarding (Feld-Import)
 
+Zwei Wege teilen sich dieselbe Import-/Review-Logik:
+- **Passwortloser Betriebs-Wizard** (`app/src/onboarding/wizard.ts`, Routen `/onboarding` +
+  `/onboarding/verify`): vier Schritte, Anmeldung ohne Passwort (Magic-Link oder Passkey), Betrieb
+  + Schläge werden beim `accounts/`-Dienst gespeichert (Postgres). Für das echte Betriebs-Onboarding.
+- **Offline-Schnellimport** (unten): Datei-Upload → Review → `localStorage`, ohne Konto. Zum
+  Ausprobieren und für den lokalen Prototyp-Betrieb.
+
 Empfohlener Weg laut Report: **iBALIS-Export hochladen** — eigene Feldstücke als
 **Shape-ZIP (UTM32)**. Umgesetzte Methoden (`onboarding/`):
 - **Shape-ZIP** (`importShape.ts`): `shpjs` liest `.shp/.dbf/.prj` aus dem ZIP und
@@ -325,12 +357,27 @@ nur Attribut-Texte/Namen, im Review korrigierbar — nicht die Geometrie).
 **App** (`cd app`):
 ```bash
 npm install
-npm run dev      # Vite-Dev-Server http://localhost:5173 (inkl. Bright-Sky-Proxy)
+npm run dev      # Vite-Dev-Server http://localhost:5173 (Proxy: Bright Sky + /api/auth + /api/onboarding)
 npm run build    # tsc --noEmit + vite build → dist/
 npm run preview  # gebauten Build ausliefern
-npm test         # Vitest (9 Tests: wetbulb, sprayWindow, waterBalance)
+npm test         # Vitest (Domäne, Wetter, Raster, Import, Accounts-Client …)
 ```
 - Keine Secrets/Keys nötig. Bundle groß (~1 MB, maplibre+shpjs) — für Prototyp ok.
+
+**Backend-Dienste** (je `cd api` / `cd rs` / `cd accounts`):
+```bash
+npm install
+npm run dev      # tsx watch, Loopback (api 8787 · rs 8788 · accounts 8789)
+npm test         # Vitest (api 33 · rs 31 · accounts 105 Tests)
+npm run build    # tsc → dist/
+```
+- `accounts/` braucht zur Laufzeit Postgres + Env (`DATABASE_URL`, `SESSION_SIGNING_KEY`,
+  `RP_ID`, `RP_ORIGIN`, `SITE_URL`, `POSTMARK_SERVER_API_TOKEN`); Tests laufen DB-nah über `pg-mem`.
+- ⚠️ **Vitest/esbuild typecheckt nicht** und akzeptiert Node-ESM-widrige Importe → vor Deploy immer
+  auch `npm run build` (tsc) **und** einen echten `node`-Laufzeit-Import prüfen (siehe `accounts/README.md`).
+
+**Deployment:** `infra/deploy.sh` (App), `infra/deploy-api.sh`, `infra/deploy-accounts.sh` — bauen,
+rsync nach doldenblick-01, systemd (neu-)starten, nginx-Snippet mit Rollback. Betrieb: `docs/infrastructure.md`.
 
 **Konzept/Report** (Repo-Root, separater Toolchain):
 ```bash
@@ -376,9 +423,8 @@ Voraussetzungen: `wkhtmltopdf`, `python3` mit `pymupdf`+`pillow`, `fontconfig`, 
 
 ## 11. Konventionen
 
-- **Branch:** Entwicklung auf `claude/repo-initialization-z6styj`; mit
-  `git push -u origin <branch>` (bei Netzfehlern Exponential-Backoff). Kein PR ohne
-  ausdrückliche Aufforderung.
+- **Branch:** `main` ist der Arbeitsstand; Feature-Arbeit ggf. auf eigenem Branch, nach Review
+  nach `main` gemergt. **Nie automatisch committen/pushen** — immer erst nach ausdrücklicher Freigabe.
 - **LOGBOOK.md / TODO.md** pflegen (siehe `CLAUDE.md`): nach jedem nennenswerten
   Schritt Logbuch-Eintrag (Datum · Was · Warum · Ergebnis/Commit); TODOs abhaken.
 - **Mockups/Report/build.sh** nicht verändern (Referenz). **Keine Secrets** committen.
@@ -407,5 +453,6 @@ Voraussetzungen: `wkhtmltopdf`, `python3` mit `pymupdf`+`pillow`, `fontconfig`, 
 - Bundle nicht code-gesplittet; DBF-Encoding nicht gehärtet (nur Namen, im Review korrigierbar);
   nur Polygone importierbar; nach Import **Bayern-Plausibilitätsprüfung**.
 - Demo-Geometrien sind fiktiv (rechteckig) und ersetzen später den echten Import.
-- Karten Peronospora, Feld-Check/Satellit, Wachstum noch ohne Live-Daten — jetzt als
-  **Roadmap-Streifen** unter den Live-Karten (nicht mehr als leere Kacheln im Raster).
+- **Feld-Check/Satellit** ist inzwischen **live** (`rs/`-Dienst, NDRE-Screening mit ehrlichem
+  Auflösungs-Label). **Peronospora** und **Wachstum/Erntefenster** bleiben vorerst
+  **Roadmap-Streifen** unter den Live-Karten (nicht als leere Kacheln im Raster).
