@@ -10,7 +10,7 @@
  *   isInHopRegion(geometry)    → { inRegion, region? }
  */
 
-import anbaugebiete from './anbaugebiete.geojson'
+import anbaugebiete from './anbaugebiete.json'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

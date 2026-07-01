@@ -147,7 +147,7 @@ export function registerPasskeyRoutes(app: FastifyInstance, deps: PasskeyRouteDe
       userDisplayName: user.name ?? user.email,
       excludeCredentials: existingCreds.map(cred => ({
         id:         cred.credential_id,
-        transports: (cred.transports ?? []) as Parameters<typeof defaultGenOptions>[0]['excludeCredentials'][0]['transports'],
+        transports: (cred.transports ?? []) as NonNullable<Parameters<typeof defaultGenOptions>[0]['excludeCredentials']>[0]['transports'],
       })),
       authenticatorSelection: {
         residentKey:      'preferred',
@@ -342,7 +342,7 @@ export function registerPasskeyRoutes(app: FastifyInstance, deps: PasskeyRouteDe
           expectedOrigin:   origin,
           credential: {
             id:         storedCred.credential_id,
-            publicKey:  storedCred.public_key,
+            publicKey:  new Uint8Array(storedCred.public_key),
             counter:    storedCred.counter,
             transports: (storedCred.transports ?? undefined) as Parameters<typeof defaultVerifyAuthResp>[0]['credential']['transports'],
           },
